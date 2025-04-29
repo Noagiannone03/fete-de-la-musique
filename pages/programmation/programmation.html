@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programmation - FDLM</title>
+    <style>
+
+@font-face {
+            font-family: 'inter-bold';
+            src: url('../../assets/fonts/inter/Inter-Bold.otf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'inter-semi-bold';
+            src: url('../../assets/fonts/inter/Inter-SemiBold.otf') format('truetype');
+        }
+        @font-face {
+            font-family: 'ubuntu-medium';
+            src: url('../../assets/fonts/ubuntu/Ubuntu-M.ttf') format('truetype');
+        }
+        /* Global styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #fff;
+            overflow-x: hidden;
+            padding-bottom: 70px; /* Space for the fixed filter button */
+        }
+        
+        /* Filter button fixed at bottom */
+        .filter-button-container {
+            position: fixed;
+            bottom: 15px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            z-index: 900;
+        }
+        
+        .filter-button {
+            width: 100px;
+            height: auto;
+            cursor: pointer;
+            filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.2));
+        }
+        
+        /* Filter Overlay Styles */
+        .filter-overlay {
+            position: fixed;
+            top: 8vh;
+            left: 0;
+            width: 100%;
+            height: 92vh;
+            background-color: #ffffff;
+            z-index: 997;
+            display: none;
+            padding: 20px 15px 20px;
+            overflow-y: auto;
+            transition: transform 0.3s ease-in-out;
+            transform: translateY(100%);
+        }
+        
+        .filter-overlay.active {
+            display: block;
+            transform: translateY(0);
+        }
+        
+        .filter-content {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .back-to-program {
+            color: #734432;
+            text-decoration: none;
+            font-size: 16px;
+            margin-bottom: 20px;
+            display: block;
+        }
+        
+        .filter-section {
+            margin-bottom: 25px;
+        }
+        
+        .filter-headline {
+            width: 45%;
+            max-width: 170px;
+            margin-bottom: 15px;
+        }
+        
+        .filter-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+        }
+        
+        .filter-chip {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 22%;
+            padding: 10px 5px;
+            border-radius: 10px;
+            border: 2px solid #D892B4;
+            background-color: white;
+            color: #734432;
+            font-size: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-chip.active {
+            background-color: #D892B4;
+            color: white;
+        }
+        
+        .chip-icon {
+            width: 20px;
+            height: 20px;
+            margin-bottom: 5px;
+        }
+        
+        .filter-divider {
+            height: 1px;
+            width: 100%;
+            background-color: #232323;
+            margin: 10px 0;
+        }
+        
+        .time-filter {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .time-selector {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .time-selector span {
+            color: #734432;
+        }
+        
+        .time-select {
+            padding: 8px 15px;
+            border: 1px solid #D892B4;
+            border-radius: 5px;
+            color: #734432;
+            background-color: white;
+        }
+        
+        .location-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+        }
+        
+        .location-chip {
+            width: 48%;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #734432;
+            color: #734432;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .location-chip.active {
+            background-color: #D892B4;
+            color: white;
+            border-color: #D892B4;
+        }
+        
+        .location-detail {
+            font-size: 10px;
+            color: inherit;
+        }
+        
+        .validate-button-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .validate-button {
+            width: 120px;
+            cursor: pointer;
+        }
+
+         /* Navbar */
+         .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4.5rem;
+            background-color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 0.9375rem;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-logo {
+            height: 3.75rem;
+            max-height: 85%;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .favorites-btn {
+            background-color: #734432;
+            color: white;
+            font-family: 'inter-bold', sans-serif;
+            border: none;
+            border-radius: 1.25rem;
+            padding: 0.6rem 1.3rem;
+            font-size: 0.875rem;
+            margin-right: 0.9375rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .favorites-btn:active {
+            transform: scale(0.95);
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 360px) {
+            .navbar {
+                padding: 0 0.625rem;
+            }
+            
+            .navbar-logo {
+                height: 3.25rem;
+            }
+            
+            .favorites-btn {
+                padding: 0.4375rem 0.75rem;
+                font-size: 0.75rem;
+                margin-right: 0.625rem;
+            }
+        }
+
+        .menu-icon {
+            width: 30px;
+            height: 20px;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .menu-icon span {
+            display: block;
+            height: 3px;
+            width: 100%;
+            background-color: #734432;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-icon.active span:nth-child(1) {
+            transform: translateY(8.5px) rotate(45deg);
+        }
+
+        .menu-icon.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-icon.active span:nth-child(3) {
+            transform: translateY(-8.5px) rotate(-45deg);
+        }
+
+        /* Menu overlay */
+        .menu-overlay {
+            position: fixed;
+            top: 4.375rem;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 4.375rem);
+            background-color: white;
+            z-index: 99;
+            padding: 1.25rem;
+            transform: translateY(-100%);
+            opacity: 0;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .menu-overlay.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Favoris overlay */
+        .favorites-overlay {
+            position: fixed;
+            top: 4.375rem;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 4.375rem);
+            background-color: white;
+            z-index: 99;
+            padding: 1.25rem;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            text-align: center;
+        }
+
+        .favorites-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .favorites-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 2.5rem;
+        }
+
+        .favorites-empty img#favorites-icon {
+            width: 90%;
+            max-width: 900px;
+            margin-bottom: 1.7rem;
+        }
+        
+        .favorites-empty img#program-icon {
+            width: 25%;
+            max-width: 150px;
+            margin-bottom: 1.5rem;
+        }
+
+        .favorites-empty img#program-btn {
+            width: 50%;
+            max-width: 300px;
+            margin-bottom: 1.5rem;
+        }
+
+        .favorites-empty h3 {
+            font-family: 'inter-semi-bold', sans-serif;
+            color: #232222;
+            font-weight: normal;
+            margin-bottom: 1.7rem;
+            font-size: 1.6rem;
+            line-height: 1.4;
+            text-align: center;
+            width: 70%;
+            max-width: 350px;
+        }
+
+        .favorites-empty .action-img {
+            width: 50%;
+            max-width: 230px;
+            margin: 1rem 0;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .favorites-empty .action-img:hover {
+            transform: scale(1.05);
+        }
+
+        .menu-item {
+            padding: 1.125rem 0;
+            font-size: 1.5rem;
+            color: #734432;
+            font-family: 'inter-bold', sans-serif;
+            text-transform: uppercase;
+            text-decoration: none;
+            display: block;
+            transition: color 0.3s ease;
+        }
+        
+        .menu-item:active {
+            opacity: 0.7;
+        }
+
+        .menu-divider {
+            width: 100%;
+            height: 1px;
+            background-color: #734432;
+            margin: 5px 0;
+        }
+
+        /* Main content styles - Programming Page */
+        .content {
+            margin-top: 8vh;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header-image {
+            margin-top: 2vh;
+            width: 70%;
+            max-width: 300px;
+            margin-bottom: 20px;
+        }
+
+        /* Tab Navigation */
+        .tab-navigation {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 8px 12px;
+            color: #252525;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            text-align: center;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: #252525;
+        }
+
+        /* Event Cards */
+        .event-list {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .event-card {
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            position: relative;
+        }
+
+        .card-image-container {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            overflow: hidden;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .time-tag {
+            position: absolute;
+            top: 5px;
+            left: 0px;
+            background-color: #D892B4;
+            color: white;
+            padding: 5px 10px;
+            transform: rotate(-7deg);
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 5px;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .card-info {
+            padding: 15px;
+            position: relative;
+        }
+
+        .event-title {
+            color: #734432;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .event-type {
+            color: #D892B4;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .event-location, .event-style {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            color: #734432;
+            font-size: 14px;
+        }
+
+        .info-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+        }
+
+        .favorite-icon {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 37px;
+            height: 37px;
+            cursor: pointer;
+        }
+
+        .info-btn {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            width: 100px;
+            height: auto;
+            cursor: pointer;
+        }
+
+        /* Special button effect with offset background */
+        .offset-button {
+            position: relative;
+            display: inline-block;
+        }
+
+        .offset-button::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 100%;
+            height: 100%;
+            background-color: #734432;
+            border-radius: 5px;
+            z-index: -1;
+        }
+
+        .offset-button img {
+            position: relative;
+            z-index: 1;
+            background-color: #D892B4;
+            border-radius: 5px;
+            padding: 8px 15px;
+            color: white;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+        }
+
+
+
+        /* Event Details Overlay */
+.event-details-overlay {
+    position: fixed;
+    top: 8vh;
+    left: 0;
+    width: 100%;
+    height: 92vh;
+    background-color: #ffffff;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: transform 0.4s ease-out, opacity 0.3s ease-out;
+    transform-origin: center center;
+}
+
+.event-details-overlay.active {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.event-details-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* This helps push partners to bottom */
+}
+
+.details-header {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.details-image-container {
+    position: relative;
+    width: 100%;
+    height: 260px; /* Increased height */
+    overflow: hidden;
+}
+
+.details-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.close-details {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 40px; /* Larger button */
+    height: 40px; /* Larger button */
+    background-color: #734432;
+    border-radius: 50%;
+    border: none;
+    font-size: 26px;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.details-title-section {
+    padding: 20px; /* Increased padding */
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    background-color: #fff;
+}
+
+.details-title-left {
+    flex: 1;
+}
+
+.details-title {
+    color: #734432;
+    font-size: 26px; /* Larger font */
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.details-subtitle {
+    color: #D892B4;
+    font-size: 18px; /* Larger font */
+}
+
+.details-title-right {
+    padding-left: 15px;
+    padding-top: 5px;
+}
+
+.details-favorite-icon {
+    width: 34px; /* Larger icon */
+    height: 34px; /* Larger icon */
+    cursor: pointer;
+}
+
+.details-description {
+    padding: 0 20px 20px; /* Increased padding */
+    color: #734432;
+    font-size: 16px; /* Larger font */
+    line-height: 1.6;
+}
+
+.details-more-button {
+    display: flex;
+    justify-content: center;
+    margin: 10px 0 25px; /* Increased margin */
+}
+
+.details-more-button img {
+    height: 42px; /* Larger button */
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.details-more-button img:hover {
+    transform: scale(1.05);
+}
+
+.details-info-section {
+    padding: 0 20px 25px; /* Increased padding */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.details-info-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px; /* Increased margin */
+    color: #734432;
+    font-size: 16px; /* Larger font */
+}
+
+.info-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 6px;
+}
+
+.details-separator {
+    margin: 0 15px; /* Increased margin */
+    color: #D892B4;
+    font-weight: bold;
+}
+
+.details-map-button {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.details-map-button img {
+    height: 48px; /* Larger button */
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.details-map-button img:hover {
+    transform: scale(1.05);
+}
+
+.details-partners {
+    background-color: #734432;
+    color: white;
+    padding: 25px 20px; /* Increased padding */
+    margin-top: auto; /* Pushes this section to the bottom */
+}
+
+.details-partners h3 {
+    text-align: center;
+    font-size: 20px; /* Larger font */
+    margin-bottom: 20px; /* Increased margin */
+    letter-spacing: 1px;
+}
+
+.partners-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px; /* Increased gap */
+}
+
+.partner-logo {
+    width: 90px; /* Larger logo */
+    height: 90px; /* Larger logo */
+    object-fit: contain;
+    background-color: white;
+    border-radius: 8px; /* Increased radius */
+    padding: 8px; /* Increased padding */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+}
+
+.partner-logo:hover {
+    transform: scale(1.05);
+}
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <img src="../../assets/logo/logo-navbar-fdlm.png" alt="Logo" class="navbar-logo">
+        <div class="navbar-right">
+            <button class="favorites-btn">Mes favoris</button>
+            <div class="menu-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Menu overlay -->
+    <div class="menu-overlay">
+        <a href="#" class="menu-item" style="margin-bottom: 2vh;">Accueil</a>
+        <a href="#" class="menu-item">Programmation</a>
+        <div class="menu-divider"></div>
+        <a href="#" class="menu-item">Mes favoris</a>
+        <div class="menu-divider"></div>
+        <a href="#" class="menu-item">Autour de moi</a>
+        <div class="menu-divider"></div>
+        <a href="#" class="menu-item" style="margin-bottom: 3vh;">Nos partenaires</a>
+        <a href="#" class="menu-item">Qui sommes-nous ?</a>
+        <div class="menu-divider"></div>
+        <a href="#" class="menu-item">Pour l'été</a>
+    </div>
+    
+    <!-- Favoris overlay -->
+    <div class="favorites-overlay">
+        <div class="favorites-empty">
+            <img src="../../assets/headline/programmation-outline.png" alt="Icône favoris" id="favorites-icon">
+            <h3>Vous n'avez pas encore sélectionné de programme favoris</h3>
+            <img src="../../assets/pictos/material-symbols_stars-outline.png" alt="Icône programme" id="program-icon">
+            <h3>Rendez-vous sur la programmation pour faire votre choix</h3>
+            <img src="../../assets/buttons/programmation-button.png" alt="Aller à la programmation" class="action-img" id="go-to-program">
+        </div>
+    </div>
+
+    <!-- Main Content - Programming Page -->
+    <div class="content">
+        <!-- Header Image -->
+        <img src="../../assets/headline/programmation-outline.png" alt="Programmation" class="header-image">
+        
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <div class="tab active" data-filter="all">Tout</div>
+            <div class="tab" data-filter="centre-ville">Centre-ville</div>
+            <div class="tab" data-filter="mourillon">Mourillon</div>
+        </div>
+        
+        <!-- Event List -->
+        <div class="event-list">
+          
+        </div>
+    </div>
+
+    <!-- Filter Button Fixed at Bottom -->
+    <div class="filter-button-container">
+        <img src="../../assets/buttons/filter-btn.png" alt="Filtrer" class="filter-button">
+    </div>
+    
+    <!-- Filter Overlay -->
+    <div class="filter-overlay">
+        <div class="filter-content">
+            <a href="#" class="back-to-program">← Retour vers la programmation</a>
+            
+            <!-- Genre Filter -->
+            <div class="filter-section">
+                <img src="../../assets/headline/filtrer-par-genre.png" alt="Filtrer par genre" class="filter-headline">
+                <div class="filter-chips">
+                    <div class="filter-chip" data-filter="good-vibes">
+                        <img src="../../assets/pictos/MusicNoteBeamed.png" alt="Music" class="chip-icon">
+                        <span>Good vibes</span>
+                    </div>
+                    <div class="filter-chip" data-filter="chill">
+                        <img src="../../assets/pictos/MusicNoteBeamed.png" alt="Music" class="chip-icon">
+                        <span>Chill</span>
+                    </div>
+                    <div class="filter-chip" data-filter="punchy">
+                        <img src="../../assets/pictos/MusicNoteBeamed.png" alt="Music" class="chip-icon">
+                        <span>Punchy</span>
+                    </div>
+                    <div class="filter-chip" data-filter="survoltee">
+                        <img src="../../assets/pictos/MusicNoteBeamed.png" alt="Music" class="chip-icon">
+                        <span>Survoltée</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-divider"></div>
+            
+            <!-- Date/Time Filter -->
+            <div class="filter-section">
+                <img src="../../assets/headline/filtrer-par-date.png" alt="Filtrer par date" class="filter-headline">
+                <div class="time-filter">
+                    <div class="time-selector">
+                        <span>À partir</span>
+                        <select class="time-select">
+                            <option value="">hh:mm</option>
+                            <option value="18:00">18:00</option>
+                            <option value="19:00">19:00</option>
+                            <option value="20:00">20:00</option>
+                            <option value="21:00">21:00</option>
+                            <option value="22:00">22:00</option>
+                        </select>
+                    </div>
+                    <div class="time-selector">
+                        <span>jusqu'à</span>
+                        <select class="time-select">
+                            <option value="">hh:mm</option>
+                            <option value="20:00">20:00</option>
+                            <option value="21:00">21:00</option>
+                            <option value="22:00">22:00</option>
+                            <option value="23:00">23:00</option>
+                            <option value="00:00">00:00</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-divider"></div>
+            
+            <!-- Location Filter -->
+            <div class="filter-section">
+                <img src="../../assets/headline/filtrer-par-lieux.png" alt="Filtrer par lieux" class="filter-headline">
+                <div class="location-filter">
+                    <div class="location-chips">
+                        <div class="location-chip">Carré du port <span class="location-detail">(centre-ville)</span></div>
+                        <div class="location-chip">Place de la liberté <span class="location-detail">(centre-ville)</span></div>
+                        <div class="location-chip">Place Camille Auban <span class="location-detail">(centre-ville)</span></div>
+                        <div class="location-chip">Place Auban <span class="location-detail">(centre-ville)</span></div>
+                        <div class="location-chip">Carré du port <span class="location-detail">(centre-ville)</span></div>
+                        <div class="location-chip">Place de la liberté <span class="location-detail">(centre-ville)</span></div>
+                        <div class="location-chip">Place Camille Auban <span class="location-detail">(centre-ville)</span></div>
+                        <div class="location-chip">Place Auban <span class="location-detail">(centre-ville)</span></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Validate Button -->
+            <div class="validate-button-container">
+                <img src="../../assets/buttons/valider-btn.png" alt="Valider" class="validate-button">
+            </div>
+        </div>
+    </div>
+    
+<script type="module">// Import Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+    
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyCwtimDB_Mai-QPyB6d0yqjJX_d5mQjGY8",
+        authDomain: "fete-de-la-musique-64a6b.firebaseapp.com",
+        projectId: "fete-de-la-musique-64a6b",
+        storageBucket: "fete-de-la-musique-64a6b.firebasestorage.app",
+        messagingSenderId: "1087878331068",
+        appId: "1:1087878331068:web:28719d3278a619cb816eb9",
+        measurementId: "G-MW9YYKP1J8"
+    };
+    
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const analytics = getAnalytics(app);
+    
+    // Global variables
+    let allEvents = [];
+    let currentFilters = {
+        location: 'all',
+        genres: [],
+        startTime: '',
+        endTime: '',
+        locations: []
+    };
+    
+    // DOM Elements
+    const eventList = document.querySelector('.event-list');
+    const tabs = document.querySelectorAll('.tab');
+    const filterChips = document.querySelectorAll('.filter-chip');
+    const locationChips = document.querySelectorAll('.location-chip');
+    const timeSelects = document.querySelectorAll('.time-select');
+    const validateButton = document.querySelector('.validate-button');
+    const filterButton = document.querySelector('.filter-button');
+    const filterOverlay = document.querySelector('.filter-overlay');
+    const backToProgram = document.querySelector('.back-to-program');
+    
+    // Function to format time from timestamp (assuming timestamp is in seconds)
+    function formatTime(timestamp) {
+        const date = new Date(timestamp * 1000);
+        return date.getHours().toString().padStart(2, '0') + 'h' + date.getMinutes().toString().padStart(2, '0');
+    }
+    
+    // Function to check if an event is in favorites
+    function isEventFavorite(eventId) {
+        return getCookie('favorite_event_' + eventId) === 'true';
+    }
+    
+    // Function to toggle favorite status
+    function toggleFavorite(eventId, icon) {
+        if (isEventFavorite(eventId)) {
+            deleteCookie('favorite_event_' + eventId);
+            icon.src = '../../assets/pictos/star-card.png';
+        } else {
+            setCookie('favorite_event_' + eventId, 'true', 30);
+            icon.src = '../../assets/pictos/filled-star.png';
+        }
+    }
+    
+    // Function to create loading card skeleton
+    function createLoadingCard() {
+        const card = document.createElement('div');
+        card.className = 'event-card loading';
+        card.innerHTML = `
+            <div class="card-image-container" style="background-color: #eee;">
+                <div class="time-tag" style="background-color: #ddd; color: transparent;">00:00-00:00</div>
+            </div>
+            <div class="card-info">
+                <div class="event-title" style="background-color: #eee; height: 20px; width: 70%; margin-bottom: 10px;"></div>
+                <div class="event-type" style="background-color: #eee; height: 16px; width: 40%; margin-bottom: 15px;"></div>
+                <div class="event-location" style="background-color: #eee; height: 16px; width: 80%; margin-bottom: 10px;"></div>
+                <div class="event-style" style="background-color: #eee; height: 16px; width: 60%; margin-bottom: 10px;"></div>
+            </div>
+        `;
+        return card;
+    }
+    
+    // Function to show loading state with shimmer effect
+    function showLoading() {
+        eventList.innerHTML = '';
+        for (let i = 0; i < 6; i++) {
+            const loadingCard = createLoadingCard();
+            eventList.appendChild(loadingCard);
+        }
+        
+        // Add shimmer effect with CSS
+        const style = document.createElement('style');
+        style.id = 'skeleton-animation';
+        style.textContent = `
+            @keyframes shimmer {
+                0% {
+                    background-position: -200% 0;
+                }
+                100% {
+                    background-position: 200% 0;
+                }
+            }
+            
+            .event-card.loading .card-image-container,
+            .event-card.loading .event-title,
+            .event-card.loading .event-type,
+            .event-card.loading .event-location,
+            .event-card.loading .event-style {
+                background: linear-gradient(90deg, #eee 8%, #f5f5f5 18%, #eee 33%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite linear;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Function to create event card
+    function createEventCard(event) {
+        const card = document.createElement('div');
+        card.className = 'event-card';
+        card.setAttribute('data-location', event.location.toLowerCase().includes('mourillon') ? 'mourillon' : 'centre-ville');
+        card.setAttribute('data-id', event.id);
+        card.setAttribute('data-genre', event.genre);
+        
+        // Format start and end time from timestamp
+        const startTime = formatTime(event.timestamp.start);
+        const endTime = formatTime(event.timestamp.end);
+        const timeTag = `${startTime}-${endTime}`;
+        
+        // Set favorite icon based on cookie
+        const favoriteIconSrc = isEventFavorite(event.id) ? 
+            '../../assets/pictos/filled-star.png' : 
+            '../../assets/pictos/star-card.png';
+        
+        card.innerHTML = `
+            <div class="card-image-container">
+                <img src="${event.imageUrl}" alt="${event.title}" class="card-image">
+                <div class="time-tag">${timeTag}</div>
+            </div>
+            <div class="card-info">
+                <h3 class="event-title">${event.title}</h3>
+                <p class="event-type">${event.subtitle}</p>
+                <div class="event-location">
+                    <img src="../../assets/pictos/pinMap.png" alt="Location" class="info-icon">
+                    <span>${event.location}</span>
+                </div>
+                <div class="event-style">
+                    <img src="../../assets/pictos/MusicNoteBeamed.png" alt="Music" class="info-icon">
+                    <span>${event.genre}</span>
+                </div>
+                <img src="${favoriteIconSrc}" alt="Favorite" class="favorite-icon" data-id="${event.id}">
+                <img src="../../assets/buttons/plus-info.png" alt="Plus d'infos" class="info-btn" data-id="${event.id}">
+            </div>
+        `;
+        
+        // Add event listener for favorite icon
+        card.querySelector('.favorite-icon').addEventListener('click', function() {
+            toggleFavorite(event.id, this);
+        });
+        
+        // Add event listener for info button
+        card.querySelector('.info-btn').addEventListener('click', function() {
+            showEventDetails(event);
+        });
+        
+        return card;
+    }
+    
+    // Function to show event details (modal or page)
+function showEventDetails(event) {
+    console.log('Show details for event:', event);
+    
+    // Create a modal or overlay for event details
+    const detailsOverlay = document.createElement('div');
+    detailsOverlay.className = 'event-details-overlay';
+    
+    // Set the favorite icon based on cookie
+    const favoriteIconSrc = isEventFavorite(event.id) ? 
+        '../../assets/pictos/filled-star.png' : 
+        '../../assets/pictos/star-card.png';
+    
+    // Format start and end time from timestamp
+    const startTime = formatTime(event.timestamp.start);
+    const endTime = formatTime(event.timestamp.end);
+    const timeTag = `${startTime}-${endTime}`;
+    
+    detailsOverlay.innerHTML = `
+        <div class="event-details-container">
+            <div class="details-header">
+                <div class="details-image-container">
+                    <img src="${event.imageUrl}" alt="${event.title}" class="details-image">
+                    <button class="close-details">×</button>
+                </div>
+                
+                <div class="details-title-section">
+                    <div class="details-title-left">
+                        <h2 class="details-title">${event.title}</h2>
+                        <p class="details-subtitle">${event.subtitle}</p>
+                    </div>
+                    <div class="details-title-right">
+                        <img src="${favoriteIconSrc}" alt="Favorite" class="details-favorite-icon" data-id="${event.id}">
+                    </div>
+                </div>
+                
+                <div class="details-description">
+                    <p>${event.description}</p>
+                </div>
+                
+                ${event.plusUrl ? `
+                <div class="details-more-button">
+                    <a href="${event.plusUrl}" target="_blank">
+                        <img src="../../assets/buttons/savoirplusmarron.png" alt="En savoir plus">
+                    </a>
+                </div>` : ''}
+                
+                <div class="details-info-section">
+                    <div class="details-info-item">
+                        <img src="../../assets/pictos/Clock.png" alt="Time" class="info-icon">
+                        <span>${timeTag}</span>
+                        <span class="details-separator">/</span>
+                        <img src="../../assets/pictos/PinMapmarron.png" alt="Location" class="info-icon">
+                        <span>${event.location}</span>
+                    </div>
+                    
+                    <div class="details-map-button">
+                        <a href="${event.locationUrl}" target="_blank">
+                            <img src="../../assets/buttons/syrendre.png" alt="Comment s'y rendre">
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="details-partners">
+                    <h3>PARTENAIRES</h3>
+                    <div class="partners-grid">
+                        ${event.partners && event.partners.length > 0 ? 
+                            event.partners.map(partner => `
+                                <img src="${partner}" alt="Partenaire" class="partner-logo">
+                            `).join('') : 
+                            '<p>Aucun partenaire</p>'
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(detailsOverlay);
+    
+    // Add history state to handle back button
+    history.pushState({overlay: 'event-details'}, '');
+    
+    // Animate the overlay
+    setTimeout(() => {
+        detailsOverlay.classList.add('active');
+    }, 10);
+    
+    // Add event listeners
+    detailsOverlay.querySelector('.close-details').addEventListener('click', () => {
+        detailsOverlay.classList.remove('active');
+        setTimeout(() => {
+            detailsOverlay.remove();
+            // Remove history state to avoid double-back
+            history.back();
+        }, 300);
+    });
+    
+    // Add to favorites button
+    const favIcon = detailsOverlay.querySelector('.details-favorite-icon');
+    favIcon.addEventListener('click', () => {
+        const isFav = isEventFavorite(event.id);
+        const favIcons = document.querySelectorAll(`.favorite-icon[data-id="${event.id}"]`);
+        
+        // Toggle the cookie
+        toggleFavorite(event.id, favIcon);
+        
+        // Update other instances of the same favorite icon
+        favIcons.forEach(icon => {
+            icon.src = isFav ? 'assets/pictos/star-card.png' : 'assets/pictos/filled-star.png';
+        });
+    });
+}
+    
+    // Function to fetch events from Firestore with min loading time
+    async function fetchEvents() {
+        showLoading(); // Show loading state
+        
+        const startTime = Date.now();
+        
+        try {
+            const eventsCol = collection(db, "events");
+            const eventSnapshot = await getDocs(eventsCol);
+            
+            // Process each document
+            allEvents = [];
+            eventSnapshot.forEach((doc) => {
+                const eventData = doc.data();
+                const event = {
+                    id: doc.id,
+                    title: eventData.title || 'Événement sans titre',
+                    subtitle: eventData.subtitle || '',
+                    imageUrl: eventData.imageUrl || 'assets/default-event.jpg',
+                    location: eventData.location || 'Lieu non spécifié',
+                    genre: eventData.genre || 'Genre non spécifié',
+                    timestamp: {
+                        start: eventData.timestamp_start || eventData.timestamp?.start || 0,
+                        end: eventData.timestamp_end || eventData.timestamp?.end || 0
+                    },
+                    locationUrl: eventData.locationUrl || '',
+                    description: eventData.description || 'Aucune description disponible'
+                };
+                
+                allEvents.push(event);
+            });
+            
+            console.log('Loaded events:', allEvents.length);
+            
+            // Ensure skeleton loader stays visible for at least 1 second
+            const elapsedTime = Date.now() - startTime;
+            const remainingTime = Math.max(0, 1000 - elapsedTime);
+            
+            setTimeout(() => {
+                // Remove skeleton animation style
+                const skeletonStyle = document.getElementById('skeleton-animation');
+                if (skeletonStyle) skeletonStyle.remove();
+                
+                // Clear loading state
+                eventList.innerHTML = '';
+                
+                // Update display with events
+                applyFilters();
+            }, remainingTime);
+            
+        } catch (error) {
+            console.error("Error fetching events:", error);
+            
+            // Show error after at least 1 second to avoid flickering
+            const elapsedTime = Date.now() - startTime;
+            const remainingTime = Math.max(0, 600 - elapsedTime);
+            
+            setTimeout(() => {
+                eventList.innerHTML = '<p style="color: #734432; text-align: center; padding: 20px;">Erreur lors du chargement des événements. Veuillez réessayer.</p>';
+            }, remainingTime);
+        }
+    }
+    
+    // Function to filter events
+    function applyFilters() {
+        // Create a copy of all events
+        let filteredEvents = [...allEvents];
+        
+        // Apply location tab filter
+        if (currentFilters.location !== 'all') {
+            filteredEvents = filteredEvents.filter(event => 
+                event.location.toLowerCase().includes(currentFilters.location.toLowerCase())
+            );
+        }
+        
+        // Apply genre filter
+        if (currentFilters.genres.length > 0) {
+            filteredEvents = filteredEvents.filter(event => 
+                currentFilters.genres.some(genre => 
+                    event.genre.toLowerCase().includes(genre.toLowerCase())
+                )
+            );
+        }
+        
+        // Apply specific locations filter
+        if (currentFilters.locations.length > 0) {
+            filteredEvents = filteredEvents.filter(event => {
+                return currentFilters.locations.some(location => 
+                    event.location.toLowerCase().includes(location.toLowerCase())
+                );
+            });
+        }
+        
+        // Apply time filter
+        if (currentFilters.startTime) {
+            const [startHours, startMinutes] = currentFilters.startTime.split(':').map(Number);
+            const startTimeMinutes = startHours * 60 + startMinutes;
+            
+            filteredEvents = filteredEvents.filter(event => {
+                const eventStartDate = new Date(event.timestamp.start * 1000);
+                const eventStartMinutes = eventStartDate.getHours() * 60 + eventStartDate.getMinutes();
+                return eventStartMinutes >= startTimeMinutes;
+            });
+        }
+        
+        if (currentFilters.endTime) {
+            const [endHours, endMinutes] = currentFilters.endTime.split(':').map(Number);
+            const endTimeMinutes = endHours * 60 + endMinutes;
+            
+            filteredEvents = filteredEvents.filter(event => {
+                const eventEndDate = new Date(event.timestamp.end * 1000);
+                const eventEndMinutes = eventEndDate.getHours() * 60 + eventEndDate.getMinutes();
+                return eventEndMinutes <= endTimeMinutes;
+            });
+        }
+        
+        // Sort events by start time
+        filteredEvents.sort((a, b) => a.timestamp.start - b.timestamp.start);
+        
+        // Update the display
+        updateEventList(filteredEvents);
+    }
+    
+    // Function to update event list
+    function updateEventList(events) {
+        eventList.innerHTML = '';
+        
+        if (events.length === 0) {
+            eventList.innerHTML = '<p style="color: #734432; text-align: center; padding: 20px;">Aucun événement ne correspond à vos critères de recherche.</p>';
+            return;
+        }
+        
+        events.forEach(event => {
+            const card = createEventCard(event);
+            eventList.appendChild(card);
+        });
+    }
+    
+    // Cookie functions
+    function setCookie(name, value, days) {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+        document.cookie = name + '=' + value + ';expires=' + expires.toUTCString() + ';path=/';
+    }
+    
+    function getCookie(name) {
+        const nameEQ = name + '=';
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+    
+    function deleteCookie(name) {
+        document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/';
+    }
+    
+    // Favorites functionality
+    function loadFavorites() {
+        const favoritesOverlay = document.querySelector('.favorites-overlay');
+        favoritesOverlay.innerHTML = ''; // Clear previous content
+        
+        // Filter events that are in favorites
+        const favoriteEvents = allEvents.filter(event => isEventFavorite(event.id));
+        
+        if (favoriteEvents.length === 0) {
+            // Show empty state
+            favoritesOverlay.innerHTML = `
+                <div class="favorites-empty">
+                    <img src="assets/headline/programmation-outline.png" alt="Icône favoris" id="favorites-icon">
+                    <h3>Vous n'avez pas encore sélectionné de programme favoris</h3>
+                    <img src="assets/pictos/material-symbols_stars-outline.png" alt="Icône programme" id="program-icon">
+                    <h3>Rendez-vous sur la programmation pour faire votre choix</h3>
+                    <img src="assets/buttons/programmation-button.png" alt="Aller à la programmation" class="action-img" id="go-to-program">
+                </div>
+            `;
+            
+            // Add event listener for "go to program" button
+            document.getElementById('go-to-program').addEventListener('click', () => {
+                favoritesOverlay.classList.remove('active');
+            });
+        } else {
+            // Create header for favorites overlay
+            const favHeader = document.createElement('div');
+            favHeader.style.width = '100%';
+            favHeader.style.padding = '10px 15px';
+            favHeader.innerHTML = `
+                <a href="#" class="back-to-program" id="back-from-favorites">← Retour vers la programmation</a>
+                <img src="assets/headline/mes-favoris.png" alt="Mes Favoris" style="width: 70%; max-width: 300px; margin: 20px auto; display: block;">
+            `;
+            favoritesOverlay.appendChild(favHeader);
+            
+            // Create container for favorite events
+            const favoriteContainer = document.createElement('div');
+            favoriteContainer.className = 'event-list';
+            favoriteContainer.style.padding = '0 15px';
+            
+            // Add each favorite event
+            favoriteEvents.forEach(event => {
+                const card = createEventCard(event);
+                favoriteContainer.appendChild(card);
+            });
+            
+            favoritesOverlay.appendChild(favoriteContainer);
+            
+            // Add event listener for back button
+            document.getElementById('back-from-favorites').addEventListener('click', (e) => {
+                e.preventDefault();
+                favoritesOverlay.classList.remove('active');
+            });
+        }
+    }
+    
+    // Document ready function
+    document.addEventListener('DOMContentLoaded', () => {
+        // Fetch events when page loads
+        fetchEvents();
+        
+        // Tab navigation
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                currentFilters.location = tab.getAttribute('data-filter');
+                applyFilters();
+            });
+        });
+        
+        // Menu toggle
+        const menuIcon = document.querySelector('.menu-icon');
+        const menuOverlay = document.querySelector('.menu-overlay');
+        
+        if (menuIcon && menuOverlay) {
+            menuIcon.addEventListener('click', () => {
+                menuOverlay.classList.toggle('active');
+            });
+        }
+        
+        // Favorites toggle
+        const favoritesBtn = document.querySelector('.favorites-btn');
+        const favoritesOverlay = document.querySelector('.favorites-overlay');
+        
+        if (favoritesBtn && favoritesOverlay) {
+            favoritesBtn.addEventListener('click', () => {
+                loadFavorites();
+                favoritesOverlay.classList.toggle('active');
+            });
+        }
+        
+        // Filter button
+        if (filterButton && filterOverlay && backToProgram) {
+            filterButton.addEventListener('click', () => {
+                filterOverlay.classList.add('active');
+            });
+            
+            backToProgram.addEventListener('click', (e) => {
+                e.preventDefault();
+                filterOverlay.classList.remove('active');
+            });
+        }
+        
+        // Genre filter chips
+        filterChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('active');
+            });
+        });
+        
+        // Location filter chips
+        locationChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('active');
+            });
+        });
+        
+        // Validate button for filters
+        if (validateButton) {
+            validateButton.addEventListener('click', () => {
+                // Collect selected genres
+                currentFilters.genres = Array.from(document.querySelectorAll('.filter-chip.active'))
+                    .map(chip => chip.getAttribute('data-filter'));
+                
+                // Collect selected locations
+                currentFilters.locations = Array.from(document.querySelectorAll('.location-chip.active'))
+                    .map(chip => chip.textContent.trim().split('(')[0].trim());
+                
+                // Collect time range
+                if (timeSelects && timeSelects.length >= 2) {
+                    currentFilters.startTime = timeSelects[0].value;
+                    currentFilters.endTime = timeSelects[1].value;
+                }
+                
+                // Apply filters
+                applyFilters();
+                
+                // Close filter overlay
+                filterOverlay.classList.remove('active');
+            });
+        }
+        
+        // Handle history navigation (back button)
+        window.addEventListener('popstate', () => {
+            // Close any open overlays
+            const overlays = document.querySelectorAll('.favorites-overlay, .filter-overlay, .event-details-overlay');
+            overlays.forEach(overlay => {
+                if (overlay.classList.contains('active')) {
+                    overlay.classList.remove('active');
+                    if (overlay.classList.contains('event-details-overlay')) {
+                        setTimeout(() => overlay.remove(), 300);
+                    }
+                }
+            });
+        });
+    });</script>
+</body>
+</html>

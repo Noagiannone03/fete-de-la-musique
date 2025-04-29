@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Mobile</title>
+    <style>
+        @font-face {
+            font-family: 'inter-bold';
+            src: url('assets/fonts/inter/Inter-Bold.otf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'inter-semi-bold';
+            src: url('assets/fonts/inter/Inter-SemiBold.otf') format('truetype');
+        }
+        @font-face {
+            font-family: 'ubuntu-medium';
+            src: url('assets/fonts/ubuntu/Ubuntu-M.ttf') format('truetype');
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            background-color: #ffffff;
+            overflow-x: hidden;
+            min-height: 100vh;
+            width: 100%;
+        }
+        
+        /* Responsive font sizes */
+        @media (max-width: 375px) {
+            html {
+                font-size: 14px;
+            }
+        }
+        
+        @media (min-width: 500px) {
+            html {
+                font-size: 17px;
+            }
+        }
+        
+        @media (min-width: 768px) {
+            html {
+                font-size: 18px;
+            }
+        }
+
+        /* Écran de chargement */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #d791b4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .loading-screen.hide {
+            opacity: 0;
+            transform: translateY(-100%);
+            pointer-events: none;
+        }
+
+        .logo-container {
+            width: 260px;
+            height: 260px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .logo {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .logo img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* Navbar */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4.5rem;
+            background-color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 0.9375rem;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-logo {
+            height: 3.75rem;
+            max-height: 85%;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .favorites-btn {
+            background-color: #734432;
+            color: white;
+            font-family: 'inter-bold', sans-serif;
+            border: none;
+            border-radius: 1.25rem;
+            padding: 0.6rem 1.3rem;
+            font-size: 0.875rem;
+            margin-right: 0.9375rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .favorites-btn:active {
+            transform: scale(0.95);
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 360px) {
+            .navbar {
+                padding: 0 0.625rem;
+            }
+            
+            .navbar-logo {
+                height: 3.25rem;
+            }
+            
+            .favorites-btn {
+                padding: 0.4375rem 0.75rem;
+                font-size: 0.75rem;
+                margin-right: 0.625rem;
+            }
+        }
+
+        .menu-icon {
+            width: 30px;
+            height: 20px;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .menu-icon span {
+            display: block;
+            height: 3px;
+            width: 100%;
+            background-color: #734432;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-icon.active span:nth-child(1) {
+            transform: translateY(8.5px) rotate(45deg);
+        }
+
+        .menu-icon.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-icon.active span:nth-child(3) {
+            transform: translateY(-8.5px) rotate(-45deg);
+        }
+
+        /* Menu overlay */
+        .menu-overlay {
+            position: fixed;
+            top: 4.375rem;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 4.375rem);
+            background-color: white;
+            z-index: 99;
+            padding: 1.25rem;
+            transform: translateY(-100%);
+            opacity: 0;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .menu-overlay.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Favoris overlay */
+        .favorites-overlay {
+            position: fixed;
+            top: 4.375rem;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 4.375rem);
+            background-color: white;
+            z-index: 99;
+            padding: 1.25rem;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            text-align: center;
+        }
+
+        .favorites-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .favorites-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 2.5rem;
+        }
+
+        .favorites-empty img#favorites-icon {
+            width: 90%;
+            max-width: 900px;
+            margin-bottom: 1.7rem;
+        }
+        
+        .favorites-empty img#program-icon {
+            width: 25%;
+            max-width: 150px;
+            margin-bottom: 1.5rem;
+        }
+
+        .favorites-empty img#program-btn {
+            width: 50%;
+            max-width: 300px;
+            margin-bottom: 1.5rem;
+        }
+
+        .favorites-empty h3 {
+            font-family: 'inter-semi-bold', sans-serif;
+            color: #232222;
+            font-weight: normal;
+            margin-bottom: 1.7rem;
+            font-size: 1.6rem;
+            line-height: 1.4;
+            text-align: center;
+            width: 70%;
+            max-width: 350px;
+        }
+
+        .favorites-empty .action-img {
+            width: 50%;
+            max-width: 230px;
+            margin: 1rem 0;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .favorites-empty .action-img:hover {
+            transform: scale(1.05);
+        }
+
+        .menu-item {
+            padding: 1.125rem 0;
+            font-size: 1.5rem;
+            color: #734432;
+            font-family: 'inter-bold', sans-serif;
+            text-transform: uppercase;
+            text-decoration: none;
+            display: block;
+            transition: color 0.3s ease;
+        }
+        
+        .menu-item:active {
+            opacity: 0.7;
+        }
+
+        .menu-divider {
+            width: 100%;
+            height: 1px;
+            background-color: #734432;
+            margin: 5px 0;
+        }
+
+        /* Contenu principal */
+        .main-content {
+            margin-top: 4.375rem;
+            min-height: calc(100vh - 4.375rem);
+            padding-bottom: 1.25rem;
+            position: relative;
+        }
+
+        .hero-image {
+            width: 100%;
+            height: 75vh;
+            max-height: calc(100vh - 4.375rem - 5rem); /* navbar height + space for button */
+            object-fit: cover;
+            display: block;
+        }
+        
+        @media (max-height: 600px) {
+            .hero-image {
+                height: 70vh;
+            }
+        }
+        
+        @media (min-height: 800px) {
+            .hero-image {
+                height: 85vh;
+            }
+        }
+
+        .action-button {
+            position: relative;
+            display: block;
+            width: 11.25rem;
+            height: 3.125rem;
+            margin: 1.25rem auto 0;
+            background-color: #734432;
+            border-radius: 0.625rem;
+            font-family: 'inter-bold', sans-serif;
+            color: white;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            z-index: 10;
+        }
+
+        .action-button::after {
+            content: '';
+            position: absolute;
+            top: -0.25rem;
+            left: -0.25rem;
+            width: 100%;
+            height: 100%;
+            background-color: #D892B4;
+            border-radius: 0.625rem;
+            z-index: -1;
+        }
+
+        .action-button:hover {
+            transform: translateY(-0.125rem);
+        }
+        
+        .action-button:active {
+            transform: translateY(0);
+        }
+        
+        @media (max-width: 360px) {
+            .action-button {
+                width: 10rem;
+                height: 2.75rem;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .action-button {
+                width: 12.5rem;
+                height: 3.5rem;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Écran de chargement -->
+    <div class="loading-screen">
+        <div class="logo-container">
+            <div class="logo">
+                <img src="assets/logo/giante-logo-fdlm.png" alt="Logo">
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <img src="assets/logo/logo-navbar-fdlm.png" alt="Logo" class="navbar-logo">
+        <div class="navbar-right">
+            <button class="favorites-btn">Mes favoris</button>
+            <div class="menu-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Menu overlay -->
+    <div class="menu-overlay">
+        <a href="#" class="menu-item" style="margin-bottom: 2vh;">Accueil</a>
+        
+        <a href="#" class="menu-item">Programmation</a>
+        <div class="menu-divider"></div>
+        <a href="#" class="menu-item">Mes favoris</a>
+        <div class="menu-divider"></div>
+        <a href="#" class="menu-item">Autour de moi</a>
+        <div class="menu-divider"></div>
+        <a href="#" class="menu-item" style="margin-bottom: 3vh;">Nos partenaires</a>
+      
+        <a href="#" class="menu-item">Qui sommes-nous ?</a>
+        <div class="menu-divider"></div>
+        <a href="#" class="menu-item">Pour l'été</a>
+    </div>
+
+    <!-- Favoris overlay -->
+    <div class="favorites-overlay">
+        <div class="favorites-empty">
+            <img src="assets/headline/programmation-outline.png" alt="Icône favoris" id="favorites-icon">
+            <h3>Vous n'avez pas encore sélectionné de programme favoris</h3>
+            <img src="assets/pictos/material-symbols_stars-outline.png" alt="Icône programme" id="program-icon">
+            <h3>Rendez-vous sur la programmation pour faire votre choix</h3>
+            <img src="assets/buttons/programmation-button.png" alt="Aller à la programmation" class="action-img" id="go-to-program">
+        </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <main class="main-content">
+        <img src="assets/images/main-background.png" alt="Image principale" class="hero-image">
+        <button class="action-button">DÉCOUVRIR</button>
+    </main>
+
+    <script>
+        // Gestion de l'écran de chargement
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.querySelector('.loading-screen').classList.add('hide');
+            }, 1500); // Délai pour voir l'animation de chargement
+        });
+
+        // Gestion du menu hamburger
+        const menuIcon = document.querySelector('.menu-icon');
+        const menuOverlay = document.querySelector('.menu-overlay');
+        const favoritesBtn = document.querySelector('.favorites-btn');
+        const favoritesOverlay = document.querySelector('.favorites-overlay');
+        const goToProgramBtn = document.getElementById('go-to-program');
+
+        menuIcon.addEventListener('click', function() {
+            this.classList.toggle('active');
+            menuOverlay.classList.toggle('active');
+            
+            // Fermer l'overlay des favoris si ouvert
+            favoritesOverlay.classList.remove('active');
+        });
+
+        // Gestion du bouton favoris
+        favoritesBtn.addEventListener('click', function() {
+            // Vérifier s'il y a des cookies de favoris
+            const hasFavorites = checkFavoritesCookies();
+            
+            // Afficher l'overlay approprié
+            favoritesOverlay.classList.toggle('active');
+            
+            // Fermer le menu principal s'il est ouvert
+            menuIcon.classList.remove('active');
+            menuOverlay.classList.remove('active');
+        });
+        
+        // Bouton pour aller à la programmation
+        goToProgramBtn.addEventListener('click', function() {
+            // Fermer l'overlay des favoris
+            favoritesOverlay.classList.remove('active');
+            
+            // Action pour naviguer vers la programmation (à implémenter)
+            // window.location.href = "programmation.html";
+            console.log("Navigation vers la programmation");
+        });
+
+        // Fermer le menu quand on clique sur un lien
+        const menuItems = document.querySelectorAll('.menu-item');
+        menuItems.forEach(item => {
+            item.addEventListener('click', function() {
+                menuIcon.classList.remove('active');
+                menuOverlay.classList.remove('active');
+            });
+        });
+        
+        // Fonction pour vérifier les cookies liés aux favoris
+        function checkFavoritesCookies() {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Vérifier si le cookie commence par "favorite_event_"
+                if (cookie.indexOf('favorite_event_') === 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        // Exemple pour ajouter un favori en cookie (pour tests)
+        function addFavorite(eventId) {
+            const expiryDate = new Date();
+            expiryDate.setMonth(expiryDate.getMonth() + 6); // Cookie valide pour 6 mois
+            document.cookie = `favorite_event_${eventId}=true; expires=${expiryDate.toUTCString()}; path=/`;
+        }
+        
+        // Exemple pour supprimer un favori des cookies (pour tests)
+        function removeFavorite(eventId) {
+            document.cookie = `favorite_event_${eventId}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        }
+    </script>
+</body>
+</html>
