@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Programmation - FDLM</title>
+    <title>La fête c'est nous | Programmation</title>
 
     <link rel="preload" as="image" href="../../assets/buttons/plus-info.png">
     <link rel="preload" as="image" href="../../assets/pictos/filled-star.png">
@@ -835,7 +835,7 @@
 <body>
     <!-- Navbar -->
     <nav class="navbar">
-        <img src="../../assets/logo/logo-navbar-fdlm.png" alt="Logo" class="navbar-logo">
+        <a href="../../index.html"> <img src="../../assets/logo/logo-navbar-fdlm.png" alt="Logo" class="navbar-logo"></a>
         <div class="navbar-right">
             <button class="favorites-btn">Mes favoris</button>
             <div class="menu-icon">
@@ -856,7 +856,7 @@
         <a href="#" class="menu-item">Autour de moi</a>
         <div class="menu-divider"></div>
         <a href="#" class="menu-item" style="margin-bottom: 3vh;">Nos partenaires</a>
-        <a href="#" class="menu-item">Qui sommes-nous ?</a>
+        <a href="../apropos/apropos.html" class="menu-item">Qui sommes-nous ?</a>
         <div class="menu-divider"></div>
         <a href="../summer/summer.html" class="menu-item">Pour l'été</a>
     </div>
@@ -875,7 +875,7 @@
     <!-- Main Content - Programming Page -->
     <div class="content">
         <!-- Header Image -->
-        <img src="../../assets/headline/programmation-outline.png" alt="Programmation" class="header-image">
+        <img loading="lazy" src="../../assets/headline/programmation-outline.png" alt="Programmation" class="header-image">
         
         <!-- Tab Navigation -->
         <div class="tab-navigation">
@@ -1273,7 +1273,7 @@ function showEventDetails(event) {
         
         // Update other instances of the same favorite icon
         favIcons.forEach(icon => {
-            icon.src = isFav ? 'assets/pictos/star-card.png' : '../../assets/pictos/filled-star.png';
+            icon.src = isFav ? '../../assets/pictos/star-card.png' : '../../assets/pictos/filled-star.png';
         });
     });
 }

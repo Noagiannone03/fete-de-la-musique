@@ -3,111 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La fête c'est nous | accueil</title>
+    <title>La fête c'est nous | Qui sommes nous ?</title>
+
+    <link rel="preload" as="image" href="../../assets/headline/quisommesnous.png">
+<link rel="preload" as="image" href="../../assets/logo/noidlogo.png">
+<link rel="preload" as="image" href="../../assets/pictos/facebook(1).png">
+<link rel="preload" as="image" href="../../assets/pictos/instagram(1).png">
     <style>
-        @font-face {
+
+
+
+@font-face {
             font-family: 'inter-bold';
-            src: url('assets/fonts/inter/Inter-Bold.otf') format('truetype');
+            src: url('../../assets/fonts/inter/Inter-Bold.otf') format('truetype');
         }
 
         @font-face {
             font-family: 'inter-semi-bold';
-            src: url('assets/fonts/inter/Inter-SemiBold.otf') format('truetype');
+            src: url('../../assets/fonts/inter/Inter-SemiBold.otf') format('truetype');
+        }
+
+         @font-face {
+            font-family: 'inter-medium';
+            src: url('../../assets/fonts/inter/Inter-Medium.otf') format('truetype');
+        }
+
+          @font-face {
+            font-family: 'inter-regular';
+            src: url('../../assets/fonts/inter/Inter-Regular.otf') format('truetype');
         }
         @font-face {
             font-family: 'ubuntu-medium';
-            src: url('assets/fonts/ubuntu/Ubuntu-M.ttf') format('truetype');
+            src: url('../../assets/fonts/ubuntu/Ubuntu-M.ttf') format('truetype');
         }
+        /* Reset CSS */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
-        }
-
-        html {
-            font-size: 16px;
+            font-family: Arial, sans-serif;
         }
 
         body {
-            background-color: #ffffff;
-            overflow-x: hidden;
+            background-color: #fff;
+            color: #000;
+            display: flex;
+            flex-direction: column;
             min-height: 100vh;
-            width: 100%;
-        }
-        
-        /* Responsive font sizes */
-        @media (max-width: 375px) {
-            html {
-                font-size: 14px;
-            }
-        }
-        
-        @media (min-width: 500px) {
-            html {
-                font-size: 17px;
-            }
-        }
-        
-        @media (min-width: 768px) {
-            html {
-                font-size: 18px;
-            }
         }
 
-        /* Écran de chargement */
-        .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #d791b4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            transition: opacity 0.8s ease, transform 0.8s ease;
-        }
-
-        .loading-screen.hide {
-            opacity: 0;
-            transform: translateY(-100%);
-            pointer-events: none;
-        }
-
-        .logo-container {
-            width: 260px;
-            height: 260px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        .logo {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-        
-        .logo img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-
-        /* Navbar */
-        .navbar {
+     /* Navbar */
+     .navbar {
             position: fixed;
             top: 0;
             left: 0;
@@ -314,101 +260,95 @@
             margin: 5px 0;
         }
 
-        /* Contenu principal */
-        .main-content {
-            margin-top: 4.375rem;
-            min-height: calc(100vh - 4.375rem);
-            padding-bottom: 1.25rem;
-            position: relative;
-        }
-
-        .hero-image {
+        /* Main content styles */
+        .content-container {
+            margin-top: 70px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             width: 100%;
-            height: 75vh;
-            max-height: calc(100vh - 4.375rem - 5rem); /* navbar height + space for button */
-            object-fit: cover;
-            display: block;
-        }
-        
-        @media (max-height: 600px) {
-            .hero-image {
-                height: 70vh;
-            }
-        }
-        
-        @media (min-height: 800px) {
-            .hero-image {
-                height: 85vh;
-            }
         }
 
-        .action-button {
-            position: relative;
-            display: block;
-            width: 11.25rem;
-            height: 3.125rem;
-            margin: 1.25rem auto 0;
-            background-color: #734432;
-            border-radius: 0.625rem;
+        .title-banner {
+            text-align: center;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+
+        .title-banner img {
+            width: auto;
+            max-width: 78%;
+            height: auto;
+        }
+
+        .logo-container {
+            margin: 20px 0;
+            text-align: center;
+            max-width: 80%;
+        }
+
+        .logo-container img {
+            width: 100%;
+            max-width: 270px;
+        }
+
+        .event-info {
+            font-family: 'inter-medium', sans-serif;
+            text-align: center;
+            margin: 10px 0;
+            font-size: 0.9rem;
+            max-width: 90%;
+        }
+
+        .main-description {
             font-family: 'inter-bold', sans-serif;
-            color: white;
-            font-size: 1rem;
-            border: none;
-            cursor: pointer;
-            transition: transform 0.3s ease;
-            z-index: 10;
+            text-align: center;
+           
+            font-size: 1.2rem;
+            margin: 15px 0 30px;
+            max-width: 90%;
         }
 
-        .action-button::after {
-            content: '';
-            position: absolute;
-            top: -0.25rem;
-            left: -0.25rem;
-            width: 100%;
-            height: 100%;
-            background-color: #D892B4;
-            border-radius: 0.625rem;
-            z-index: -1;
+        .address-container {
+            text-align: center;
+            font-size: 0.8rem;
+            margin-bottom: 30px;
+            max-width: 90%;
         }
 
-        .action-button:hover {
-            transform: translateY(-0.125rem);
+        .social-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            background-color: #f8f8f8;
+            border: 2px solid #000000;
+            border-radius: 30px;
+            padding: 3px 3px;
+            max-width: 90%;
         }
-        
-        .action-button:active {
-            transform: translateY(0);
+
+        .social-container img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
         }
-        
-        @media (max-width: 360px) {
-            .action-button {
-                width: 10rem;
-                height: 2.75rem;
-                font-size: 0.9rem;
-            }
+
+        .social-text {
+            text-align: center;
+            margin: 0 15px;
+            font-size: 1.1rem;
+         
         }
-        
-        @media (min-width: 768px) {
-            .action-button {
-                width: 12.5rem;
-                height: 3.5rem;
-                font-size: 1.1rem;
-            }
-        }
+
+       
     </style>
 </head>
 <body>
-    <!-- Écran de chargement -->
-    <div class="loading-screen">
-        <div class="logo-container">
-            <div class="logo">
-                <img src="assets/logo/giante-logo-fdlm.png" alt="Logo">
-            </div>
-        </div>
-    </div>
-
     <!-- Navbar -->
     <nav class="navbar">
-        <a href="index.html"><img src="assets/logo/logo-navbar-fdlm.png" alt="Logo" class="navbar-logo"></a>
+        <a href="../../index.html"><img src="../../assets/logo/logo-navbar-fdlm.png" alt="Logo" class="navbar-logo"></a>
         <div class="navbar-right">
             <button class="favorites-btn">Mes favoris</button>
             <div class="menu-icon">
@@ -418,40 +358,59 @@
             </div>
         </div>
     </nav>
-
+    
     <!-- Menu overlay -->
     <div class="menu-overlay">
-        <a href="index.html" class="menu-item" style="margin-bottom: 2vh;">Accueil</a>
-        
-        <a href="pages/programmation/programmation.html" class="menu-item">Programmation</a>
+        <a href="../../index.html" class="menu-item" style="margin-bottom: 2vh;">Accueil</a>
+        <a href="../programmation/programmation.html" class="menu-item">Programmation</a>
         <div class="menu-divider"></div>
         <a href="#" class="menu-item">Mes favoris</a>
         <div class="menu-divider"></div>
         <a href="#" class="menu-item">Autour de moi</a>
         <div class="menu-divider"></div>
         <a href="#" class="menu-item" style="margin-bottom: 3vh;">Nos partenaires</a>
-      
-        <a href="pages/apropos/apropos.html" class="menu-item">Qui sommes-nous ?</a>
+        <a href="apropos.html" class="menu-item">Qui sommes-nous ?</a>
         <div class="menu-divider"></div>
-        <a href="pages/summer/summer.html" class="menu-item">Pour l'été</a>
+        <a href="../summer/summer.html" class="menu-item">Pour l'été</a>
     </div>
-
+    
     <!-- Favoris overlay -->
     <div class="favorites-overlay">
         <div class="favorites-empty">
-            <img src="assets/headline/programmation-outline.png" alt="Icône favoris" id="favorites-icon">
+            <img   loading="lazy" src="../../assets/headline/programmation-outline.png" alt="Icône favoris" id="favorites-icon">
             <h3>Vous n'avez pas encore sélectionné de programme favoris</h3>
-            <img src="assets/pictos/material-symbols_stars-outline.png" alt="Icône programme" id="program-icon">
+            <img src="../../assets/pictos/material-symbols_stars-outline.png" alt="Icône programme" id="program-icon">
             <h3>Rendez-vous sur la programmation pour faire votre choix</h3>
-            <img src="assets/buttons/programmation-button.png" alt="Aller à la programmation" class="action-img" id="go-to-program">
+            <img src="../../assets/buttons/programmation-button.png" alt="Aller à la programmation" class="action-img" id="go-to-program">
         </div>
     </div>
 
-    <!-- Contenu principal -->
-    <main class="main-content">
-        <img src="assets/images/main-background.png"  alt="Image principale" class="hero-image">
-        <button class="action-button" onclick="window.location.href='pages/programmation/programmation.html'">DÉCOUVRIR</button>
-    </main>
+    <!-- Main content -->
+    <div class="content-container">
+        <div class="title-banner">
+            <img src="../../assets/headline/quisommesnous.png" loading="lazy" alt="Qui sommes-nous">
+        </div>
+        
+        <div class="logo-container">
+            <img src="../../assets/logo/noidlogo.png" loading="lazy" alt="NOIDI logo">
+        </div>
+        
+        <p class="event-info">La fête c'est NOUS est une production<br>pour la fête de la musique à Toulon proposée par NO/ID*</p>
+        
+        <p class="main-description">Structure culturelle proposant<br>des événements (ré)créatifs sur<br>la côte méditerranéenne depuis<br>1997.</p>
+        
+        <p class="address-container">
+            18 rue d'Antrechaus, 83000 Toulon<br>
+            +33(0)6 09 14 44 85 - contact@noidilab.com<br>
+            www.noidilab.com - #noidiab.com
+        </p>
+        
+        <div class="social-container">
+            <img src="../../assets/pictos/facebook(1).png" alt="Facebook icon">
+            <span class="social-text">Suivez-nous<br>sur nos réseaux</span>
+            <img src="../../assets/pictos/instagram(1).png" alt="Instagram icon">
+        </div>
+    </div>
 
     <script>
         // Gestion de l'écran de chargement

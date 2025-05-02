@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Gestionnaire d'Événements</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+   
+</head>
+<body>
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toast-message">Événement ajouté avec succès</span>
+    </div>
+
+    <!-- Login Page -->
+    <div id="login-container" class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-logo">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h1 class="login-title">Connexion Admin</h1>
+            </div>
+            <div id="login-alert" class="alert alert-error">
+                Email ou mot de passe incorrect
+            </div>
+            <form id="login-form" class="login-form">
+                <div class="form-group">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" id="email" class="form-input" placeholder="admin@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="password" class="form-label">Mot de passe</label>
+                    <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <span id="login-button-text">Se connecter</span>
+                    <span id="login-button-spinner" class="spinner" style="display: none;"></span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard-container" class="dashboard">
+        <!-- Mobile Header -->
+        <div class="mobile-header">
+            <button id="menu-toggle" class="menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="login-logo">
+                <i class="fas fa-calendar-alt"></i> Admin
+            </div>
+        </div>
+
+        <!-- Sidebar Overlay -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+        <!-- Sidebar -->
+        <div id="sidebar" class="sidebar">
+            <div class="sidebar-logo">
+                <div class="icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="text">FDLM - Admin</div>
+            </div>
+
+            <div class="sidebar-menu">
+                <a href="#" class="menu-item active" data-page="dashboard">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Tableau de bord</span>
+                </a>
+                <a href="#" class="menu-item" data-page="events">
+                    <i class="fas fa-calendar-week"></i>
+                    <span>Événements FDLM</span>
+                </a>
+                <a href="#" class="menu-item" data-page="summer-events">
+                    <i class="fas fa-sun"></i>
+                    <span>Événements de l'été</span>
+                </a>
+                <a href="#" class="menu-item" data-page="add-event">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Ajouter un événement</span>
+                </a>
+            </div>
+
+            <div class="sidebar-divider"></div>
+
+            <div class="sidebar-menu">
+                <a href="#" class="menu-item" id="logout-button">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Déconnexion</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Page -->
+            <div id="dashboard-page" class="page active">
+                <div class="page-header">
+                    <h1 class="page-title">Tableau de bord</h1>
+                    <div class="page-actions">
+                        <button class="btn btn-primary" id="refresh-data">
+                            <i class="fas fa-sync-alt"></i>
+                            Rafraîchir
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-3" style="margin-bottom: 1.5rem;">
+                    <div class="stats-card">
+                        <div class="stats-icon blue">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="stats-info">
+                            <div class="stats-value" id="total-events">0</div>
+                            <div class="stats-label">Événements FDLM</div>
+                        </div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-icon pink">
+                            <i class="fas fa-sun"></i>
+                        </div>
+                        <div class="stats-info">
+                            <div class="stats-value" id="summer-events">0</div>
+                            <div class="stats-label">Événements de l'été</div>
+                        </div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-icon amber">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="stats-info">
+                            <div class="stats-value" id="upcoming-events">0</div>
+                            <div class="stats-label">jours avant la fête de la musique</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Events -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Liste des événements FDLM</h2>
+                        <div class="card-actions">
+                            <input type="text" id="events-search" class="form-input" placeholder="Rechercher..." style="width: 200px;">
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Titre</th>
+                                    <th>Sous-titre</th>
+                                    <th>Date</th>
+                                    <th>Lieu</th>
+                                    <th>Genre</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="events-table">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 2rem;">
+                                        <div class="spinner"></div>
+                                        <div style="margin-top: 0.5rem; color: var(--text-light);">Chargement des événements...</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="pagination" id="events-pagination">
+                            <!-- Pagination will be dynamically generated -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summer Events Page -->
+            <div id="summer-events-page" class="page">
+                <div class="page-header">
+                    <h1 class="page-title">Événements de l'été</h1>
+                    <div class="page-actions">
+                        
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Liste des événements d'été</h2>
+                        <div class="card-actions">
+                            <input type="text" id="summer-events-search" class="form-input" placeholder="Rechercher..." style="width: 200px;">
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Titre</th>
+                                    <th>Date</th>
+                                    <th>Lieu</th>
+                                    <th>Organisateur</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summer-events-table">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 2rem;">
+                                        <div class="spinner"></div>
+                                        <div style="margin-top: 0.5rem; color: var(--text-light);">Chargement des événements...</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="pagination" id="summer-events-pagination">
+                            <!-- Pagination will be dynamically generated -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <!-- Add Event Page -->
+<div id="add-event-page" class="page" >
+    <div class="page-header">
+        <h1 class="page-title">Ajouter un événement</h1>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="tab-nav">
+                <button class="tab-button active" data-tab="regular-event">Événement standard</button>
+                <button class="tab-button" data-tab="summer-event">Événement d'été</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Regular Event Form -->
+            <div id="regular-event" class="tab-content active">
+                <form id="event-form" class="form-grid">
+                    <div class="form-group">
+                        <label for="event-title" class="form-label">Titre *</label>
+                        <input type="text" id="event-title" class="form-input" placeholder="Titre de l'événement" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-subtitle" class="form-label">Sous-titre</label>
+                        <input type="text" id="event-subtitle" class="form-input" placeholder="Sous-titre (optionnel)">
+                    </div>
+                    <div class="form-group">
+                        <label for="event-location" class="form-label">Point de son</label>
+                        <div class="custom-select-wrapper">
+                            <select id="event-location" class="custom-select" required>
+                                <option value="" disabled selected>Sélectionner un point de son</option>
+                                <!-- Options will be added by JavaScript -->
+                            </select>
+                            <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-genre" class="form-label">Genre *</label>
+                        <div class="multiselect-wrapper">
+                            <div class="multiselect-input-wrapper">
+                                <input type="text" id="event-genre-input" class="multiselect-search" placeholder="Rechercher ou ajouter un genre">
+                                <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
+                            </div>
+                            <div class="multiselect-dropdown" id="event-genre-dropdown">
+                                <!-- Options will be added by JavaScript -->
+                            </div>
+                            <div class="selected-items" id="event-genre-selected"></div>
+                            <input type="hidden" id="event-genre" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-start-date" class="form-label">Date de début *</label>
+                        <input type="datetime-local" id="event-start-date" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-end-date" class="form-label">Date de fin *</label>
+                        <input type="datetime-local" id="event-end-date" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-location-url" class="form-label">URL google maps du lieu</label>
+                        <input type="url" id="event-location-url" class="form-input" placeholder="https://maps.google.com/...">
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label for="event-description" class="form-label">Description *</label>
+                        <textarea id="event-description" class="form-input" rows="4" placeholder="Description détaillée de l'événement" required></textarea>
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label for="event-partners" class="form-label">Partenaires</label>
+                        <div class="multiselect-wrapper">
+                            <div class="multiselect-input-wrapper">
+                                <input type="text" id="event-partners-input" class="multiselect-search" placeholder="Rechercher ou ajouter un partenaire">
+                                <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
+                            </div>
+                            <div class="multiselect-dropdown" id="event-partners-dropdown">
+                                <!-- Options will be added by JavaScript -->
+                            </div>
+                            <div class="selected-items" id="event-partners-selected"></div>
+                            <input type="hidden" id="event-partners">
+                        </div>
+                    </div>
+                    <div class="form-group col-span-2">
+                        <div class="file-input-container">
+                            <label class="form-label">Image de l'événement</label>
+                            <div class="file-input-box" id="event-image-drop">
+                                <div class="file-input-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <div class="file-input-text">Glissez-déposez une image ou cliquez pour choisir</div>
+                                <div class="file-input-help">PNG, JPG ou JPEG (max. 2MB)</div>
+                                <input type="file" id="event-image" class="file-input" accept="image/*">
+                            </div>
+                            <div class="image-preview" id="event-image-preview">
+                                <img src="" alt="Aperçu de l'image">
+                                <div class="image-preview-remove" id="event-image-remove">
+                                    <i class="fas fa-times"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group col-span-2">
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-outline" id="event-cancel">Annuler</button>
+                            <button type="submit" class="btn btn-primary" id="event-submit">
+                                <span id="event-submit-text">Ajouter l'événement</span>
+                                <span id="event-submit-spinner" class="spinner" style="display: none;"></span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Summer Event Form -->
+            <div id="summer-event" class="tab-content">
+                <form id="summer-event-form" class="form-grid">
+                    <div class="form-group">
+                        <label for="summer-event-title" class="form-label">Titre *</label>
+                        <input type="text" id="summer-event-title" class="form-input" placeholder="Titre de l'événement" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="summer-event-subtitle" class="form-label">Sous-titre</label>
+                        <input type="text" id="summer-event-subtitle" class="form-input" placeholder="Sous-titre (optionnel)">
+                    </div>
+                    <div class="form-group">
+                        <label for="summer-event-location" class="form-label">Point de son</label>
+                        <div class="custom-select-wrapper">
+                            <select id="summer-event-location" class="custom-select" required>
+                                <option value="" disabled selected>Sélectionner un point de son</option>
+                                
+                                <!-- Options will be added by JavaScript -->
+                            </select>
+                            <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="summer-event-genre" class="form-label">Genre *</label>
+                        <div class="multiselect-wrapper">
+                            <div class="multiselect-input-wrapper">
+                                <input type="text" id="summer-event-genre-input" class="multiselect-search" placeholder="Rechercher ou ajouter un genre">
+                                <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
+                            </div>
+                            <div class="multiselect-dropdown" id="summer-event-genre-dropdown">
+                                <!-- Options will be added by JavaScript -->
+                            </div>
+                            <div class="selected-items" id="summer-event-genre-selected"></div>
+                            <input type="hidden" id="summer-event-genre" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="summer-event-organizer" class="form-label">Organisateur *</label>
+                        <input type="text" id="summer-event-organizer" class="form-input" placeholder="Nom de l'organisateur" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="summer-event-date" class="form-label">Date de l'événement *</label>
+                        <input type="datetime-local" id="summer-event-date" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="summer-event-end-date" class="form-label">Date de fin</label>
+                        <input type="datetime-local" id="summer-event-end-date" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="summer-event-location-url" class="form-label">URL du lieu</label>
+                        <input type="url" id="summer-event-location-url" class="form-input" placeholder="https://maps.google.com/...">
+                    </div>
+                    <div class="form-group">
+                        <label for="summer-event-plus-url" class="form-label">URL Plus d'info</label>
+                        <input type="url" id="summer-event-plus-url" class="form-input" placeholder="https://...">
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label for="summer-event-description" class="form-label">Description *</label>
+                        <textarea id="summer-event-description" class="form-input" rows="4" placeholder="Description détaillée de l'événement" required></textarea>
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label for="summer-event-partners" class="form-label">Partenaires</label>
+                        <div class="multiselect-wrapper">
+                            <div class="multiselect-input-wrapper">
+                                <input type="text" id="summer-event-partners-input" class="multiselect-search" placeholder="Rechercher ou ajouter un partenaire">
+                                <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
+                            </div>
+                            <div class="multiselect-dropdown" id="summer-event-partners-dropdown">
+                                <!-- Options will be added by JavaScript -->
+                            </div>
+                            <div class="selected-items" id="summer-event-partners-selected"></div>
+                            <input type="hidden" id="summer-event-partners">
+                        </div>
+                    </div>
+                    <div class="form-group col-span-2">
+                        <div class="file-input-container">
+                            <label class="form-label">Image de l'événement</label>
+                            <div class="file-input-box" id="summer-event-image-drop">
+                                <div class="file-input-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <div class="file-input-text">Glissez-déposez une image ou cliquez pour choisir</div>
+                                <div class="file-input-help">PNG, JPG ou JPEG (max. 2MB)</div>
+                                <input type="file" id="summer-event-image" class="file-input" accept="image/*">
+                            </div>
+                            <div class="image-preview" id="summer-event-image-preview">
+                                <img src="" alt="Aperçu de l'image">
+                                <div class="image-preview-remove" id="summer-event-image-remove">
+                                    <i class="fas fa-times"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group col-span-2">
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-outline" id="summer-event-cancel">Annuler</button>
+                            <button type="submit" class="btn btn-primary" id="summer-event-submit">
+                                <span id="summer-event-submit-text">Ajouter l'événement d'été</span>
+                                <span id="summer-event-submit-spinner" class="spinner" style="display: none;"></span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+        </div>
+    </div>
+
+    <!-- View Event Modal -->
+    <div class="modal-overlay" id="view-event-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="event-modal-title">Détails de l'événement</h2>
+                <button class="modal-close" id="close-event-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="event-modal-body">
+                <!-- Event details will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="delete-confirmation-modal" style="display: flex;">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Confirmer la suppression</h2>
+                <button class="modal-close" id="close-delete-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer cet événement ? Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancel-delete">Annuler</button>
+                <button class="btn btn-primary" style="background-color: var(--error);" id="confirm-delete">
+                    <span id="delete-text">Supprimer</span>
+                    <span id="delete-spinner" class="spinner" style="display: none;"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Scripts -->
+    <script type="module" src="script.js"> </script>
