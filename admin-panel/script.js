@@ -1,6 +1,6 @@
 // Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, Timestamp, query, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, Timestamp, query, orderBy, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import { browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
@@ -1039,21 +1039,21 @@ async function debugFirebaseCollections() {
         }
         
         // Tester la collection 'summer-events'
-        console.log("Test de la collection 'summer-events'...");
-        const summerEventsRef = collection(db, 'events');//SUN
+        console.log("Test de la collection 'summer_events'...");
+        const summerEventsRef = collection(db, 'summer_events');//SUN
         const summerEventsSnapshot = await getDocs(summerEventsRef);
         
         if (summerEventsSnapshot && summerEventsSnapshot.docs) {
-            console.log(`Collection 'summer-events' - ${summerEventsSnapshot.docs.length} documents trouvés`);
+            console.log(`Collection 'summer_events' - ${summerEventsSnapshot.docs.length} documents trouvés`);
             
             if (summerEventsSnapshot.docs.length > 0) {
-                console.log("Structure d'un document de la collection 'summer-events':");
+                console.log("Structure d'un document de la collection 'summer_events':");
                 const firstDoc = summerEventsSnapshot.docs[0];
                 console.log("ID:", firstDoc.id);
                 console.log("Données:", firstDoc.data());
             }
         } else {
-            console.log("Aucun document trouvé ou format de retour inattendu pour 'summer-events'");
+            console.log("Aucun document trouvé ou format de retour inattendu pour 'summer_events'");
         }
         
     } catch (error) {
@@ -1258,17 +1258,45 @@ setupSearch() {
     }
 
  // Modification de la méthode createEventRow pour prendre en compte plus de champs
+// Modification de la structure HTML du tableau
+// Remplacez votre structure actuelle par celle-ci
+
+// Structure du HTML avec colonnes dédiées
 createEventRow(event) {
     console.log(`Création d'une ligne pour l'événement:`, event);
     
-    // Structure de table commune, indépendamment du type d'événement
+    // Formatage des dates avec une gestion plus robuste
+    const startDateFormatted = event.startDate ? this.formatDate(event.startDate) : '-';
+    const endDateFormatted = event.endDate ? this.formatDate(event.endDate) : '-';
+    
+    // Formatage des genres (qui peuvent être un tableau d'objets)
+    let genreDisplay = '-';
+    if (event.genre) {
+        if (Array.isArray(event.genre)) {
+            genreDisplay = event.genre.map(g => g.name || g).join(', ');
+        } else {
+            genreDisplay = event.genre;
+        }
+    }
+    
+    // Formatage des partenaires
+    let partnersDisplay = '-';
+    if (event.partners && Array.isArray(event.partners)) {
+        partnersDisplay = event.partners.map(p => p.name || p).join(', ');
+    }
+    
     return `
         <tr data-id="${event.id}">
             <td>${event.title || '-'}</td>
             <td>${event.subtitle || '-'}</td>
-            <td>${event.dateFormatted || this.formatDate(event.startDate) || '-'}</td>
+            <td>
+                <div>Début: ${startDateFormatted}</div>
+                <div>Fin: ${endDateFormatted}</div>
+            </td>
             <td>${event.location || event.locationName || '-'}</td>
-            <td>${Array.isArray(event.genre) ? event.genre.map(g => g.name || g).join(', ') : (event.genre || '-')}</td>
+            <td>${genreDisplay}</td>
+            <td>${partnersDisplay}</td>
+            <td class="truncate-text">${event.description || '-'}</td>
             <td class="table-actions">
                 <button class="action-view view-event" title="Voir">
                     <i class="fas fa-eye"></i>
@@ -1373,7 +1401,7 @@ createEventRow(event) {
         });
     }
 
-    // Modification de la méthode viewEvent pour afficher tous les champs disponibles
+// Méthode pour visualiser un événement
 async viewEvent(eventId) {
     try {
         const eventRef = doc(db, this.collectionName, eventId);
@@ -1381,19 +1409,12 @@ async viewEvent(eventId) {
         
         if (eventDoc.exists()) {
             const eventData = eventDoc.data();
-            const modal = document.getElementById('view-event-modal');
-            const modalBody = document.getElementById('event-modal-body');
-            const modalTitle = document.getElementById('event-modal-title');
             
-            modalTitle.textContent = eventData.title || 'Détails de l\'événement';
-            
-            // Formatage des dates
+            // Formatage des dates avec une gestion plus robuste
             const startDateFormatted = eventData.startDate ? this.formatDate(eventData.startDate) : '-';
             const endDateFormatted = eventData.endDate ? this.formatDate(eventData.endDate) : '-';
-            const createdAtFormatted = eventData.createdAt ? this.formatDate(eventData.createdAt) : '-';
-            const updatedAtFormatted = eventData.updatedAt ? this.formatDate(eventData.updatedAt) : '-';
             
-            // Formatage des genres (qui peuvent être un tableau d'objets)
+            // Formatage des genres
             let genreDisplay = '-';
             if (eventData.genre) {
                 if (Array.isArray(eventData.genre)) {
@@ -1403,134 +1424,507 @@ async viewEvent(eventId) {
                 }
             }
             
-            // Formatage des partenaires (qui peuvent être un tableau d'objets)
+            // Formatage des partenaires
             let partnersDisplay = '-';
             if (eventData.partners && Array.isArray(eventData.partners)) {
                 partnersDisplay = eventData.partners.map(p => p.name || p).join(', ');
             }
             
-            // Construction HTML pour tous les champs disponibles
-            let fieldsHtml = `
-                <div class="form-group">
-                    <label>Titre</label>
-                    <div class="field-value">${eventData.title || '-'}</div>
-                </div>
-                <div class="form-group">
-                    <label>Sous-titre</label>
-                    <div class="field-value">${eventData.subtitle || '-'}</div>
-                </div>
-                <div class="form-group">
-                    <label>Date de début</label>
-                    <div class="field-value">${startDateFormatted}</div>
-                </div>
-                <div class="form-group">
-                    <label>Date de fin</label>
-                    <div class="field-value">${endDateFormatted}</div>
-                </div>
-                <div class="form-group">
-                    <label>Lieu</label>
-                    <div class="field-value">${eventData.location || eventData.locationName || '-'}</div>
-                </div>
-                <div class="form-group">
-                    <label>URL du lieu</label>
-                    <div class="field-value">
-                        ${eventData.locationUrl ? 
+            // Création du contenu HTML pour l'affichage
+            const viewHtml = `
+                <div class="swal-event-details">
+                    <div class="event-detail">
+                        <h4>Titre</h4>
+                        <p>${eventData.title || '-'}</p>
+                    </div>
+                    <div class="event-detail">
+                        <h4>Sous-titre</h4>
+                        <p>${eventData.subtitle || '-'}</p>
+                    </div>
+                    <div class="event-detail">
+                        <h4>Date de début</h4>
+                        <p>${startDateFormatted}</p>
+                    </div>
+                    <div class="event-detail">
+                        <h4>Date de fin</h4>
+                        <p>${endDateFormatted}</p>
+                    </div>
+                    <div class="event-detail">
+                        <h4>Lieu</h4>
+                        <p>${eventData.location || eventData.locationName || '-'}</p>
+                    </div>
+                    <div class="event-detail">
+                        <h4>URL du lieu</h4>
+                        <p>${eventData.locationUrl ? 
                             `<a href="${eventData.locationUrl}" target="_blank">${eventData.locationUrl}</a>` : 
                             '-'
-                        }
+                        }</p>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label>Genre</label>
-                    <div class="field-value">${genreDisplay}</div>
-                </div>
-                <div class="form-group">
-                    <label>Partenaires</label>
-                    <div class="field-value">${partnersDisplay}</div>
-                </div>
-                <div class="form-group">
-                    <label>Description</label>
-                    <div class="field-value">${eventData.description || '-'}</div>
-                </div>
-            `;
-            
-            // Ajouter l'image si disponible
-            if (eventData.imageUrl) {
-                fieldsHtml += `
-                    <div class="form-group">
-                        <label>Image</label>
-                        <div class="field-value image-container">
+                    <div class="event-detail">
+                        <h4>Genre</h4>
+                        <p>${genreDisplay}</p>
+                    </div>
+                    <div class="event-detail">
+                        <h4>Partenaires</h4>
+                        <p>${partnersDisplay}</p>
+                    </div>
+                    <div class="event-detail">
+                        <h4>Description</h4>
+                        <p>${eventData.description || '-'}</p>
+                    </div>
+                    ${eventData.imageUrl ? `
+                    <div class="event-detail">
+                        <h4>Image</h4>
+                        <div class="event-image">
                             <img src="${eventData.imageUrl}" alt="${eventData.title}" style="max-width: 100%; max-height: 300px;">
                         </div>
-                    </div>
-                `;
-            }
-            
-            // Ajouter les dates de création et de mise à jour
-            fieldsHtml += `
-                <div class="form-group">
-                    <label>Créé le</label>
-                    <div class="field-value">${createdAtFormatted}</div>
-                </div>
-                <div class="form-group">
-                    <label>Mis à jour le</label>
-                    <div class="field-value">${updatedAtFormatted}</div>
+                    </div>` : ''}
                 </div>
             `;
             
-            modalBody.innerHTML = fieldsHtml;
-            modal.style.display = 'flex';
-            
-            // Close modal event
-            document.getElementById('close-event-modal').addEventListener('click', () => {
-                modal.style.display = 'none';
+            // Afficher le overlay de visualisation
+            Swal.fire({
+                title: eventData.title || 'Détails de l\'événement',
+                html: viewHtml,
+                width: '800px',
+                showConfirmButton: false,
+                showCloseButton: true,
+                showDenyButton: true,
+                denyButtonText: 'Modifier',
+                denyButtonColor: '#3085d6',
+                customClass: {
+                    container: 'swal-event-container',
+                    popup: 'swal-event-popup',
+                    content: 'swal-event-content'
+                }
+            }).then((result) => {
+                if (result.isDenied) {
+                    // Si l'utilisateur clique sur "Modifier", on passe en mode édition
+                    this.editEvent(eventId, eventData);
+                }
             });
+            
+            // Ajouter des styles pour améliorer l'apparence
+            const styleElement = document.createElement('style');
+            styleElement.textContent = `
+                .swal-event-container {
+                    z-index: 9999;
+                }
+                .swal-event-popup {
+                    padding: 20px;
+                }
+                .swal-event-content {
+                    padding: 0;
+                }
+                .swal-event-details {
+                    text-align: left;
+                    max-height: 70vh;
+                    overflow-y: auto;
+                    padding-right: 10px;
+                }
+                .event-detail {
+                    margin-bottom: 15px;
+                    border-bottom: 1px solid #eee;
+                    padding-bottom: 10px;
+                }
+                .event-detail:last-child {
+                    border-bottom: none;
+                }
+                .event-detail h4 {
+                    margin: 0;
+                    color: #555;
+                    font-size: 14px;
+                    font-weight: 600;
+                }
+                .event-detail p {
+                    margin: 5px 0 0;
+                    font-size: 16px;
+                }
+                .event-image {
+                    margin-top: 10px;
+                    text-align: center;
+                }
+            `;
+            document.head.appendChild(styleElement);
+            
         } else {
-            alert('Événement non trouvé');
+            Swal.fire({
+                title: 'Événement non trouvé',
+                text: "L'événement demandé n'existe pas ou a été supprimé.",
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
         }
     } catch (error) {
         console.error("Erreur lors de l'affichage de l'événement:", error);
-        alert('Une erreur est survenue lors de l\'affichage de l\'événement');
+        Swal.fire({
+            title: 'Erreur!',
+            text: `Une erreur est survenue: ${error.message}`,
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
     }
 }
 
-    // Edit event (placeholder for now)
-    editEvent(eventId) {
-        alert(`Fonctionnalité de modification pour l'événement ${eventId} à implémenter`);
-        // Vous pouvez implémenter cette fonction plus tard selon vos besoins
+ 
+// Méthode pour éditer un événement
+async editEvent(eventId, eventData = null) {
+    try {
+        // Si eventData n'est pas fourni, on le récupère
+        if (!eventData) {
+            const eventRef = doc(db, this.collectionName, eventId);
+            const eventDoc = await getDoc(eventRef);
+            if (!eventDoc.exists()) {
+                throw new Error("L'événement n'existe pas");
+            }
+            eventData = eventDoc.data();
+        }
+        
+        // Fonction pour convertir les timestamps en chaînes pour input datetime-local
+        const timestampToInputDatetime = (timestamp) => {
+            if (!timestamp) return '';
+            
+            let date;
+            try {
+                if (timestamp instanceof Timestamp) {
+                    date = timestamp.toDate();
+                } else if (timestamp.seconds && timestamp.nanoseconds) {
+                    date = new Date(timestamp.seconds * 1000);
+                } else if (timestamp._seconds && timestamp._nanoseconds) {
+                    date = new Date(timestamp._seconds * 1000);
+                } else {
+                    date = new Date(timestamp);
+                }
+                
+                if (isNaN(date.getTime())) return '';
+                
+                return date.toISOString().slice(0, 16);
+            } catch (e) {
+                return '';
+            }
+        };
+        
+        // Préparation des valeurs pour le formulaire
+        const startDateInput = timestampToInputDatetime(eventData.startDate);
+        const endDateInput = timestampToInputDatetime(eventData.endDate);
+        
+        let genreValue = '';
+        if (eventData.genre) {
+            if (Array.isArray(eventData.genre)) {
+                genreValue = eventData.genre.map(g => g.name || g).join(', ');
+            } else {
+                genreValue = eventData.genre;
+            }
+        }
+        
+        let partnersValue = '';
+        if (eventData.partners && Array.isArray(eventData.partners)) {
+            partnersValue = eventData.partners.map(p => p.name || p).join(', ');
+        }
+        
+        // Création du formulaire d'édition
+        const formHtml = `
+            <form id="edit-event-form" class="swal-event-form">
+                <div class="form-group">
+                    <label for="edit-title">Titre*</label>
+                    <input type="text" id="edit-title" class="swal2-input" value="${eventData.title || ''}" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-subtitle">Sous-titre</label>
+                    <input type="text" id="edit-subtitle" class="swal2-input" value="${eventData.subtitle || ''}">
+                </div>
+                <div class="form-group">
+                    <label for="edit-start-date">Date de début</label>
+                    <input type="datetime-local" id="edit-start-date" class="swal2-input" value="${startDateInput}">
+                </div>
+                <div class="form-group">
+                    <label for="edit-end-date">Date de fin</label>
+                    <input type="datetime-local" id="edit-end-date" class="swal2-input" value="${endDateInput}">
+                </div>
+                <div class="form-group">
+                    <label for="edit-location">Lieu</label>
+                    <input type="text" id="edit-location" class="swal2-input" value="${eventData.location || eventData.locationName || ''}">
+                </div>
+                <div class="form-group">
+                    <label for="edit-location-url">URL du lieu</label>
+                    <input type="url" id="edit-location-url" class="swal2-input" value="${eventData.locationUrl || ''}">
+                </div>
+                <div class="form-group">
+                    <label for="edit-genre">Genre (séparés par des virgules)</label>
+                    <input type="text" id="edit-genre" class="swal2-input" value="${genreValue}">
+                </div>
+                <div class="form-group">
+                    <label for="edit-partners">Partenaires (séparés par des virgules)</label>
+                    <input type="text" id="edit-partners" class="swal2-input" value="${partnersValue}">
+                </div>
+                <div class="form-group">
+                    <label for="edit-description">Description</label>
+                    <textarea id="edit-description" class="swal2-textarea">${eventData.description || ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="edit-image">Image</label>
+                    <input type="file" id="edit-image" class="swal2-file" accept="image/*">
+                    ${eventData.imageUrl ? 
+                        `<div class="current-image">
+                            <p>Image actuelle:</p>
+                            <img src="${eventData.imageUrl}" alt="Image actuelle" style="max-width: 100%; max-height: 200px; margin-top: 10px;">
+                        </div>` : ''}
+                    <div id="image-preview" class="image-preview"></div>
+                </div>
+            </form>
+        `;
+        
+        // Affichage du formulaire d'édition
+        const result = await Swal.fire({
+            title: 'Modifier l\'événement',
+            html: formHtml,
+            width: '800px',
+            showCancelButton: true,
+            confirmButtonText: 'Enregistrer',
+            cancelButtonText: 'Annuler',
+            confirmButtonColor: '#28a745',
+            customClass: {
+                container: 'swal-event-container',
+                popup: 'swal-event-popup',
+                content: 'swal-event-content'
+            },
+            didOpen: () => {
+                // Prévisualisation de l'image
+                const imageInput = document.getElementById('edit-image');
+                const imagePreview = document.getElementById('image-preview');
+                
+                imageInput.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            imagePreview.innerHTML = `
+                                <p>Nouvelle image:</p>
+                                <img src="${e.target.result}" style="max-width: 100%; max-height: 200px; margin-top: 10px;">
+                            `;
+                        };
+                        reader.readAsDataURL(this.files[0]);
+                    }
+                });
+            },
+            preConfirm: async () => {
+                // Validation du formulaire
+                const title = document.getElementById('edit-title').value;
+                if (!title) {
+                    Swal.showValidationMessage('Le titre est obligatoire');
+                    return false;
+                }
+                
+                try {
+                    // Afficher un indicateur de chargement
+                    Swal.showLoading();
+                    
+                    // Collecte des données du formulaire
+                    const formData = {
+                        title: document.getElementById('edit-title').value,
+                        subtitle: document.getElementById('edit-subtitle').value,
+                        location: document.getElementById('edit-location').value,
+                        locationUrl: document.getElementById('edit-location-url').value,
+                        description: document.getElementById('edit-description').value,
+                        updatedAt: serverTimestamp()
+                    };
+                    
+                    // Gestion des dates
+                    const startDateValue = document.getElementById('edit-start-date').value;
+                    const endDateValue = document.getElementById('edit-end-date').value;
+                    
+                    if (startDateValue) {
+                        formData.startDate = Timestamp.fromDate(new Date(startDateValue));
+                    }
+                    
+                    if (endDateValue) {
+                        formData.endDate = Timestamp.fromDate(new Date(endDateValue));
+                    }
+                    
+                    // Gestion du genre et des partenaires
+                    const genreValue = document.getElementById('edit-genre').value;
+                    if (genreValue) {
+                        formData.genre = genreValue.split(',').map(g => g.trim()).filter(g => g);
+                    } else {
+                        formData.genre = [];
+                    }
+                    
+                    const partnersValue = document.getElementById('edit-partners').value;
+                    if (partnersValue) {
+                        formData.partners = partnersValue.split(',').map(p => p.trim()).filter(p => p);
+                    } else {
+                        formData.partners = [];
+                    }
+                    
+                    // Gestion de l'image
+                    const imageFile = document.getElementById('edit-image').files[0];
+                    if (imageFile) {
+                        // Créer une référence au storage pour l'image
+                        const storageRef = ref(storage, `events/${eventId}/${imageFile.name}`);
+                        
+                        // Uploader l'image
+                        await uploadBytes(storageRef, imageFile);
+                        
+                        // Obtenir l'URL de l'image
+                        const downloadURL = await getDownloadURL(storageRef);
+                        formData.imageUrl = downloadURL;
+                    }
+                    
+                    // Mise à jour dans Firestore
+                    await updateDoc(doc(db, this.collectionName, eventId), formData);
+                    
+                    // Mise à jour des données locales
+                    this.updateLocalEventData(eventId, formData);
+                    
+                    return true;
+                } catch (error) {
+                    console.error("Erreur lors de la mise à jour:", error);
+                    Swal.showValidationMessage(`Erreur: ${error.message}`);
+                    return false;
+                }
+            }
+        });
+        
+        if (result.isConfirmed) {
+            // Notification de succès et rafraîchissement du tableau
+            this.renderTable();
+            updateStatsCards();
+            Swal.fire({
+                title: 'Événement mis à jour!',
+                text: 'Les modifications ont été enregistrées avec succès.',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+        
+        // Ajouter des styles pour le formulaire
+        const styleElement = document.createElement('style');
+        styleElement.textContent = `
+            .swal-event-form {
+                text-align: left;
+                max-height: 70vh;
+                overflow-y: auto;
+                padding-right: 10px;
+            }
+            .swal-event-form .form-group {
+                margin-bottom: 15px;
+            }
+            .swal-event-form label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: 600;
+                color: #555;
+            }
+            .swal-event-form .swal2-input,
+            .swal-event-form .swal2-textarea,
+            .swal-event-form .swal2-file {
+                margin: 5px 0;
+                width: 100%;
+            }
+            .swal-event-form .swal2-textarea {
+                height: 100px;
+            }
+            .image-preview {
+                margin-top: 10px;
+            }
+            .current-image {
+                margin-top: 10px;
+                margin-bottom: 15px;
+            }
+            .current-image p {
+                margin: 0 0 5px;
+                font-weight: 600;
+            }
+        `;
+        document.head.appendChild(styleElement);
+        
+    } catch (error) {
+        console.error("Erreur lors de l'édition de l'événement:", error);
+        Swal.fire({
+            title: 'Erreur!',
+            text: `Une erreur est survenue: ${error.message}`,
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
     }
+}
 
-    // Show delete confirmation
-    showDeleteConfirmation(eventId) {
-        const modal = document.getElementById('delete-confirmation-modal');
-        modal.style.display = 'flex';
-        
-        const confirmButton = document.getElementById('confirm-delete');
-        const cancelButton = document.getElementById('cancel-delete');
-        const closeButton = document.getElementById('close-delete-modal');
-        
-        // Remove existing event listeners
-        const newConfirmButton = confirmButton.cloneNode(true);
-        const newCancelButton = cancelButton.cloneNode(true);
-        const newCloseButton = closeButton.cloneNode(true);
-        
-        confirmButton.parentNode.replaceChild(newConfirmButton, confirmButton);
-        cancelButton.parentNode.replaceChild(newCancelButton, cancelButton);
-        closeButton.parentNode.replaceChild(newCloseButton, closeButton);
-        
-        // Add new event listeners
-        newConfirmButton.addEventListener('click', () => {
-            this.deleteEvent(eventId);
-        });
-        
-        newCancelButton.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
-        
-        newCloseButton.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
+// Méthode utilitaire pour mettre à jour les données locales
+updateLocalEventData(eventId, formData) {
+    // Mise à jour des données locales
+    const eventIndex = this.events.findIndex(e => e.id === eventId);
+    if (eventIndex !== -1) {
+        this.events[eventIndex] = {
+            ...this.events[eventIndex],
+            ...formData,
+            dateFormatted: formData.startDate ? this.formatDate(formData.startDate) : this.events[eventIndex].dateFormatted
+        };
     }
+    
+    // Mise à jour des données filtrées si nécessaire
+    const filteredIndex = this.filteredEvents.findIndex(e => e.id === eventId);
+    if (filteredIndex !== -1) {
+        this.filteredEvents[filteredIndex] = {
+            ...this.filteredEvents[filteredIndex],
+            ...formData,
+            dateFormatted: formData.startDate ? this.formatDate(formData.startDate) : this.filteredEvents[filteredIndex].dateFormatted
+        };
+    }
+}
+
+    // Remplacer la méthode showDeleteConfirmation
+showDeleteConfirmation(eventId) {
+    const event = this.events.find(event => event.id === eventId);
+    if (!event) return;
+    
+    Swal.fire({
+        title: 'Êtes-vous sûr?',
+        html: `Vous êtes sur le point de supprimer l'événement <strong>${event.title}</strong>.<br>Cette action est irréversible!`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Oui, supprimer!',
+        cancelButtonText: 'Annuler',
+        showLoaderOnConfirm: true,
+        preConfirm: () => {
+            return this.deleteEvent(eventId)
+                .catch(error => {
+                    Swal.showValidationMessage(
+                        `La suppression a échoué: ${error.message}`
+                    );
+                });
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire(
+                'Supprimé!',
+                `L'événement "${event.title}" a été supprimé avec succès.`,
+                'success'
+            );
+        }
+    });
+}
+
+// Modifier la méthode deleteEvent pour retourner une promesse
+async deleteEvent(eventId) {
+    try {
+        await deleteDoc(doc(db, this.collectionName, eventId));
+        
+        // Remove from local arrays
+        this.events = this.events.filter(event => event.id !== eventId);
+        this.filteredEvents = this.filteredEvents.filter(event => event.id !== eventId);
+        
+        // Re-render table
+        this.renderTable();
+        updateStatsCards();
+        
+        return true;
+    } catch (error) {
+        console.error("Erreur lors de la suppression de l'événement:", error);
+        throw error;
+    }
+}
 
     // Delete event
     async deleteEvent(eventId) {
@@ -1554,6 +1948,7 @@ async viewEvent(eventId) {
             
             // Re-render table
             this.renderTable();
+            updateStatsCards();
             
             deleteText.style.display = 'inline';
             deleteSpinner.style.display = 'none';
@@ -1706,3 +2101,14 @@ async function updateStatsCards() {
 
   // Lancement au chargement
   updateStatsCards();
+
+
+
+
+
+
+
+
+
+
+  

@@ -161,15 +161,17 @@
                                 <tr>
                                     <th>Titre</th>
                                     <th>Sous-titre</th>
-                                    <th>Date</th>
+                                    <th>Dates</th>
                                     <th>Lieu</th>
                                     <th>Genre</th>
+                                    <th>Partenaires</th>
+                                    <th>Description</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="events-table">
                                 <tr>
-                                    <td colspan="5" style="text-align: center; padding: 2rem;">
+                                    <td colspan="8" style="text-align: center; padding: 2rem;">
                                         <div class="spinner"></div>
                                         <div style="margin-top: 0.5rem; color: var(--text-light);">Chargement des événements...</div>
                                     </td>
@@ -485,5 +487,26 @@
         </div>
     </div>
 
+
+    <!-- Modal pour visualiser/éditer un événement -->
+<div id="event-modal" class="modal">
+    <div class="modal-content large-modal">
+        <div class="modal-header">
+            <h2 id="event-modal-title">Détails de l'événement</h2>
+            <div class="modal-actions">
+                <button id="edit-mode-toggle" class="btn primary">Modifier</button>
+                <button id="close-event-modal" class="modal-close">&times;</button>
+            </div>
+        </div>
+        <div class="modal-body" id="event-modal-body">
+            <!-- Le contenu sera injecté dynamiquement -->
+        </div>
+        <div class="modal-footer">
+            <button id="save-event-changes" class="btn primary" style="display: none;">Enregistrer</button>
+            <button id="cancel-edit" class="btn secondary" style="display: none;">Annuler</button>
+        </div>
+    </div>
+</div>
     <!-- Firebase Scripts -->
     <script type="module" src="script.js"> </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
