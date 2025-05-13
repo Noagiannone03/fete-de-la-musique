@@ -158,16 +158,7 @@
                     <div class="card-body">
                         <table class="data-table">
                             <thead>
-                                <tr>
-                                    <th>Titre</th>
-                                    <th>Sous-titre</th>
-                                    <th>Dates</th>
-                                    <th>Lieu</th>
-                                    <th>Genre</th>
-                                    <th>Partenaires</th>
-                                    <th>Description</th>
-                                    <th>Actions</th>
-                                </tr>
+                              
                             </thead>
                             <tbody id="events-table">
                                 <tr>
@@ -204,13 +195,7 @@
                     <div class="card-body">
                         <table class="data-table">
                             <thead>
-                                <tr>
-                                    <th>Titre</th>
-                                    <th>Date</th>
-                                    <th>Lieu</th>
-                                    <th>Organisateur</th>
-                                    <th>Actions</th>
-                                </tr>
+                               
                             </thead>
                             <tbody id="summer-events-table">
                                 <tr>
@@ -227,6 +212,35 @@
                     </div>
                 </div>
             </div>
+
+
+
+            <!-- Liste des Partenaires Page -->
+<div id="partners-list-page" class="page">
+    <div class="page-header">
+        <h1 class="page-title">Partenaires</h1>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Liste des partenaires</h2>
+            
+            <div class="card-actions">
+                            <input type="text" id="summer-events-search" class="form-input" placeholder="Rechercher..." style="width: 200px;">
+                        </div>
+        </div>
+        <div class="card-body">
+            <div id="partners-container" class="partners-grid">
+                <div id="partners-loading" class="loading-message">
+                    Chargement des partenaires...
+                </div>
+                <div id="partners-empty" class="empty-message" style="display: none;">
+                    Aucun partenaire trouvé.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
         <!-- Add Event Page -->
 <div id="add-event-page" class="page" >
@@ -288,6 +302,10 @@
                     <div class="form-group">
                         <label for="event-location-url" class="form-label">URL google maps du lieu</label>
                         <input type="url" id="event-location-url" class="form-input" placeholder="https://maps.google.com/...">
+                    </div>
+                    <div class="form-group">
+                        <label for="event-plus-url" class="form-label">URL Plus d'info</label>
+                        <input type="url" id="event-plus-url" class="form-input" placeholder="https://...">
                     </div>
                     <div class="form-group col-span-2">
                         <label for="event-description" class="form-label">Description *</label>
@@ -446,6 +464,82 @@
     </div>
 </div>
 
+
+
+
+
+
+<!-- Ajouter un Partenaire Page -->
+<div id="add-partner-page" class="page" >
+    <div class="page-header">
+        <h1 class="page-title">Ajouter un partenaire</h1>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form id="partner-form" class="form-grid">
+                <div class="form-group">
+                    <label for="partner-name" class="form-label">Nom du partenaire *</label>
+                    <input type="text" id="partner-name" class="form-input" placeholder="Nom du partenaire" required>
+                </div>
+                <div class="form-group">
+                    <label for="partner-type" class="form-label">Type d'établissement *</label>
+                    <div class="custom-select-wrapper">
+                        <select id="partner-type" class="custom-select" required>
+                            <option value="" disabled selected>Sélectionner un type</option>
+                            <option value="restaurant">Restaurant</option>
+                            <option value="brasserie">Brasserie</option>
+                            <option value="bar">Bar</option>
+                            <option value="cafe">Café</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                        <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
+                    </div>
+                </div>
+                <div class="form-group col-span-2">
+                    <label for="partner-info" class="form-label">Informations pratiques *</label>
+                    <textarea id="partner-info" class="form-input" rows="3" placeholder="Horaires, spécialités, etc." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="partner-maps-url" class="form-label">URL Google Maps *</label>
+                    <input type="url" id="partner-maps-url" class="form-input" placeholder="https://maps.google.com/..." required>
+                </div>
+                <div class="form-group">
+                    <label for="partner-website" class="form-label">Site web</label>
+                    <input type="url" id="partner-website" class="form-input" placeholder="https://...">
+                </div>
+                <div class="form-group col-span-2">
+                    <div class="file-input-container">
+                        <label class="form-label">Logo du partenaire *</label>
+                        <div class="file-input-box" id="partner-image-drop">
+                            <div class="file-input-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <div class="file-input-text">Glissez-déposez une image ou cliquez pour choisir</div>
+                            <div class="file-input-help">PNG, JPG ou JPEG (max. 2MB)</div>
+                            <input type="file" id="partner-image" class="file-input" accept="image/*" required>
+                        </div>
+                        <div class="image-preview" id="partner-image-preview">
+                            <img src="" alt="Aperçu de l'image">
+                            <div class="image-preview-remove" id="partner-image-remove">
+                                <i class="fas fa-times"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group col-span-2">
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" id="partner-cancel">Annuler</button>
+                        <button type="submit" class="btn btn-primary" id="partner-submit">
+                            <span id="partner-submit-text">Ajouter le partenaire</span>
+                            <span id="partner-submit-spinner" class="spinner" style="display: none;"></span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
         </div>
     </div>

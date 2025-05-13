@@ -1166,7 +1166,7 @@
     
     // Function to show event details (modal or page)
 function showEventDetails(event) {
-    console.log('Show details for event:', event);
+    console.log('Données de l’événement reçu :', event);
     
     // Create a modal or overlay for event details
     const detailsOverlay = document.createElement('div');
@@ -1204,7 +1204,7 @@ function showEventDetails(event) {
                     <p>${event.description}</p>
                 </div>
                 
-                ${event.plusUrl ? `
+                 ${event.plusUrl ? `
                 <div class="details-more-button">
                     <a href="${event.plusUrl}" target="_blank">
                         <img src="../../assets/buttons/savoirplusmarron.png" alt="En savoir plus">

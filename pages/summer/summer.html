@@ -1433,7 +1433,7 @@ async function fetchEvents() {
     const startTime = Date.now();
     
     try {
-        const eventsCol = collection(db, "events"); // Changed from "events" to "summer_events"
+        const eventsCol = collection(db, "summer_events"); // Changed from "events" to "summer_events"
         const eventSnapshot = await getDocs(eventsCol);
         
         // Process each document

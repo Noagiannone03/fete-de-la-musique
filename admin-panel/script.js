@@ -26,28 +26,29 @@ let summerEventImageFile = null;
 
 // Hard-coded data (remplace la récupération depuis Firestore)
 const locations = [
-    { id: 'Place de la République', name: 'Place de la République' },
-    { id: 'Parc des expositions', name: 'Parc des expositions' },
-    { id: 'Salle des fêtes', name: 'Salle des fêtes' },
-    { id: 'Théâtre municipal', name: 'Théâtre municipal' },
-    { id: 'Place du marché', name: 'Place du marché' }
+     'Place de la République',
+    'Parc des expositions',
+    'Salle des fêtes',
+    'Théâtre municipal',
+    'Place du marché'
 ];
 
 const genres = [
-    { id: 'genre1', name: 'Rock' },
-    { id: 'genre2', name: 'Pop' },
-    { id: 'genre3', name: 'Jazz' },
-    { id: 'genre4', name: 'Classique' },
-    { id: 'genre5', name: 'Hip-Hop' },
-    { id: 'genre6', name: 'Électronique' }
+    'Rock',
+    'Pop',
+    'Jazz',
+    'Classique',
+    'Hip-Hop',
+    'Électronique'
 ];
 
+
 const partners = [
-    { id: 'partner1', name: 'Mairie' },
-    { id: 'partner2', name: 'Conservatoire' },
-    { id: 'partner3', name: 'Association culturelle' },
-    { id: 'partner4', name: 'Radio locale' },
-    { id: 'partner5', name: 'Sponsor principal' }
+    'Mairie',
+    'Conservatoire',
+    'Association culturelle' ,
+    'Radio locale',
+    'Sponsor principal'
 ];
 
 // DOM Elements
@@ -195,7 +196,6 @@ function initializeHardcodedData() {
     }
 }
 
-// Populate single select dropdown
 function populateSelectDropdown(selectId, options) {
     const select = document.getElementById(selectId);
     if (!select) {
@@ -203,21 +203,28 @@ function populateSelectDropdown(selectId, options) {
         return;
     }
     
-    // Clear all options except the first one
+    // On garde la première option (placeholder), on supprime le reste
     while (select.options.length > 1) {
         select.remove(1);
     }
     
-    // Add options
     options.forEach(option => {
+        const value = (typeof option === 'object' && option.id !== undefined)
+            ? option.id
+            : option;
+        const label = (typeof option === 'object' && option.name !== undefined)
+            ? option.name
+            : option;
+
         const optElement = document.createElement('option');
-        optElement.value = option.id;
-        optElement.textContent = option.name;
+        optElement.value = value;
+        optElement.textContent = label;
         select.appendChild(optElement);
     });
 }
 
-// Populate multiselect dropdown
+
+// Populate multiselect dropdown (objets ou strings)
 function populateMultiselectDropdown(baseId, options) {
     const dropdown = document.getElementById(`${baseId}-dropdown`);
     if (!dropdown) {
@@ -229,12 +236,18 @@ function populateMultiselectDropdown(baseId, options) {
     
     // Add options
     options.forEach(option => {
+        // Si option est un objet, on prend id et name, sinon c'est une simple string
+        const optId   = (typeof option === 'object' && option.id   !== undefined) ? option.id   : option;
+        const optName = (typeof option === 'object' && option.name !== undefined) ? option.name : option;
+
         const optElement = document.createElement('div');
         optElement.className = 'multiselect-option';
-        optElement.dataset.id = option.id;
-        optElement.dataset.name = option.name;
-        optElement.textContent = option.name;
-        optElement.addEventListener('click', () => toggleMultiselectOption(baseId, option.id, option.name));
+        optElement.dataset.id   = optId;
+        optElement.dataset.name = optName;
+        optElement.textContent  = optName;
+        optElement.addEventListener('click', () => 
+            toggleMultiselectOption(baseId, optId, optName)
+        );
         dropdown.appendChild(optElement);
     });
 
@@ -253,57 +266,54 @@ function populateMultiselectDropdown(baseId, options) {
     
     searchInput.addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase();
-        const options = dropdown.querySelectorAll('.multiselect-option');
+        const opts = dropdown.querySelectorAll('.multiselect-option');
         
-        options.forEach(option => {
-            const text = option.textContent.toLowerCase();
-            if (text.includes(searchTerm)) {
-                option.style.display = 'block';
-            } else {
-                option.style.display = 'none';
-            }
+        opts.forEach(opt => {
+            const text = opt.textContent.toLowerCase();
+            opt.style.display = text.includes(searchTerm) ? 'block' : 'none';
         });
     });
 
-    // Search input enter key handler
+    // Enter key to add new option
     searchInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && searchInput.value.trim() !== '') {
             e.preventDefault();
             const newOption = searchInput.value.trim();
-            const existingOptions = Array.from(dropdown.querySelectorAll('.multiselect-option'))
+            const existing = Array.from(dropdown.querySelectorAll('.multiselect-option'))
                 .map(opt => opt.dataset.name.toLowerCase());
             
-            if (!existingOptions.includes(newOption.toLowerCase())) {
-                // Create a new option and add it
+            if (!existing.includes(newOption.toLowerCase())) {
                 const newId = `new-${Date.now()}`;
+                // Ajoute à la sélection active
                 toggleMultiselectOption(baseId, newId, newOption);
                 
-                // Add to dropdown
-                const optElement = document.createElement('div');
-                optElement.className = 'multiselect-option selected';
-                optElement.dataset.id = newId;
-                optElement.dataset.name = newOption;
-                optElement.textContent = newOption;
-                optElement.addEventListener('click', () => toggleMultiselectOption(baseId, newId, newOption));
-                dropdown.appendChild(optElement);
+                // Insère dans la dropdown
+                const optEl = document.createElement('div');
+                optEl.className = 'multiselect-option selected';
+                optEl.dataset.id   = newId;
+                optEl.dataset.name = newOption;
+                optEl.textContent  = newOption;
+                optEl.addEventListener('click', () => 
+                    toggleMultiselectOption(baseId, newId, newOption)
+                );
+                dropdown.appendChild(optEl);
             }
             
             searchInput.value = '';
         }
     });
     
-    // Close dropdown when clicking outside
+    // Ferme dropdown au clic à l'extérieur
     document.addEventListener('click', (e) => {
         if (!e.target.closest(`.multiselect-wrapper`)) {
             dropdown.style.display = 'none';
         }
     });
 
-    // Prevent dropdown from closing when clicking inside
-    dropdown.addEventListener('click', (e) => {
-        e.stopPropagation();
-    });
+    // Empêche la fermeture quand on clique dedans
+    dropdown.addEventListener('click', e => e.stopPropagation());
 }
+
 
 // Toggle multiselect option selection
 function toggleMultiselectOption(baseId, optionId, optionName) {
@@ -396,72 +406,85 @@ async function uploadEventImageBase64(file, eventType) {
         throw error;
     }
 }
-
-// Add regular event to Firestore
-async function addRegularEvent(event) {
-    try {
-        // Ensure we have valid event data before adding
-        if (!event.title || !event.location) {
-            throw new Error("Missing required event data");
-        }
-        
-        // Add to Firestore
-        const docRef = await addDoc(collection(db, "events"), {
-            title: event.title,
-            subtitle: event.subtitle || null,
-            location: event.location,
-            locationName: event.locationName || "",
-            genre: event.genres || [],
-            startDate: Timestamp.fromDate(new Date(event.startDate)),
-            endDate: Timestamp.fromDate(new Date(event.endDate)),
-            locationUrl: event.locationUrl || null,
-            description: event.description || "",
-            partners: event.partners || [],
-            imageUrl: event.imageUrl || null,
-            createdAt: Timestamp.now(),
-            updatedAt: Timestamp.now()
-        });
-        
-        return docRef.id;
-    } catch (error) {
-        console.error("Error adding regular event:", error);
-        throw error;
+// Helper pour extraire une simple valeur depuis un objet ou une string
+function extractValue(item) {
+    // si c'est un objet on renvoie son name (ou son id si tu préfères)
+    if (typeof item === 'object' && item !== null) {
+      return item.name ?? item.id;
     }
-}
-
-// Add summer event to Firestore
-async function addSummerEvent(event) {
+    // sinon c'est déjà une string
+    return item;
+  }
+  
+  // Add regular event to Firestore
+  async function addRegularEvent(event) {
     try {
-        // Ensure we have valid event data before adding
-        if (!event.title || !event.location) {
-            throw new Error("Missing required event data");
-        }
-        
-        // Add to Firestore
-        const docRef = await addDoc(collection(db, "summer_events"), {
-            title: event.title,
-            subtitle: event.subtitle || null,
-            location: event.location,
-            locationName: event.locationName || "",
-            genre: event.genres || [],
-            organizer: event.organizer || "",
-            date: Timestamp.fromDate(new Date(event.date)),
-            endDate: event.endDate ? Timestamp.fromDate(new Date(event.endDate)) : null,
-            locationUrl: event.locationUrl || null,
-            plusUrl: event.plusUrl || null,
-            description: event.description || "",
-            partners: event.partners || [],
-            imageUrl: event.imageUrl || null,
-            createdAt: Timestamp.now(),
-            updatedAt: Timestamp.now()
-        });
-        
-        return docRef.id;
+      if (!event.title || !event.location) {
+        throw new Error("Missing required event data");
+      }
+      
+      const genresArray = (event.genres || []).map(extractValue);
+      const partnersArray = (event.partners || []).map(extractValue);
+      
+      const docRef = await addDoc(collection(db, "events"), {
+        title:       event.title,
+        subtitle:    event.subtitle || null,
+        location:    event.location,
+        locationName:event.locationName || "",
+        genre:       genresArray,
+        startDate:   Timestamp.fromDate(new Date(event.startDate)),
+        endDate:     Timestamp.fromDate(new Date(event.endDate)),
+        locationUrl: event.locationUrl || null,
+        plusUrl:     event.plusUrl     || null,
+        description: event.description || "",
+        partners:    partnersArray,
+        imageUrl:    event.imageUrl || null,
+        createdAt:   Timestamp.now(),
+        updatedAt:   Timestamp.now()
+      });
+      
+      return docRef.id;
     } catch (error) {
-        console.error("Error adding summer event:", error);
-        throw error;
+      console.error("Error adding regular event:", error);
+      throw error;
     }
-}
+  }
+  
+  // Add summer event to Firestore
+  async function addSummerEvent(event) {
+    try {
+      if (!event.title || !event.location) {
+        throw new Error("Missing required event data");
+      }
+      
+      const genresArray   = (event.genres   || []).map(extractValue);
+      const partnersArray = (event.partners || []).map(extractValue);
+      
+      const docRef = await addDoc(collection(db, "summer_events"), {
+        title:       event.title,
+        subtitle:    event.subtitle || null,
+        location:    event.location,
+        locationName:event.locationName || "",
+        genre:       genresArray,
+        organizer:   event.organizer || "",
+        date:        Timestamp.fromDate(new Date(event.date)),
+        endDate:     event.endDate ? Timestamp.fromDate(new Date(event.endDate)) : null,
+        locationUrl: event.locationUrl || null,
+        plusUrl:     event.plusUrl     || null,
+        description: event.description || "",
+        partners:    partnersArray,
+        imageUrl:    event.imageUrl || null,
+        createdAt:   Timestamp.now(),
+        updatedAt:   Timestamp.now()
+      });
+      
+      return docRef.id;
+    } catch (error) {
+      console.error("Error adding summer event:", error);
+      throw error;
+    }
+  }
+  
 
 // Show toast notification
 function showToast(message, type = 'success') {
@@ -515,6 +538,8 @@ if (eventForm) {
             const startDateInput = document.getElementById('event-start-date');
             const endDateInput = document.getElementById('event-end-date');
             const locationUrlInput = document.getElementById('event-location-url');
+            const moreUrlInput = document.getElementById('event-plus-url');
+
             const descriptionInput = document.getElementById('event-description');
             const partnersInput = document.getElementById('event-partners');
             
@@ -532,6 +557,7 @@ if (eventForm) {
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
             const locationUrl = locationUrlInput ? locationUrlInput.value : '';
+            const moreUrl = moreUrlInput ? moreUrlInput.value : '';
             const description = descriptionInput.value;
             const partnersValue = partnersInput ? partnersInput.value : '[]';
             const partners = partnersValue ? JSON.parse(partnersValue) : [];
@@ -552,6 +578,7 @@ if (eventForm) {
                 startDate,
                 endDate,
                 locationUrl,
+                moreUrl,
                 description,
                 partners
             };
@@ -1086,7 +1113,7 @@ async function initializeFirebase() {
 
 // Event Manager class to handle all event operations
 class EventManager {
-    constructor(collectionName, tableId, paginationId, searchId) {
+constructor(collectionName, tableId, paginationId, searchId, columnConfig = null) {
         this.collectionName = collectionName;
         this.tableId = tableId;
         this.paginationId = paginationId;
@@ -1094,6 +1121,25 @@ class EventManager {
         this.currentPage = 1;
         this.events = [];
         this.filteredEvents = [];
+        
+        // Configuration par défaut des colonnes si aucune n'est fournie
+        this.columnConfig = columnConfig || {
+            columns: [
+                { key: 'title', label: 'Titre' },
+                { key: 'dateFormatted', label: 'Date' },
+                { key: 'location', label: 'Lieu' },
+                { key: 'organizer', label: 'Organisateur' }
+            ],
+            searchFields: ['title', 'location', 'organizer', 'description']
+        };
+
+        // Assurez-vous qu'aucun formatter n'est défini par défaut
+        this.columnConfig.columns.forEach(column => {
+            if (column.formatter && typeof column.formatter !== 'function') {
+                console.warn(`Formatter non valide pour la colonne ${column.key}, suppression du formatter`);
+                delete column.formatter;
+            }
+        });
     }
 
     // Load events from Firebase
@@ -1145,8 +1191,8 @@ class EventManager {
             `;
         }
     }
-
-   // Modification de la méthode formatDate pour gérer tous les cas possibles
+// 1. Corriger le formatage des dates
+// Modifiez la méthode formatDate pour être plus robuste
 formatDate(timestamp) {
     if (!timestamp) return "Date non définie";
     
@@ -1155,7 +1201,10 @@ formatDate(timestamp) {
     let date;
     try {
         // Gestion des différents formats possibles
-        if (timestamp instanceof Timestamp) {
+        if (typeof timestamp === 'string') {
+            // Si c'est déjà une chaîne, essayer de la convertir
+            date = new Date(timestamp);
+        } else if (timestamp instanceof Timestamp) {
             date = timestamp.toDate();
         } else if (timestamp.seconds && timestamp.nanoseconds) {
             date = new Date(timestamp.seconds * 1000);
@@ -1163,8 +1212,13 @@ formatDate(timestamp) {
             date = new Date(timestamp._seconds * 1000);
         } else if (typeof timestamp === 'object' && timestamp.toDate instanceof Function) {
             date = timestamp.toDate();
-        } else {
+        } else if (timestamp instanceof Date) {
+            date = timestamp;
+        } else if (typeof timestamp === 'number') {
             date = new Date(timestamp);
+        } else {
+            console.error("Format de date non reconnu:", timestamp);
+            return "Format inconnu";
         }
         
         if (isNaN(date.getTime())) {
@@ -1180,123 +1234,59 @@ formatDate(timestamp) {
             minute: '2-digit'
         });
     } catch (error) {
-        console.error("Erreur lors du formatage de la date:", error);
+        console.error("Erreur lors du formatage de la date:", error, "Pour la valeur:", timestamp);
         return "Erreur de date";
     }
 }
+// Modifiez la partie de la méthode createEventRow qui gère les formatters
+// À l'intérieur de la classe EventManager, remplacez la partie concernant les formatters par ce code:
 
-  // Modification de setupSearch pour prendre en compte les nouveaux champs
-setupSearch() {
-    const searchInput = document.getElementById(this.searchId);
-    if (searchInput) {
-        searchInput.addEventListener('input', () => {
-            const searchTerm = searchInput.value.toLowerCase();
-            
-            this.filteredEvents = this.events.filter(event => {
-                // Recherche dans tous les champs textuels
-                return (
-                    (event.title?.toLowerCase().includes(searchTerm)) ||
-                    (event.subtitle?.toLowerCase().includes(searchTerm)) ||
-                    (event.location?.toLowerCase().includes(searchTerm)) ||
-                    (event.locationName?.toLowerCase().includes(searchTerm)) ||
-                    (event.description?.toLowerCase().includes(searchTerm)) ||
-                    // Recherche dans le tableau de genres s'il existe
-                    (Array.isArray(event.genre) && 
-                     event.genre.some(g => (g.name || g).toString().toLowerCase().includes(searchTerm))) ||
-                    // Si genre est une chaîne simple
-                    (typeof event.genre === 'string' && 
-                     event.genre.toLowerCase().includes(searchTerm)) ||
-                    // Recherche dans le tableau de partenaires s'il existe
-                    (Array.isArray(event.partners) && 
-                     event.partners.some(p => (p.name || p).toString().toLowerCase().includes(searchTerm)))
-                );
-            });
-            
-            this.currentPage = 1;
-            this.renderTable();
-        });
-    }
-}
-
-    // Render events table
-    renderTable() {
-        console.log(`Rendu du tableau ${this.tableId} avec ${this.filteredEvents.length} événements`);
-        const table = document.getElementById(this.tableId);
-        
-        if (!table) {
-            console.error(`Élément avec ID ${this.tableId} introuvable dans le DOM`);
-            return;
-        }
-        
-        const startIndex = (this.currentPage - 1) * ITEMS_PER_PAGE;
-        const endIndex = startIndex + ITEMS_PER_PAGE;
-        const eventsToShow = this.filteredEvents.slice(startIndex, endIndex);
-        
-        console.log(`Affichage des événements ${startIndex+1} à ${Math.min(endIndex, this.filteredEvents.length)} sur ${this.filteredEvents.length}`);
-        
-        if (this.filteredEvents.length === 0) {
-            table.innerHTML = `
-                <tr>
-                    <td colspan="5" style="text-align: center; padding: 1rem;">
-                        Aucun événement trouvé dans la collection "${this.collectionName}".
-                    </td>
-                </tr>
-            `;
-        } else {
-            let html = '';
-            
-            eventsToShow.forEach((event, index) => {
-                console.log(`Traitement de l'événement #${startIndex + index + 1}:`, event.id);
-                html += this.createEventRow(event);
-            });
-            
-            table.innerHTML = html;
-            this.addEventListeners();
-        }
-        
-        this.renderPagination();
-    }
-
- // Modification de la méthode createEventRow pour prendre en compte plus de champs
-// Modification de la structure HTML du tableau
-// Remplacez votre structure actuelle par celle-ci
-
-// Structure du HTML avec colonnes dédiées
 createEventRow(event) {
     console.log(`Création d'une ligne pour l'événement:`, event);
     
-    // Formatage des dates avec une gestion plus robuste
-    const startDateFormatted = event.startDate ? this.formatDate(event.startDate) : '-';
-    const endDateFormatted = event.endDate ? this.formatDate(event.endDate) : '-';
-    
-    // Formatage des genres (qui peuvent être un tableau d'objets)
-    let genreDisplay = '-';
-    if (event.genre) {
-        if (Array.isArray(event.genre)) {
-            genreDisplay = event.genre.map(g => g.name || g).join(', ');
-        } else {
-            genreDisplay = event.genre;
+    // Générer dynamiquement les colonnes basées sur la configuration
+    const tableColumns = this.columnConfig.columns.map(column => {
+        let cellContent = '-';
+        
+        // Vérifier si un formatter personnalisé est défini
+        if (column.formatter && typeof column.formatter === 'function') {
+            try {
+                // Utiliser le formatter avec le contexte this
+                cellContent = column.formatter.call(this, event);
+            } catch (error) {
+                console.error("Erreur avec le formatter pour la colonne", column.key, error);
+                cellContent = "Erreur d'affichage";
+            }
+        } 
+        // Gestion spéciale pour les dates
+        else if (column.key === 'dateFormatted' || column.key === 'date' || 
+                 column.key === 'startDate' || column.key === 'endDate') {
+            const dateValue = event[column.key];
+            cellContent = dateValue ? this.formatDate(dateValue) : '-';
         }
-    }
-    
-    // Formatage des partenaires
-    let partnersDisplay = '-';
-    if (event.partners && Array.isArray(event.partners)) {
-        partnersDisplay = event.partners.map(p => p.name || p).join(', ');
-    }
-    
+        // Gestion pour les clés multiples
+        else if (Array.isArray(column.key)) {
+            // Pour les colonnes avec plusieurs champs (comme dates)
+            const values = column.key.map(k => {
+                const val = event[k];
+                if (k.includes('Date') && val) {
+                    return this.formatDate(val);
+                }
+                return val || '-';
+            });
+            cellContent = values.join(' - ');
+        }
+        // Gestion standard d'une propriété
+        else if (typeof column.key === 'string' && column.key in event) {
+            cellContent = event[column.key] || '-';
+        }
+        
+        return `<td>${cellContent}</td>`;
+    }).join('');
+
     return `
-        <tr data-id="${event.id}">
-            <td>${event.title || '-'}</td>
-            <td>${event.subtitle || '-'}</td>
-            <td>
-                <div>Début: ${startDateFormatted}</div>
-                <div>Fin: ${endDateFormatted}</div>
-            </td>
-            <td>${event.location || event.locationName || '-'}</td>
-            <td>${genreDisplay}</td>
-            <td>${partnersDisplay}</td>
-            <td class="truncate-text">${event.description || '-'}</td>
+        <tr data-id="${event.id}" data-collection="${this.collectionName}">
+            ${tableColumns}
             <td class="table-actions">
                 <button class="action-view view-event" title="Voir">
                     <i class="fas fa-eye"></i>
@@ -1311,6 +1301,86 @@ createEventRow(event) {
         </tr>
     `;
 }
+
+// Modifiez setupSearch pour utiliser la configuration personnalisée
+setupSearch() {
+    const searchInput = document.getElementById(this.searchId);
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            
+            this.filteredEvents = this.events.filter(event => {
+                // Utiliser les champs de recherche configurés
+                return this.columnConfig.searchFields.some(field => {
+                    // Vérification robuste pour gérer différents types de données
+                    const value = event[field];
+                    if (value === undefined) return false;
+                    
+                    // Convertir en chaîne et rechercher
+                    return value.toString().toLowerCase().includes(searchTerm);
+                });
+            });
+            
+            this.currentPage = 1;
+            this.renderTable();
+        });
+    }
+}
+
+// Modifiez renderTable pour générer dynamiquement l'en-tête du tableau
+renderTable() {
+    const table = document.getElementById(this.tableId);
+    
+    if (!table) {
+        console.error(`Élément avec ID ${this.tableId} introuvable dans le DOM`);
+        return;
+    }
+    
+    // Générer l'en-tête dynamiquement
+    const headerColumns = this.columnConfig.columns
+        .map(column => `<th>${column.label}</th>`)
+        .join('');
+    
+    // Ajouter la colonne Actions
+    const header = `
+        <thead>
+            <tr>
+                ${headerColumns}
+                <th>Actions</th>
+            </tr>
+        </thead>
+    `;
+    
+    // Le reste de la méthode reste similaire
+    const startIndex = (this.currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const eventsToShow = this.filteredEvents.slice(startIndex, endIndex);
+    
+    if (this.filteredEvents.length === 0) {
+        table.innerHTML = header + `
+            <tbody>
+                <tr>
+                    <td colspan="${this.columnConfig.columns.length + 1}" style="text-align: center; padding: 2rem;">
+                        <h3>C'est un peu vide par ici 👀</h3>
+                    </td>
+                </tr>
+            </tbody>
+        `;
+    } else {
+        let bodyHtml = '<tbody>';
+        
+        eventsToShow.forEach((event, index) => {
+            bodyHtml += this.createEventRow(event);
+        });
+        
+        bodyHtml += '</tbody>';
+        table.innerHTML = header + bodyHtml;
+    }
+    
+    this.addEventListeners();
+    this.renderPagination();
+}
+
 
     // Add event listeners to table buttons
     addEventListeners() {
@@ -1401,7 +1471,7 @@ createEventRow(event) {
         });
     }
 
-// Méthode pour visualiser un événement
+// 3. Mettre à jour viewEvent pour s'adapter au type d'événement
 async viewEvent(eventId) {
     try {
         const eventRef = doc(db, this.collectionName, eventId);
@@ -1410,9 +1480,15 @@ async viewEvent(eventId) {
         if (eventDoc.exists()) {
             const eventData = eventDoc.data();
             
-            // Formatage des dates avec une gestion plus robuste
-            const startDateFormatted = eventData.startDate ? this.formatDate(eventData.startDate) : '-';
-            const endDateFormatted = eventData.endDate ? this.formatDate(eventData.endDate) : '-';
+            // Déterminer le type d'événement basé sur la collection
+            const isSummerEvent = this.collectionName === 'summer_events';
+            
+            // Préparation des champs communs
+            const title = eventData.title || '-';
+            const subtitle = eventData.subtitle || '-';
+            const description = eventData.description || '-';
+            const location = eventData.location || eventData.locationName || '-';
+            const locationUrl = eventData.locationUrl || '-';
             
             // Formatage des genres
             let genreDisplay = '-';
@@ -1424,23 +1500,36 @@ async viewEvent(eventId) {
                 }
             }
             
-            // Formatage des partenaires
-            let partnersDisplay = '-';
-            if (eventData.partners && Array.isArray(eventData.partners)) {
-                partnersDisplay = eventData.partners.map(p => p.name || p).join(', ');
-            }
+            // Formatter les dates en fonction du type d'événement
+            let dateSection = '';
             
-            // Création du contenu HTML pour l'affichage
-            const viewHtml = `
-                <div class="swal-event-details">
+            if (isSummerEvent) {
+                // Pour les événements d'été
+                const dateFormatted = eventData.date ? this.formatDate(eventData.date) : '-';
+                const organizer = eventData.organizer || '-';
+                
+                dateSection = `
                     <div class="event-detail">
-                        <h4>Titre</h4>
-                        <p>${eventData.title || '-'}</p>
+                        <h4>Date</h4>
+                        <p>${dateFormatted}</p>
                     </div>
                     <div class="event-detail">
-                        <h4>Sous-titre</h4>
-                        <p>${eventData.subtitle || '-'}</p>
+                        <h4>Organisateur</h4>
+                        <p>${organizer}</p>
                     </div>
+                `;
+            } else {
+                // Pour les événements normaux
+                const startDateFormatted = eventData.startDate ? this.formatDate(eventData.startDate) : '-';
+                const endDateFormatted = eventData.endDate ? this.formatDate(eventData.endDate) : '-';
+                
+                // Formatage des partenaires
+                let partnersDisplay = '-';
+                if (eventData.partners && Array.isArray(eventData.partners)) {
+                    partnersDisplay = eventData.partners.map(p => p.name || p).join(', ');
+                }
+                
+                dateSection = `
                     <div class="event-detail">
                         <h4>Date de début</h4>
                         <p>${startDateFormatted}</p>
@@ -1450,13 +1539,32 @@ async viewEvent(eventId) {
                         <p>${endDateFormatted}</p>
                     </div>
                     <div class="event-detail">
+                        <h4>Partenaires</h4>
+                        <p>${partnersDisplay}</p>
+                    </div>
+                `;
+            }
+            
+            // Création du contenu HTML pour l'affichage
+            const viewHtml = `
+                <div class="swal-event-details">
+                    <div class="event-detail">
+                        <h4>Titre</h4>
+                        <p>${title}</p>
+                    </div>
+                    <div class="event-detail">
+                        <h4>Sous-titre</h4>
+                        <p>${subtitle}</p>
+                    </div>
+                    ${dateSection}
+                    <div class="event-detail">
                         <h4>Lieu</h4>
-                        <p>${eventData.location || eventData.locationName || '-'}</p>
+                        <p>${location}</p>
                     </div>
                     <div class="event-detail">
                         <h4>URL du lieu</h4>
-                        <p>${eventData.locationUrl ? 
-                            `<a href="${eventData.locationUrl}" target="_blank">${eventData.locationUrl}</a>` : 
+                        <p>${locationUrl ? 
+                            `<a href="${locationUrl}" target="_blank">${locationUrl}</a>` : 
                             '-'
                         }</p>
                     </div>
@@ -1465,18 +1573,14 @@ async viewEvent(eventId) {
                         <p>${genreDisplay}</p>
                     </div>
                     <div class="event-detail">
-                        <h4>Partenaires</h4>
-                        <p>${partnersDisplay}</p>
-                    </div>
-                    <div class="event-detail">
                         <h4>Description</h4>
-                        <p>${eventData.description || '-'}</p>
+                        <p>${description}</p>
                     </div>
                     ${eventData.imageUrl ? `
                     <div class="event-detail">
                         <h4>Image</h4>
                         <div class="event-image">
-                            <img src="${eventData.imageUrl}" alt="${eventData.title}" style="max-width: 100%; max-height: 300px;">
+                            <img src="${eventData.imageUrl}" alt="${title}" style="max-width: 100%; max-height: 300px;">
                         </div>
                     </div>` : ''}
                 </div>
@@ -1484,7 +1588,7 @@ async viewEvent(eventId) {
             
             // Afficher le overlay de visualisation
             Swal.fire({
-                title: eventData.title || 'Détails de l\'événement',
+                title: title || 'Détails de l\'événement',
                 html: viewHtml,
                 width: '800px',
                 showConfirmButton: false,
@@ -1566,8 +1670,7 @@ async viewEvent(eventId) {
     }
 }
 
- 
-// Méthode pour éditer un événement
+// 4. Mettre à jour editEvent pour s'adapter au type d'événement
 async editEvent(eventId, eventData = null) {
     try {
         // Si eventData n'est pas fourni, on le récupère
@@ -1579,6 +1682,9 @@ async editEvent(eventId, eventData = null) {
             }
             eventData = eventDoc.data();
         }
+        
+        // Déterminer le type d'événement basé sur la collection
+        const isSummerEvent = this.collectionName === 'summer_events';
         
         // Fonction pour convertir les timestamps en chaînes pour input datetime-local
         const timestampToInputDatetime = (timestamp) => {
@@ -1592,6 +1698,8 @@ async editEvent(eventId, eventData = null) {
                     date = new Date(timestamp.seconds * 1000);
                 } else if (timestamp._seconds && timestamp._nanoseconds) {
                     date = new Date(timestamp._seconds * 1000);
+                } else if (timestamp instanceof Date) {
+                    date = timestamp;
                 } else {
                     date = new Date(timestamp);
                 }
@@ -1600,15 +1708,22 @@ async editEvent(eventId, eventData = null) {
                 
                 return date.toISOString().slice(0, 16);
             } catch (e) {
+                console.error("Erreur conversion timestamp:", e);
                 return '';
             }
         };
         
-        // Préparation des valeurs pour le formulaire
-        const startDateInput = timestampToInputDatetime(eventData.startDate);
-        const endDateInput = timestampToInputDatetime(eventData.endDate);
+        // Préparation des champs communs
+        const title = eventData.title || '';
+        const subtitle = eventData.subtitle || '';
+        const location = eventData.location || eventData.locationName || '';
+        const locationUrl = eventData.locationUrl || '';
+        const description = eventData.description || '';
         
+        // Préparation des valeurs pour le formulaire en fonction du type d'événement
+        let dateSection = '';
         let genreValue = '';
+        
         if (eventData.genre) {
             if (Array.isArray(eventData.genre)) {
                 genreValue = eventData.genre.map(g => g.name || g).join(', ');
@@ -1617,22 +1732,32 @@ async editEvent(eventId, eventData = null) {
             }
         }
         
-        let partnersValue = '';
-        if (eventData.partners && Array.isArray(eventData.partners)) {
-            partnersValue = eventData.partners.map(p => p.name || p).join(', ');
-        }
-        
-        // Création du formulaire d'édition
-        const formHtml = `
-            <form id="edit-event-form" class="swal-event-form">
+        if (isSummerEvent) {
+            // Pour les événements d'été
+            const dateInput = timestampToInputDatetime(eventData.date);
+            const organizer = eventData.organizer || '';
+            
+            dateSection = `
                 <div class="form-group">
-                    <label for="edit-title">Titre*</label>
-                    <input type="text" id="edit-title" class="swal2-input" value="${eventData.title || ''}" required>
+                    <label for="edit-date">Date</label>
+                    <input type="datetime-local" id="edit-date" class="swal2-input" value="${dateInput}">
                 </div>
                 <div class="form-group">
-                    <label for="edit-subtitle">Sous-titre</label>
-                    <input type="text" id="edit-subtitle" class="swal2-input" value="${eventData.subtitle || ''}">
+                    <label for="edit-organizer">Organisateur</label>
+                    <input type="text" id="edit-organizer" class="swal2-input" value="${organizer}">
                 </div>
+            `;
+        } else {
+            // Pour les événements normaux
+            const startDateInput = timestampToInputDatetime(eventData.startDate);
+            const endDateInput = timestampToInputDatetime(eventData.endDate);
+            
+            let partnersValue = '';
+            if (eventData.partners && Array.isArray(eventData.partners)) {
+                partnersValue = eventData.partners.map(p => p.name || p).join(', ');
+            }
+            
+            dateSection = `
                 <div class="form-group">
                     <label for="edit-start-date">Date de début</label>
                     <input type="datetime-local" id="edit-start-date" class="swal2-input" value="${startDateInput}">
@@ -1642,24 +1767,39 @@ async editEvent(eventId, eventData = null) {
                     <input type="datetime-local" id="edit-end-date" class="swal2-input" value="${endDateInput}">
                 </div>
                 <div class="form-group">
+                    <label for="edit-partners">Partenaires (séparés par des virgules)</label>
+                    <input type="text" id="edit-partners" class="swal2-input" value="${partnersValue}">
+                </div>
+            `;
+        }
+        
+        // Création du formulaire d'édition
+        const formHtml = `
+            <form id="edit-event-form" class="swal-event-form">
+                <div class="form-group">
+                    <label for="edit-title">Titre*</label>
+                    <input type="text" id="edit-title" class="swal2-input" value="${title}" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-subtitle">Sous-titre</label>
+                    <input type="text" id="edit-subtitle" class="swal2-input" value="${subtitle}">
+                </div>
+                ${dateSection}
+                <div class="form-group">
                     <label for="edit-location">Lieu</label>
-                    <input type="text" id="edit-location" class="swal2-input" value="${eventData.location || eventData.locationName || ''}">
+                    <input type="text" id="edit-location" class="swal2-input" value="${location}">
                 </div>
                 <div class="form-group">
                     <label for="edit-location-url">URL du lieu</label>
-                    <input type="url" id="edit-location-url" class="swal2-input" value="${eventData.locationUrl || ''}">
+                    <input type="url" id="edit-location-url" class="swal2-input" value="${locationUrl}">
                 </div>
                 <div class="form-group">
                     <label for="edit-genre">Genre (séparés par des virgules)</label>
                     <input type="text" id="edit-genre" class="swal2-input" value="${genreValue}">
                 </div>
                 <div class="form-group">
-                    <label for="edit-partners">Partenaires (séparés par des virgules)</label>
-                    <input type="text" id="edit-partners" class="swal2-input" value="${partnersValue}">
-                </div>
-                <div class="form-group">
                     <label for="edit-description">Description</label>
-                    <textarea id="edit-description" class="swal2-textarea">${eventData.description || ''}</textarea>
+                    <textarea id="edit-description" class="swal2-textarea">${description}</textarea>
                 </div>
                 <div class="form-group">
                     <label for="edit-image">Image</label>
@@ -1718,7 +1858,7 @@ async editEvent(eventId, eventData = null) {
                     // Afficher un indicateur de chargement
                     Swal.showLoading();
                     
-                    // Collecte des données du formulaire
+                    // Collecte des données du formulaire - champs communs
                     const formData = {
                         title: document.getElementById('edit-title').value,
                         subtitle: document.getElementById('edit-subtitle').value,
@@ -1728,19 +1868,42 @@ async editEvent(eventId, eventData = null) {
                         updatedAt: serverTimestamp()
                     };
                     
-                    // Gestion des dates
-                    const startDateValue = document.getElementById('edit-start-date').value;
-                    const endDateValue = document.getElementById('edit-end-date').value;
-                    
-                    if (startDateValue) {
-                        formData.startDate = Timestamp.fromDate(new Date(startDateValue));
+                    // Collecte des données spécifiques au type d'événement
+                    if (isSummerEvent) {
+                        // Pour les événements d'été
+                        const dateValue = document.getElementById('edit-date').value;
+                        const organizer = document.getElementById('edit-organizer').value;
+                        
+                        if (dateValue) {
+                            formData.date = Timestamp.fromDate(new Date(dateValue));
+                        }
+                        
+                        if (organizer) {
+                            formData.organizer = organizer;
+                        }
+                    } else {
+                        // Pour les événements normaux
+                        const startDateValue = document.getElementById('edit-start-date').value;
+                        const endDateValue = document.getElementById('edit-end-date').value;
+                        
+                        if (startDateValue) {
+                            formData.startDate = Timestamp.fromDate(new Date(startDateValue));
+                        }
+                        
+                        if (endDateValue) {
+                            formData.endDate = Timestamp.fromDate(new Date(endDateValue));
+                        }
+                        
+                        // Gestion des partenaires
+                        const partnersValue = document.getElementById('edit-partners').value;
+                        if (partnersValue) {
+                            formData.partners = partnersValue.split(',').map(p => p.trim()).filter(p => p);
+                        } else {
+                            formData.partners = [];
+                        }
                     }
                     
-                    if (endDateValue) {
-                        formData.endDate = Timestamp.fromDate(new Date(endDateValue));
-                    }
-                    
-                    // Gestion du genre et des partenaires
+                    // Gestion du genre pour tous les types d'événements
                     const genreValue = document.getElementById('edit-genre').value;
                     if (genreValue) {
                         formData.genre = genreValue.split(',').map(g => g.trim()).filter(g => g);
@@ -1748,18 +1911,11 @@ async editEvent(eventId, eventData = null) {
                         formData.genre = [];
                     }
                     
-                    const partnersValue = document.getElementById('edit-partners').value;
-                    if (partnersValue) {
-                        formData.partners = partnersValue.split(',').map(p => p.trim()).filter(p => p);
-                    } else {
-                        formData.partners = [];
-                    }
-                    
                     // Gestion de l'image
                     const imageFile = document.getElementById('edit-image').files[0];
                     if (imageFile) {
                         // Créer une référence au storage pour l'image
-                        const storageRef = ref(storage, `events/${eventId}/${imageFile.name}`);
+                        const storageRef = ref(storage, `${this.collectionName}/${eventId}/${imageFile.name}`);
                         
                         // Uploader l'image
                         await uploadBytes(storageRef, imageFile);
@@ -1787,7 +1943,9 @@ async editEvent(eventId, eventData = null) {
         if (result.isConfirmed) {
             // Notification de succès et rafraîchissement du tableau
             this.renderTable();
-            updateStatsCards();
+            if (typeof updateStatsCards === 'function') {
+                updateStatsCards();
+            }
             Swal.fire({
                 title: 'Événement mis à jour!',
                 text: 'Les modifications ont été enregistrées avec succès.',
@@ -1849,6 +2007,36 @@ async editEvent(eventId, eventData = null) {
     }
 }
 
+// 5. Modifier addEventListeners pour passer l'information sur la collection
+addEventListeners() {
+    // View event buttons
+    document.querySelectorAll(`#${this.tableId} .view-event`).forEach(button => {
+        button.addEventListener('click', (e) => {
+            const row = e.target.closest('tr');
+            const eventId = row.dataset.id;
+            this.viewEvent(eventId);
+        });
+    });
+
+    // Edit event buttons
+    document.querySelectorAll(`#${this.tableId} .edit-event`).forEach(button => {
+        button.addEventListener('click', (e) => {
+            const row = e.target.closest('tr');
+            const eventId = row.dataset.id;
+            this.editEvent(eventId);
+        });
+    });
+
+    // Delete event buttons
+    document.querySelectorAll(`#${this.tableId} .delete-event`).forEach(button => {
+        button.addEventListener('click', (e) => {
+            const row = e.target.closest('tr');
+            const eventId = row.dataset.id;
+            this.showDeleteConfirmation(eventId);
+        });
+    });
+}
+
 // Méthode utilitaire pour mettre à jour les données locales
 updateLocalEventData(eventId, formData) {
     // Mise à jour des données locales
@@ -1871,6 +2059,7 @@ updateLocalEventData(eventId, formData) {
         };
     }
 }
+
 
     // Remplacer la méthode showDeleteConfirmation
 showDeleteConfirmation(eventId) {
@@ -1926,6 +2115,9 @@ async deleteEvent(eventId) {
     }
 }
 
+
+
+
     // Delete event
     async deleteEvent(eventId) {
         try {
@@ -1969,6 +2161,7 @@ async deleteEvent(eventId) {
 }
 
 // Initialize event managers when DOM is loaded
+// Corrigez les formatters dans l'initialisation des gestionnaires d'événements
 document.addEventListener('DOMContentLoaded', async () => {
     console.log("DOM chargé, initialisation des gestionnaires d'événements");
     
@@ -1989,19 +2182,156 @@ document.addEventListener('DOMContentLoaded', async () => {
             'events', 
             'events-table', 
             'events-pagination', 
-            'events-search'
+            'events-search',
+            {
+                columns: [
+                    { 
+                        key: 'title', 
+                        label: 'Titre',
+                        formatter: function(event) {
+                            return `${event.title || '-'}`;
+                        }
+                    },
+                    { 
+                        key: 'subtitle', 
+                        label: 'Sous-titre',
+                        formatter: function(event) {
+                            return `${event.subtitle || ''}`;
+                        }
+                    },
+                    { 
+                        key: ['startDate', 'endDate'], 
+                        label: 'Dates',
+                        formatter: function(event) {
+                            // Utiliser this.formatDate correctement - le "this" ici fait référence à l'instance EventManager
+                            const startDateFormatted = event.startDate ? this.formatDate(event.startDate) : '-';
+                            const endDateFormatted = event.endDate ? this.formatDate(event.endDate) : '-';
+                            return `
+                                <div>
+                                    <div>Début: ${startDateFormatted}</div>
+                                    <div>Fin: ${endDateFormatted}</div>
+                                </div>
+                            `;
+                        }
+                    },
+                    { 
+                        key: 'location', 
+                        label: 'Lieu',
+                        formatter: function(event) {
+                            return event.location || event.locationName || '-';
+                        }
+                    },
+                    { 
+                        key: 'genre', 
+                        label: 'Genre',
+                        formatter: function(event) {
+                            if (!event.genre) return '-';
+                            return Array.isArray(event.genre) 
+                                ? event.genre.map(g => g.name || g).join(', ')
+                                : event.genre;
+                        }
+                    },
+                    { 
+                        key: 'partners', 
+                        label: 'Partenaires',
+                        formatter: function(event) {
+                            if (!event.partners) return '-';
+                            return Array.isArray(event.partners) 
+                                ? event.partners.map(p => p.name || p).join(', ')
+                                : event.partners;
+                        }
+                    },
+                    { 
+                        key: 'description', 
+                        label: 'Description',
+                        formatter: function(event) {
+                            return event.description ? 
+                                `<div class="truncate-text">${event.description}</div>` : 
+                                '-';
+                        }
+                    }
+                ],
+                searchFields: [
+                    'title', 'subtitle', 'location', 'locationName', 
+                    'genre', 'description', 'partners'
+                ]
+            }
         );
-        await eventsManager.loadEvents();
+        eventsManager.loadEvents();
         
         // Summer events manager
         console.log("Initialisation du gestionnaire d'événements d'été");
+        // Configuration pour les événements d'été
         const summerEventsManager = new EventManager(
-            'summer-events', 
+            'summer_events', 
             'summer-events-table', 
             'summer-events-pagination', 
-            'summer-events-search'
+            'summer-events-search',
+            {
+                columns: [
+                    { 
+                        key: 'title', 
+                        label: 'Titre',
+                        formatter: function(event) {
+                            return `${event.title || '-'}`;
+                        }
+                    },
+                    { 
+                        key: 'subtitle', 
+                        label: 'Sous-titre',
+                        formatter: function(event) {
+                            return `${event.subtitle || ''}`;
+                        }
+                    },
+                    { 
+                        key: 'date', 
+                        label: 'Date',
+                        formatter: function(event) {
+                            // Utiliser this.formatDate correctement - le "this" ici fait référence à l'instance EventManager
+                            return event.date ? this.formatDate(event.date) : '-';
+                        }
+                    },
+                    { 
+                        key: 'location', 
+                        label: 'Lieu',
+                        formatter: function(event) {
+                            return event.location || event.locationName || '-';
+                        }
+                    },
+                    { 
+                        key: 'organizer', 
+                        label: 'Organisateur',
+                        formatter: function(event) {
+                            return event.organizer || '-';
+                        }
+                    },
+                    { 
+                        key: 'genre', 
+                        label: 'Genre',
+                        formatter: function(event) {
+                            if (!event.genre) return '-';
+                            return Array.isArray(event.genre) 
+                                ? event.genre.map(g => g.name || g).join(', ')
+                                : event.genre;
+                        }
+                    },
+                    { 
+                        key: 'description', 
+                        label: 'Description',
+                        formatter: function(event) {
+                            return event.description ? 
+                                `<div class="truncate-text">${event.description}</div>` : 
+                                '-';
+                        }
+                    }
+                ],
+                searchFields: [
+                    'title', 'subtitle', 'location', 'locationName', 
+                    'organizer', 'genre', 'description'
+                ]
+            }
         );
-        await summerEventsManager.loadEvents();
+        summerEventsManager.loadEvents();
         
         // Handle modal background clicks to close modals
         document.querySelectorAll('.modal-overlay').forEach(overlay => {
@@ -2110,5 +2440,3 @@ async function updateStatsCards() {
 
 
 
-
-  
