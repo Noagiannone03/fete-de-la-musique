@@ -78,17 +78,18 @@
                     <i class="fas fa-tachometer-alt"></i>
                     <span>Tableau de bord</span>
                 </a>
-                <a href="#" class="menu-item" data-page="events">
-                    <i class="fas fa-calendar-week"></i>
-                    <span>Événements FDLM</span>
-                </a>
+               
                 <a href="#" class="menu-item" data-page="summer-events">
                     <i class="fas fa-sun"></i>
-                    <span>Événements de l'été</span>
+                    <span>Liste des partenaires</span>
                 </a>
                 <a href="#" class="menu-item" data-page="add-event">
                     <i class="fas fa-plus-circle"></i>
                     <span>Ajouter un événement</span>
+                </a>
+                  <a href="#" class="menu-item" data-page="add-event">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Ajouter un partenaire</span>
                 </a>
             </div>
 
@@ -174,11 +175,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Summer Events Page -->
-            <div id="summer-events-page" class="page">
-                <div class="page-header">
+                   <div class="page-header">
                     <h1 class="page-title">Événements de l'été</h1>
                     <div class="page-actions">
                         
@@ -213,6 +210,11 @@
                 </div>
             </div>
 
+            <!-- Summer Events Page -->
+            <div id="summer-events-page" class="page">
+             
+            </div>
+
 
 
             <!-- Liste des Partenaires Page -->
@@ -230,6 +232,8 @@
                         </div>
         </div>
         <div class="card-body">
+            <tbody id="summer-events-table">
+                   <tr>
             <div id="partners-container" class="partners-grid">
                 <div id="partners-loading" class="loading-message">
                     Chargement des partenaires...
@@ -238,6 +242,8 @@
                     Aucun partenaire trouvé.
                 </div>
             </div>
+            </tr>
+            </tbody>
         </div>
     </div>
 </div>
@@ -603,4 +609,5 @@
 </div>
     <!-- Firebase Scripts -->
     <script type="module" src="script.js"> </script>
+        <script src="sidebar-mecanique.js"> </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

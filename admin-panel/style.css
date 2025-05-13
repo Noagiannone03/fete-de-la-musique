@@ -133,7 +133,7 @@ body {
 }
 
 .sidebar {
-    width: 250px;
+    width: 270px;
     background-color: var(--bg);
     box-shadow: var(--shadow);
     padding: 1.5rem 1rem;
@@ -1086,4 +1086,143 @@ animation: spin 1s ease-in-out infinite;
 .view-mode .form-textarea,
 .view-mode .form-file {
     display: none;
+}
+
+
+
+
+
+
+/* Styles pour améliorer la navigation et les animations */
+.page {
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    display: none;
+    position: relative;
+}
+
+.page.active {
+    display: block;
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Style pour la sidebar */
+.sidebar {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    z-index: 1000;
+}
+
+
+/* Overlay pour mobile */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+/* Styles responsive */
+@media (max-width: 767px) {
+    .sidebar {
+        transform: translateX(-100%);
+        box-shadow: none;
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        height: 100vh;
+    }
+    
+    .sidebar.open {
+        transform: translateX(0);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+
+/* Animations pour les cartes */
+.stats-card, .card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stats-card:hover, .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+
+/* Animation pour les formulaires */
+.form-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Effet d'entrée pour les pages */
+#dashboard-page.active {
+    animation: fadeInUp 0.4s ease;
+}
+
+#partners-list-page.active {
+    animation: fadeInRight 0.4s ease;
+}
+
+#add-event-page.active, #add-partner-page.active {
+    animation: fadeInUp 0.4s ease;
+}
+
+/* Animations keyframes */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+
+
+/* Animation du spinner de chargement */
+.spinner {
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid #fff;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

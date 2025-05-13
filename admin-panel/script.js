@@ -43,13 +43,138 @@ const genres = [
 ];
 
 
-const partners = [
-    'Mairie',
-    'Conservatoire',
-    'Association culturelle' ,
-    'Radio locale',
-    'Sponsor principal'
-];
+// Déclaration du tableau partners comme avant, mais vide au départ
+let partners = [];
+
+// Fonction pour charger les partenaires depuis Firebase
+async function loadPartners() {
+  try {
+    const partnersCollection = collection(db, 'partners');
+    const querySnapshot = await getDocs(partnersCollection);
+    
+    // Vider le tableau existant
+    partners = [];
+    
+    querySnapshot.forEach((doc) => {
+      // Pour chaque document, récupérer le champ "name"
+      if (doc.data().name) {
+        partners.push(doc.data().name);
+      }
+    });
+    
+    // Si aucun partenaire n'est trouvé dans Firebase, utiliser les valeurs par défaut
+    if (partners.length === 0) {
+      partners = [
+        'Mairie',
+        'Conservatoire',
+        'Association culturelle',
+        'Radio locale',
+        'Sponsor principal'
+      ];
+    }
+    
+    // À ce stade, actualiser la liste déroulante avec les nouvelles valeurs
+    updateMultiselectDropdown();
+    
+  } catch (error) {
+    console.error("Erreur lors de la récupération des partenaires:", error);
+    // En cas d'erreur, utiliser les valeurs par défaut
+    partners = [
+      'Mairie',
+      'Conservatoire',
+      'Association culturelle',
+      'Radio locale',
+      'Sponsor principal'
+    ];
+    
+    // Actualiser la liste déroulante avec les valeurs par défaut
+    updateMultiselectDropdown();
+  }
+}
+
+// Fonction pour mettre à jour la liste déroulante multiselect
+function updateMultiselectDropdown() {
+  // Récupérer le conteneur dropdown
+  const dropdown = document.getElementById('event-partners-dropdown');
+  
+  // Vider le dropdown actuel
+  dropdown.innerHTML = '';
+  
+  // Ajouter chaque partenaire comme option dans le format spécifique requis
+  partners.forEach(partner => {
+    const option = document.createElement('div');
+    option.className = 'multiselect-option';
+    option.setAttribute('data-id', partner);
+    option.setAttribute('data-name', partner);
+    option.textContent = partner;
+    dropdown.appendChild(option);
+  });
+  
+  // Si vous avez besoin de réattacher des écouteurs d'événements après avoir mis à jour les options
+  attachEventListeners();
+}
+
+// Fonction pour réattacher les écouteurs d'événements si nécessaire
+function attachEventListeners() {
+  // Réattacher les écouteurs d'événements aux nouvelles options
+  const options = document.querySelectorAll('.multiselect-option');
+  options.forEach(option => {
+    option.addEventListener('click', function() {
+      // Votre code de gestion de clic sur une option
+      // Par exemple, ajouter l'élément sélectionné à la section "selected-items"
+      const id = this.getAttribute('data-id');
+      const name = this.getAttribute('data-name');
+      
+      // Vérifier si l'élément est déjà sélectionné
+      const selectedContainer = document.getElementById('event-partners-selected');
+      if (!selectedContainer.querySelector(`[data-id="${id}"]`)) {
+        // Créer un nouvel élément sélectionné
+        const selectedItem = document.createElement('div');
+        selectedItem.className = 'selected-item';
+        selectedItem.setAttribute('data-id', id);
+        selectedItem.innerHTML = `
+          ${name}
+          <span class="remove-item"><i class="fas fa-times"></i></span>
+        `;
+        
+        // Ajouter l'élément à la section des éléments sélectionnés
+        selectedContainer.appendChild(selectedItem);
+        
+        // Mettre à jour le champ caché
+        updateHiddenField();
+        
+        // Ajouter l'écouteur d'événement pour supprimer l'élément
+        selectedItem.querySelector('.remove-item').addEventListener('click', function(e) {
+          e.stopPropagation();
+          selectedItem.remove();
+          updateHiddenField();
+        });
+      }
+      
+      // Fermer le dropdown (facultatif)
+      // dropdown.style.display = 'none';
+    });
+  });
+}
+
+// Fonction pour mettre à jour le champ caché avec les valeurs sélectionnées
+function updateHiddenField() {
+  const selectedItems = document.querySelectorAll('#event-partners-selected .selected-item');
+  const selectedValues = Array.from(selectedItems).map(item => item.getAttribute('data-id'));
+  document.getElementById('event-partners').value = JSON.stringify(selectedValues);
+}
+
+// Appeler cette fonction au chargement de la page ou au moment approprié
+document.addEventListener('DOMContentLoaded', () => {
+  loadPartners();
+  
+  // Réattacher les écouteurs d'événements pour l'input de recherche
+  const searchInput = document.getElementById('event-partners-input');
+ 
+ 
+  
+ 
+});
 
 // DOM Elements
 const eventForm = document.getElementById('event-form');
@@ -2434,9 +2559,1320 @@ async function updateStatsCards() {
 
 
 
+// Partner Manager class to handle all partner operations
+class PartnerManager {
+    constructor(collectionName = 'partners', containerId = 'partners-container', loadingId = 'partners-loading', emptyId = 'partners-empty') {
+        this.collectionName = collectionName;
+        this.containerId = containerId;
+        this.loadingId = loadingId;
+        this.emptyId = emptyId;
+        this.partners = [];
+    }
+
+    // Load partners from Firebase
+    async loadPartners() {
+        try {
+            console.log(`Tentative de chargement de la collection: ${this.collectionName}`);
+            const partnersRef = collection(db, this.collectionName);
+            
+            // Vérifier si la collection existe
+            console.log("Référence de collection créée:", partnersRef);
+            
+            const querySnapshot = await getDocs(partnersRef);
+            
+            console.log(`Résultat de la requête sur ${this.collectionName}:`, querySnapshot);
+            console.log(`Nombre de documents trouvés: ${querySnapshot.size}`);
+            
+            this.partners = [];
+            querySnapshot.forEach((doc) => {
+                console.log(`Document trouvé - ID: ${doc.id}`);
+                const partnerData = doc.data();
+                console.log("Données du document:", partnerData);
+                
+                this.partners.push({
+                    id: doc.id,
+                    ...partnerData
+                });
+            });
+            
+            console.log(`Total des partenaires chargés: ${this.partners.length}`);
+            this.renderPartners();
+        } catch (error) {
+            console.error("Erreur lors du chargement des partenaires:", error);
+            document.getElementById(this.containerId).innerHTML = `
+                <div class="error-message">
+                    Une erreur est survenue lors du chargement des partenaires: ${error.message}
+                </div>
+            `;
+        }
+    }
+
+    // Modifiez la méthode renderPartners pour afficher un tableau
+renderPartners() {
+    const container = document.getElementById(this.containerId);
+    const loading = document.getElementById(this.loadingId);
+    const empty = document.getElementById(this.emptyId);
+    
+    // Masquer le message de chargement
+    if (loading) loading.style.display = 'none';
+    
+    if (this.partners.length === 0) {
+        // Afficher le message "vide" s'il n'y a pas de partenaires
+        if (empty) empty.style.display = 'block';
+        return;
+    }
+    
+    // Masquer le message "vide"
+    if (empty) empty.style.display = 'none';
+    
+    // Créer un tableau pour afficher les partenaires
+    let tableHTML = `
+        <table class="data-table" id="partners-table">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Type</th>
+                    <th>Informations</th>
+                    <th>Site Web / réseaux sociaux</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    // Générer les lignes du tableau pour chaque partenaire
+    this.partners.forEach(partner => {
+        const formattedType = this.formatPartnerType(partner.type);
+        // Limiter la longueur du texte des informations pour l'affichage
+        const infoText = partner.info ? 
+            (partner.info.length > 50 ? partner.info.substring(0, 50) + '...' : partner.info) 
+            : '-';
+        
+        tableHTML += `
+            <tr data-id="${partner.id}" data-collection="${this.collectionName}">
+                <td>${partner.name || '-'}</td>
+                <td>${formattedType}</td>
+                <td><div class="truncate-text">${infoText}</div></td>
+                <td>${partner.website ? 
+                    `<a href="${partner.website}" target="_blank" title="${partner.website}">
+                        <i class="fas fa-external-link-alt"></i> Site
+                    </a>` : '-'}</td>
+                <td class="table-actions">
+                    <button class="action-view view-partner" title="Voir">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="action-edit edit-partner" title="Modifier">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="action-delete delete-partner" title="Supprimer">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    // Fermer le tableau
+    tableHTML += `
+            </tbody>
+        </table>
+    `;
+    
+    // Mettre à jour le contenu du conteneur
+    container.innerHTML = tableHTML;
+    
+    // Ajouter les écouteurs d'événements pour les actions
+    this.addEventListeners();
+}
+    // Create a partner card HTML
+    createPartnerCard(partner) {
+        // Obtenir l'icône en fonction du type d'établissement
+        const typeIcon = this.getTypeIcon(partner.type);
+        
+        // Formatter le type d'établissement pour l'affichage
+        const formattedType = this.formatPartnerType(partner.type);
+        
+        return `
+            <div class="partner-card" data-id="${partner.id}">
+                <img src="${partner.imageUrl || '/images/placeholder.jpg'}" alt="${partner.name}" class="partner-image">
+                <div class="partner-content">
+                    <h3 class="partner-name">${partner.name}</h3>
+                    <div class="partner-type">
+                        <i class="${typeIcon}"></i> ${formattedType}
+                    </div>
+                    <div class="partner-info">${partner.info || ''}</div>
+                    <div class="partner-actions">
+                        <a href="${partner.mapsUrl}" target="_blank" class="partner-link">
+                            <i class="fas fa-map-marker-alt"></i> Voir sur la carte
+                        </a>
+                        <div class="partner-buttons">
+                            <button class="view-partner" title="Voir les détails">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="edit-partner" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="delete-partner" title="Supprimer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Get icon based on partner type
+    getTypeIcon(type) {
+        switch (type) {
+            case 'restaurant':
+                return 'fas fa-utensils';
+            case 'brasserie':
+                return 'fas fa-beer';
+            case 'bar':
+                return 'fas fa-glass-martini-alt';
+            case 'cafe':
+                return 'fas fa-coffee';
+            default:
+                return 'fas fa-store';
+        }
+    }
+
+    // Format partner type for display
+    formatPartnerType(type) {
+        switch (type) {
+            case 'restaurant':
+                return 'Restaurant';
+            case 'brasserie':
+                return 'Brasserie';
+            case 'bar':
+                return 'Bar';
+            case 'cafe':
+                return 'Café';
+            case 'autre':
+                return 'Autre établissement';
+            default:
+                return type || 'Non spécifié';
+        }
+    }
 
 
 
+    // View partner details
+async viewPartner(partnerId) {
+    try {
+        const partnerRef = doc(db, this.collectionName, partnerId);
+        const partnerDoc = await getDoc(partnerRef);
+        
+        if (partnerDoc.exists()) {
+            const partnerData = partnerDoc.data();
+            
+            // Formatage du type d'établissement
+            const formattedType = this.formatPartnerType(partnerData.type);
+            
+            // Création du contenu HTML pour l'affichage
+            const viewHtml = `
+                <div class="swal-partner-details">
+                    <div class="partner-detail">
+                        <h4>Nom</h4>
+                        <p>${partnerData.name || '-'}</p>
+                    </div>
+                    <div class="partner-detail">
+                        <h4>Type d'établissement</h4>
+                        <p>${formattedType}</p>
+                    </div>
+                    <div class="partner-detail">
+                        <h4>Informations</h4>
+                        <p>${partnerData.info || '-'}</p>
+                    </div>
+                    <div class="partner-detail">
+                        <h4>URL Google Maps</h4>
+                        <p>${partnerData.mapsUrl ? 
+                            `<a href="${partnerData.mapsUrl}" target="_blank">${partnerData.mapsUrl}</a>` : 
+                            '-'
+                        }</p>
+                    </div>
+                    <div class="partner-detail">
+                        <h4>Site Web</h4>
+                        <p>${partnerData.website ? 
+                            `<a href="${partnerData.website}" target="_blank">${partnerData.website}</a>` : 
+                            '-'
+                        }</p>
+                    </div>
+                    ${partnerData.imageUrl ? `
+                    <div class="partner-detail">
+                        <h4>Image</h4>
+                        <div class="partner-image-view">
+                            <img src="${partnerData.imageUrl}" alt="${partnerData.name}" style="max-width: 100%; max-height: 300px;">
+                        </div>
+                    </div>` : ''}
+                </div>
+            `;
+            
+            // Afficher les détails dans un SweetAlert
+            Swal.fire({
+                title: partnerData.name || 'Détails du partenaire',
+                html: viewHtml,
+                width: '800px',
+                showConfirmButton: false,
+                showCloseButton: true,
+                showDenyButton: true,
+                denyButtonText: 'Modifier',
+                denyButtonColor: '#3085d6',
+                customClass: {
+                    container: 'swal-partner-container',
+                    popup: 'swal-partner-popup',
+                    content: 'swal-partner-content'
+                }
+            }).then((result) => {
+                if (result.isDenied) {
+                    // Si l'utilisateur clique sur "Modifier", on passe en mode édition
+                    this.editPartner(partnerId);
+                }
+            });
+            
+            // Ajouter des styles pour améliorer l'apparence
+            const styleElement = document.createElement('style');
+            styleElement.textContent = `
+                .swal-partner-container {
+                    z-index: 9999;
+                }
+                .swal-partner-popup {
+                    padding: 20px;
+                }
+                .swal-partner-content {
+                    padding: 0;
+                }
+                .swal-partner-details {
+                    text-align: left;
+                    max-height: 70vh;
+                    overflow-y: auto;
+                    padding-right: 10px;
+                }
+                .partner-detail {
+                    margin-bottom: 15px;
+                    border-bottom: 1px solid #eee;
+                    padding-bottom: 10px;
+                }
+                .partner-detail:last-child {
+                    border-bottom: none;
+                }
+                .partner-detail h4 {
+                    margin: 0;
+                    color: #555;
+                    font-size: 14px;
+                    font-weight: 600;
+                }
+                .partner-detail p {
+                    margin: 5px 0 0;
+                    font-size: 16px;
+                }
+                .partner-image-view {
+                    margin-top: 10px;
+                    text-align: center;
+                }
+            `;
+            document.head.appendChild(styleElement);
+            
+        } else {
+            Swal.fire({
+                title: 'Partenaire non trouvé',
+                text: "Le partenaire demandé n'existe pas ou a été supprimé.",
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        }
+    } catch (error) {
+        console.error("Erreur lors de l'affichage du partenaire:", error);
+        Swal.fire({
+            title: 'Erreur!',
+            text: `Une erreur est survenue: ${error.message}`,
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    }
+}
+
+// Show partner edit form
+async editPartner(partnerId) {
+    try {
+        // Récupérer les données du partenaire
+        const partnerRef = doc(db, this.collectionName, partnerId);
+        const partnerDoc = await getDoc(partnerRef);
+        
+        if (!partnerDoc.exists()) {
+            throw new Error("Le partenaire n'existe pas");
+        }
+        
+        const partnerData = partnerDoc.data();
+        
+        // Création du formulaire d'édition
+        const formHtml = `
+            <form id="edit-partner-form" class="swal-partner-form">
+                <div class="form-group">
+                    <label for="edit-name">Nom*</label>
+                    <input type="text" id="edit-name" class="swal2-input" value="${partnerData.name || ''}" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-type">Type d'établissement</label>
+                    <select id="edit-type" class="swal2-select">
+                        <option value="restaurant" ${partnerData.type === 'restaurant' ? 'selected' : ''}>Restaurant</option>
+                        <option value="hotel" ${partnerData.type === 'hotel' ? 'selected' : ''}>Hôtel</option>
+                        <option value="venue" ${partnerData.type === 'venue' ? 'selected' : ''}>Lieu</option>
+                        <option value="other" ${partnerData.type === 'other' ? 'selected' : ''}>Autre</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-info">Informations</label>
+                    <textarea id="edit-info" class="swal2-textarea">${partnerData.info || ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="edit-maps-url">URL Google Maps</label>
+                    <input type="url" id="edit-maps-url" class="swal2-input" value="${partnerData.mapsUrl || ''}">
+                </div>
+                <div class="form-group">
+                    <label for="edit-website">Site Web</label>
+                    <input type="url" id="edit-website" class="swal2-input" value="${partnerData.website || ''}">
+                </div>
+                <div class="form-group">
+                    <label for="edit-image">Image</label>
+                    <input type="file" id="edit-image" class="swal2-file" accept="image/*">
+                    ${partnerData.imageUrl ? `
+                    <div class="current-image">
+                        <p>Image actuelle:</p>
+                        <img src="${partnerData.imageUrl}" alt="Image actuelle" style="max-width: 100%; max-height: 200px; margin-top: 10px;">
+                    </div>` : ''}
+                    <div id="image-preview" class="image-preview"></div>
+                </div>
+            </form>
+        `;
+        
+        // Affichage du formulaire d'édition
+        const result = await Swal.fire({
+            title: 'Modifier le partenaire',
+            html: formHtml,
+            width: '800px',
+            showCancelButton: true,
+            confirmButtonText: 'Enregistrer',
+            cancelButtonText: 'Annuler',
+            confirmButtonColor: '#28a745',
+            customClass: {
+                container: 'swal-partner-container',
+                popup: 'swal-partner-popup',
+                content: 'swal-partner-content'
+            },
+            didOpen: () => {
+                // Prévisualisation de l'image
+                const imageInput = document.getElementById('edit-image');
+                const imagePreview = document.getElementById('image-preview');
+                
+                imageInput.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            imagePreview.innerHTML = `
+                                <p>Nouvelle image:</p>
+                                <img src="${e.target.result}" style="max-width: 100%; max-height: 200px; margin-top: 10px;">
+                            `;
+                        };
+                        reader.readAsDataURL(this.files[0]);
+                    }
+                });
+            },
+            preConfirm: async () => {
+                // Validation du formulaire
+                const name = document.getElementById('edit-name').value;
+                if (!name) {
+                    Swal.showValidationMessage('Le nom est obligatoire');
+                    return false;
+                }
+                
+                try {
+                    // Afficher un indicateur de chargement
+                    Swal.showLoading();
+                    
+                    // Collecte des données du formulaire
+                    const formData = {
+                        name: document.getElementById('edit-name').value,
+                        type: document.getElementById('edit-type').value,
+                        info: document.getElementById('edit-info').value,
+                        mapsUrl: document.getElementById('edit-maps-url').value,
+                        website: document.getElementById('edit-website').value,
+                        updatedAt: serverTimestamp()
+                    };
+                    
+                    // Gestion de l'image en Base64
+                    const imageFile = document.getElementById('edit-image').files[0];
+                    if (imageFile) {
+                        try {
+                            // Convertir l'image en Base64
+                            const imageBase64 = await convertImageToBase64(imageFile);
+                            formData.imageUrl = imageBase64;
+                        } catch (uploadError) {
+                            console.error("Erreur lors de la conversion de l'image:", uploadError);
+                            Swal.showValidationMessage(`Erreur avec l'image: ${uploadError.message}`);
+                            return false;
+                        }
+                    }
+                    
+                    // Mise à jour dans Firestore
+                    await updateDoc(doc(db, this.collectionName, partnerId), formData);
+                    
+                    // Mise à jour des données locales
+                    this.updateLocalPartnerData(partnerId, formData);
+                    
+                    return true;
+                } catch (error) {
+                    console.error("Erreur lors de la mise à jour:", error);
+                    Swal.showValidationMessage(`Erreur: ${error.message}`);
+                    return false;
+                }
+            }
+        });
+        
+        if (result.isConfirmed) {
+            // Notification de succès et rafraîchissement du tableau
+            this.renderPartners();
+            if (typeof updateStatsCards === 'function') {
+                updateStatsCards();
+            }
+            Swal.fire({
+                title: 'Partenaire mis à jour!',
+                text: 'Les modifications ont été enregistrées avec succès.',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+        
+        // Ajouter des styles pour le formulaire
+        const styleElement = document.createElement('style');
+        styleElement.textContent = `
+            .swal-partner-form {
+                text-align: left;
+                max-height: 70vh;
+                overflow-y: auto;
+                padding-right: 10px;
+            }
+            .swal-partner-form .form-group {
+                margin-bottom: 15px;
+            }
+            .swal-partner-form label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: 600;
+                color: #555;
+            }
+            .swal-partner-form .swal2-input,
+            .swal-partner-form .swal2-textarea,
+            .swal-partner-form .swal2-file,
+            .swal-partner-form .swal2-select {
+                margin: 5px 0;
+                width: 100%;
+            }
+            .swal-partner-form .swal2-textarea {
+                height: 100px;
+            }
+            .image-preview {
+                margin-top: 10px;
+            }
+            .current-image {
+                margin-top: 10px;
+                margin-bottom: 15px;
+            }
+            .current-image p {
+                margin: 0 0 5px;
+                font-weight: 600;
+            }
+        `;
+        document.head.appendChild(styleElement);
+        
+    } catch (error) {
+        console.error("Erreur lors de l'édition du partenaire:", error);
+        Swal.fire({
+            title: 'Erreur!',
+            text: `Une erreur est survenue: ${error.message}`,
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    }
+}
+
+// Show delete confirmation
+showDeleteConfirmation(partnerId) {
+    const partner = this.partners.find(p => p.id === partnerId);
+    if (!partner) return;
+    
+    Swal.fire({
+        title: 'Êtes-vous sûr?',
+        html: `Vous êtes sur le point de supprimer le partenaire <strong>${partner.name}</strong>.<br>Cette action est irréversible!`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Oui, supprimer!',
+        cancelButtonText: 'Annuler',
+        showLoaderOnConfirm: true,
+        preConfirm: () => {
+            return this.deletePartner(partnerId)
+                .catch(error => {
+                    Swal.showValidationMessage(
+                        `La suppression a échoué: ${error.message}`
+                    );
+                });
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire(
+                'Supprimé!',
+                `Le partenaire "${partner.name}" a été supprimé avec succès.`,
+                'success'
+            );
+        }
+    });
+}
+
+// Delete partner from Firebase
+async deletePartner(partnerId) {
+    try {
+        // Récupérer les données du partenaire pour supprimer l'image si nécessaire
+        const partnerRef = doc(db, this.collectionName, partnerId);
+        const partnerDoc = await getDoc(partnerRef);
+        
+        if (partnerDoc.exists()) {
+            const partnerData = partnerDoc.data();
+            
+            // Supprimer l'image du storage si elle existe
+            if (partnerData.imageUrl && (partnerData.imageUrl.startsWith('gs://') || partnerData.imageUrl.startsWith('https://firebasestorage.googleapis.com'))) {
+                try {
+                    // Créer une référence au fichier basée sur l'URL
+                    const imageRef = ref(storage, partnerData.imageUrl);
+                    await deleteObject(imageRef);
+                    console.log("Image supprimée avec succès");
+                } catch (imageError) {
+                    console.error("Erreur lors de la suppression de l'image:", imageError);
+                    // Continuer malgré l'erreur de suppression d'image
+                }
+            }
+        }
+        
+        // Supprimer le document du partenaire
+        await deleteDoc(partnerRef);
+        
+        // Mettre à jour le tableau local
+        this.partners = this.partners.filter(p => p.id !== partnerId);
+        
+        // Mettre à jour l'affichage
+        this.renderPartners();
+        
+        // Mettre à jour les statistiques si la fonction existe
+        if (typeof updateStatsCards === 'function') {
+            updateStatsCards();
+        }
+        
+        return true;
+    } catch (error) {
+        console.error("Erreur lors de la suppression du partenaire:", error);
+        throw error;
+    }
+}
+
+// Méthode utilitaire pour mettre à jour les données locales
+updateLocalPartnerData(partnerId, formData) {
+    // Mise à jour des données locales
+    const partnerIndex = this.partners.findIndex(p => p.id === partnerId);
+    if (partnerIndex !== -1) {
+        this.partners[partnerIndex] = {
+            ...this.partners[partnerIndex],
+            ...formData
+        };
+    }
+    
+    // Mise à jour des données filtrées si elles existent
+    if (this.filteredPartners) {
+        const filteredIndex = this.filteredPartners.findIndex(p => p.id === partnerId);
+        if (filteredIndex !== -1) {
+            this.filteredPartners[filteredIndex] = {
+                ...this.filteredPartners[filteredIndex],
+                ...formData
+            };
+        }
+    }
+}
+
+// Add event listeners
+// Add event listeners
+addEventListeners() {
+    // View partner buttons
+    document.querySelectorAll(`.view-partner`).forEach(button => {
+        button.addEventListener('click', (e) => {
+            const row = e.target.closest('tr');
+            const partnerId = row.dataset.id;
+            this.viewPartner(partnerId);
+        });
+    });
+
+    // Edit partner buttons
+    document.querySelectorAll(`.edit-partner`).forEach(button => {
+        button.addEventListener('click', (e) => {
+            const row = e.target.closest('tr');
+            const partnerId = row.dataset.id;
+            this.editPartner(partnerId);
+        });
+    });
+
+    // Delete partner buttons
+    document.querySelectorAll(`.delete-partner`).forEach(button => {
+        button.addEventListener('click', (e) => {
+            const row = e.target.closest('tr');
+            const partnerId = row.dataset.id;
+            this.showDeleteConfirmation(partnerId);
+        });
+    });
+}
+
+// Formatage du type de partenaire
+formatPartnerType(type) {
+    const typeMapping = {
+        'restaurant': 'Restaurant',
+        'hotel': 'Hôtel',
+        'venue': 'Lieu',
+        'other': 'Autre'
+    };
+    
+    return typeMapping[type] || type || '-';
+}
+}
+
+// Initialize form handlers for partners
+function initializePartnerFormHandlers(partnerManager) {
+    // Form submit handler
+    const partnerForm = document.getElementById('partner-form');
+    if (partnerForm) {
+        partnerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Récupérer les valeurs du formulaire
+            const name = document.getElementById('partner-name').value;
+            const type = document.getElementById('partner-type').value;
+            const info = document.getElementById('partner-info').value;
+            const mapsUrl = document.getElementById('partner-maps-url').value;
+            const website = document.getElementById('partner-website').value;
+            
+            // Récupérer l'ID du partenaire s'il s'agit d'une mise à jour
+            const submitButton = document.getElementById('partner-submit');
+            const partnerId = submitButton.dataset.partnerId;
+            const isUpdate = !!partnerId;
+            
+            // Afficher le spinner et désactiver le bouton
+            const submitText = document.getElementById('partner-submit-text');
+            const submitSpinner = document.getElementById('partner-submit-spinner');
+            submitText.style.display = 'none';
+            submitSpinner.style.display = 'inline-block';
+            submitButton.disabled = true;
+            
+            try {
+                // Créer l'objet pour les données du partenaire
+                const partnerData = {
+                    name,
+                    type,
+                    info,
+                    mapsUrl,
+                    website: website || null,
+                    updatedAt: serverTimestamp()
+                };
+                
+                // Si c'est une nouvelle entrée, ajouter la date de création
+                if (!isUpdate) {
+                    partnerData.createdAt = serverTimestamp();
+                }
+                
+                // Référence au document Firestore
+                let partnerRef;
+                if (isUpdate) {
+                    partnerRef = doc(db, 'partners', partnerId);
+                } else {
+                    partnerRef = doc(collection(db, 'partners'));
+                }
+                
+                // Gérer l'upload de l'image en Base64
+                const imageInput = document.getElementById('partner-image');
+                if (imageInput.files && imageInput.files[0]) {
+                    try {
+                        const imageBase64 = await convertImageToBase64(imageInput.files[0]);
+                        partnerData.imageUrl = imageBase64;
+                    } catch (uploadError) {
+                        console.error("Erreur lors de la conversion de l'image:", uploadError);
+                        showToast("L'image n'a pas pu être traitée, le partenaire sera enregistré sans image", "error");
+                    }
+                }
+                
+                // Enregistrer les données dans Firestore
+                if (isUpdate) {
+                    await updateDoc(partnerRef, partnerData);
+                } else {
+                    await setDoc(partnerRef, partnerData);
+                }
+                
+                // Réinitialiser le formulaire mais ne pas le faire disparaître
+                document.getElementById('partner-name').value = '';
+                document.getElementById('partner-type').selectedIndex = 0;
+                document.getElementById('partner-info').value = '';
+                document.getElementById('partner-maps-url').value = '';
+                document.getElementById('partner-website').value = '';
+                
+                // Réinitialiser l'aperçu de l'image
+                document.getElementById('partner-image-preview').style.display = 'none';
+                document.getElementById('partner-image-preview').innerHTML = '';
+                imageInput.value = '';
+                
+                // Réinitialiser le bouton
+                submitButton.dataset.partnerId = '';
+                submitText.textContent = 'Ajouter le partenaire';
+                
+                // Si c'était une mise à jour, actualiser l'affichage
+                if (isUpdate) {
+                    document.querySelector('#add-partner-page .page-title').textContent = 'Ajouter un partenaire';
+                }
+                
+                // Afficher un message de succès
+                showToast(
+                    isUpdate ? 'Partenaire mis à jour avec succès!' : 'Partenaire ajouté avec succès!',
+                    'success'
+                );
+                
+                // Recharger la liste des partenaires en arrière-plan
+                await partnerManager.loadPartners();
+                
+                // Mettre à jour les statistiques si la fonction existe
+                if (typeof updateStatsCards === 'function') {
+                    updateStatsCards();
+                }
+            } catch (error) {
+                console.error("Erreur lors de l'enregistrement du partenaire:", error);
+                showToast(`Erreur: ${error.message}`, 'error');
+            } finally {
+                // Réinitialiser le bouton quoi qu'il arrive
+                submitText.style.display = 'inline';
+                submitSpinner.style.display = 'none';
+                submitButton.disabled = false;
+            }
+        });
+    }
+    
+    // Fonction pour afficher des notifications toast
+    function showToast(message, type = 'success') {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: type === 'success' ? 'Succès!' : 'Erreur',
+                text: message,
+                icon: type,
+                timer: 3000,
+                showConfirmButton: false
+            });
+        } else {
+            alert(message);
+        }
+    }
+    
+    // Cancel button handler
+    const cancelButton = document.getElementById('partner-cancel');
+    if (cancelButton) {
+        cancelButton.addEventListener('click', () => {
+            // Récupérer l'ID du partenaire s'il s'agit d'une mise à jour
+            const submitButton = document.getElementById('partner-submit');
+            const isUpdate = !!submitButton.dataset.partnerId;
+            
+            // Réinitialiser le formulaire
+            document.getElementById('partner-form').reset();
+            
+            // Réinitialiser l'aperçu de l'image
+            document.getElementById('partner-image-preview').style.display = 'none';
+            document.getElementById('partner-image-preview').innerHTML = '';
+            
+            // Réinitialiser le bouton de soumission
+            submitButton.dataset.partnerId = '';
+            document.getElementById('partner-submit-text').textContent = 'Ajouter le partenaire';
+            
+            // Réinitialiser le titre de la page
+            document.querySelector('#add-partner-page .page-title').textContent = 'Ajouter un partenaire';
+            
+            // Si c'était une mise à jour, revenir à la liste des partenaires
+            if (isUpdate) {
+                document.getElementById('add-partner-page').style.display = 'none';
+                document.getElementById('partners-list-page').style.display = 'block';
+            }
+            // Pour un nouvel ajout, on laisse la page de formulaire visible
+        });
+    }
+    
+    // Add partner button handler
+    const addPartnerButton = document.getElementById('add-partner-button');
+    if (addPartnerButton) {
+        addPartnerButton.addEventListener('click', () => {
+            // Réinitialiser le formulaire avant d'afficher la page
+            document.getElementById('partner-form').reset();
+            
+            // Réinitialiser l'aperçu de l'image
+            document.getElementById('partner-image-preview').style.display = 'none';
+            document.getElementById('partner-image-preview').innerHTML = '';
+            
+            // Réinitialiser le bouton de soumission
+            const submitButton = document.getElementById('partner-submit');
+            submitButton.dataset.partnerId = '';
+            document.getElementById('partner-submit-text').textContent = 'Ajouter le partenaire';
+            
+            // Réinitialiser le titre de la page
+            document.querySelector('#add-partner-page .page-title').textContent = 'Ajouter un partenaire';
+            
+            // Afficher la page d'ajout de partenaire
+            document.getElementById('partners-list-page').style.display = 'none';
+            document.getElementById('add-partner-page').style.display = 'block';
+        });
+    }
+    
+    // Initialiser la prévisualisation des images
+    initializeImagePreview();
+    
+    // Back to list button handler
+    const backToListButton = document.getElementById('back-to-list-button');
+    if (backToListButton) {
+        backToListButton.addEventListener('click', () => {
+            // Réinitialiser le formulaire
+            document.getElementById('partner-form').reset();
+            
+            // Réinitialiser l'aperçu de l'image
+            document.getElementById('partner-image-preview').style.display = 'none';
+            document.getElementById('partner-image-preview').innerHTML = '';
+            
+            // Réinitialiser le bouton de soumission
+            const submitButton = document.getElementById('partner-submit');
+            submitButton.dataset.partnerId = '';
+            document.getElementById('partner-submit-text').textContent = 'Ajouter le partenaire';
+            
+            // Réinitialiser le titre de la page
+            document.querySelector('#add-partner-page .page-title').textContent = 'Ajouter un partenaire';
+            
+            // Revenir à la liste des partenaires
+            document.getElementById('add-partner-page').style.display = 'none';
+            document.getElementById('partners-list-page').style.display = 'block';
+        });
+    }
+}
+
+// Fonction pour créer un nouveau partenaire
+async function createPartner(partnerData, imageFile = null) {
+    try {
+        // Créer une référence pour le nouveau document
+        const partnerRef = doc(collection(db, 'partners'));
+        
+        // Ajouter les timestamps
+        partnerData.createdAt = serverTimestamp();
+        partnerData.updatedAt = serverTimestamp();
+        
+        // Gérer l'upload de l'image si fournie
+        if (imageFile) {
+            try {
+                // Convertir l'image en Base64
+                const imageBase64 = await convertImageToBase64(imageFile);
+                partnerData.imageUrl = imageBase64;
+            } catch (uploadError) {
+                console.error("Erreur lors de la conversion de l'image:", uploadError);
+                // Continuer sans image
+            }
+        }
+        
+        // Enregistrer dans Firestore
+        await setDoc(partnerRef, partnerData);
+        
+        return partnerRef.id;
+    } catch (error) {
+        console.error("Erreur lors de la création du partenaire:", error);
+        throw error;
+    }
+}
+
+// Fonction pour mettre à jour un partenaire existant
+async function updatePartner(partnerId, partnerData, imageFile = null) {
+    try {
+        // Référence au document du partenaire
+        const partnerRef = doc(db, 'partners', partnerId);
+        
+        // Ajouter le timestamp de mise à jour
+        partnerData.updatedAt = serverTimestamp();
+        
+        // Gérer l'upload de l'image si fournie
+        if (imageFile) {
+            try {
+                // Convertir l'image en Base64 au lieu d'utiliser Storage
+                const imageBase64 = await convertImageToBase64(imageFile);
+                partnerData.imageUrl = imageBase64;
+            } catch (uploadError) {
+                console.error("Erreur lors de la conversion de l'image:", uploadError);
+                // Continuer sans mettre à jour l'image
+            }
+        }
+        
+        // Mise à jour dans Firestore
+        await updateDoc(partnerRef, partnerData);
+        
+        return partnerId;
+    } catch (error) {
+        console.error("Erreur lors de la mise à jour du partenaire:", error);
+        throw error;
+    }
+}
 
 
 
+// Modification du comportement du formulaire pour ne pas le faire disparaître après soumission
+function updatePartnerFormSubmitBehavior() {
+    const partnerForm = document.getElementById('partner-form');
+    if (partnerForm) {
+        // Remplacer le gestionnaire d'événements existant
+        const newSubmitHandler = async (e) => {
+            e.preventDefault();
+            
+            // Récupérer les valeurs du formulaire
+            const name = document.getElementById('partner-name').value;
+            const type = document.getElementById('partner-type').value;
+            const info = document.getElementById('partner-info').value;
+            const mapsUrl = document.getElementById('partner-maps-url').value;
+            const website = document.getElementById('partner-website').value;
+            
+            // Récupérer l'ID du partenaire s'il s'agit d'une mise à jour
+            const submitButton = document.getElementById('partner-submit');
+            const partnerId = submitButton.dataset.partnerId;
+            const isUpdate = !!partnerId;
+            
+            // Afficher le spinner et désactiver le bouton
+            const submitText = document.getElementById('partner-submit-text');
+            const submitSpinner = document.getElementById('partner-submit-spinner');
+            submitText.style.display = 'none';
+            submitSpinner.style.display = 'inline-block';
+            submitButton.disabled = true;
+            
+            try {
+                // Créer l'objet pour les données du partenaire
+                const partnerData = {
+                    name,
+                    type,
+                    info,
+                    mapsUrl,
+                    website: website || null,
+                    updatedAt: serverTimestamp()
+                };
+                
+                // Si c'est une nouvelle entrée, ajouter la date de création
+                if (!isUpdate) {
+                    partnerData.createdAt = serverTimestamp();
+                }
+                
+                // Référence au document Firestore
+                let partnerRef;
+                if (isUpdate) {
+                    partnerRef = doc(db, 'partners', partnerId);
+                } else {
+                    partnerRef = doc(collection(db, 'partners'));
+                }
+                
+                // Gérer l'upload de l'image si nécessaire
+                const imageInput = document.getElementById('partner-image');
+                
+                if (imageInput.files && imageInput.files[0]) {
+                    try {
+                        // Convertir l'image en Base64
+                        const imageBase64 = await convertImageToBase64(imageInput.files[0]);
+                        partnerData.imageUrl = imageBase64;
+                    } catch (uploadError) {
+                        console.error("Erreur lors de la conversion de l'image:", uploadError);
+                        showToast("L'image n'a pas pu être traitée", "error");
+                    }
+                }
+                
+                // Enregistrer les données dans Firestore
+                if (isUpdate) {
+                    await updateDoc(partnerRef, partnerData);
+                } else {
+                    await setDoc(partnerRef, partnerData);
+                }
+                
+                // IMPORTANT: Ne PAS faire disparaître le formulaire ici
+                // Simplement vider les champs
+                document.getElementById('partner-name').value = '';
+                document.getElementById('partner-type').selectedIndex = 0;
+                document.getElementById('partner-info').value = '';
+                document.getElementById('partner-maps-url').value = '';
+                document.getElementById('partner-website').value = '';
+                
+                // Réinitialiser l'aperçu de l'image
+                document.getElementById('partner-image-preview').style.display = 'none';
+                document.getElementById('partner-image-preview').innerHTML = '';
+                imageInput.value = '';
+                
+                // Si c'était une mise à jour, réinitialiser le mode du formulaire pour un nouvel ajout
+                if (isUpdate) {
+                    submitButton.dataset.partnerId = '';
+                    submitText.textContent = 'Ajouter le partenaire';
+                    document.querySelector('#add-partner-page .page-title').textContent = 'Ajouter un partenaire';
+                    
+                    // IMPORTANT: Ne PAS faire disparaître le formulaire, juste le réinitialiser
+                }
+                
+                // Afficher un message de succès
+                showToast(
+                    isUpdate ? 'Partenaire mis à jour avec succès!' : 'Partenaire ajouté avec succès!',
+                    'success'
+                );
+                
+                // Recharger la liste des partenaires en arrière-plan
+                // (Cela ne fera pas disparaître le formulaire)
+                if (window.partnerManager) {
+                    await window.partnerManager.loadPartners();
+                }
+                
+                // Mettre à jour les statistiques si la fonction existe
+                if (typeof updateStatsCards === 'function') {
+                    updateStatsCards();
+                }
+            } catch (error) {
+                console.error("Erreur lors de l'enregistrement du partenaire:", error);
+                showToast(`Erreur: ${error.message}`, 'error');
+            } finally {
+                // Réinitialiser le bouton quoi qu'il arrive
+                submitText.style.display = 'inline';
+                submitSpinner.style.display = 'none';
+                submitButton.disabled = false;
+            }
+        };
+        
+        // Supprimer tous les anciens gestionnaires d'événements
+        const clonedForm = partnerForm.cloneNode(true);
+        partnerForm.parentNode.replaceChild(clonedForm, partnerForm);
+        
+        // Ajouter le nouveau gestionnaire
+        clonedForm.addEventListener('submit', newSubmitHandler);
+    }
+}
+
+
+
+// Initialiser la gestion des partenaires
+document.addEventListener('DOMContentLoaded', function() {
+    // Créer l'instance du gestionnaire de partenaires
+    window.partnerManager = new PartnerManager();
+    
+    // Initialiser les gestionnaires d'événements du formulaire
+    initializePartnerFormHandlers(window.partnerManager);
+    
+    // Modifier le comportement du formulaire pour qu'il ne disparaisse pas après soumission
+    updatePartnerFormSubmitBehavior();
+    
+    // Charger les partenaires
+    window.partnerManager.loadPartners();
+});
+
+
+// Image upload preview handler - Amélioré
+function initializeImagePreview() {
+    const partnerImage = document.getElementById('partner-image');
+    const partnerImageDrop = document.getElementById('partner-image-drop');
+    const partnerImagePreview = document.getElementById('partner-image-preview');
+    
+    if (partnerImage && partnerImageDrop && partnerImagePreview) {
+        // Gestionnaire de changement de fichier
+        partnerImage.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                
+                // Vérification du type de fichier
+                if (!file.type.match(/image.*/)) {
+                    Swal.fire({
+                        title: 'Format invalide',
+                        text: 'Veuillez sélectionner une image valide (JPG, PNG, GIF...)',
+                        icon: 'error'
+                    });
+                    this.value = '';
+                    return;
+                }
+                
+                // Vérification de la taille du fichier (max 5 MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    Swal.fire({
+                        title: 'Fichier trop volumineux',
+                        text: 'L\'image ne doit pas dépasser 5 MB',
+                        icon: 'error'
+                    });
+                    this.value = '';
+                    return;
+                }
+                
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    partnerImagePreview.innerHTML = `
+                        <div class="preview-container">
+                            <img src="${e.target.result}" alt="Aperçu de l'image" class="preview-image">
+                            <div class="image-preview-remove" id="partner-image-remove">
+                                <i class="fas fa-times"></i> Supprimer
+                            </div>
+                        </div>
+                    `;
+                    partnerImagePreview.style.display = 'block';
+                    
+                    // Ajouter un gestionnaire pour supprimer l'image
+                    document.getElementById('partner-image-remove').addEventListener('click', function() {
+                        partnerImage.value = ''; // Réinitialiser le champ de fichier
+                        partnerImagePreview.style.display = 'none';
+                        partnerImagePreview.innerHTML = '';
+                    });
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Support pour le drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            partnerImageDrop.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            partnerImageDrop.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            partnerImageDrop.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            partnerImageDrop.classList.add('highlighted');
+        }
+        
+        function unhighlight() {
+            partnerImageDrop.classList.remove('highlighted');
+        }
+        
+        // Gestionnaire pour le drop d'images
+        partnerImageDrop.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files && files.length) {
+                const file = files[0];
+                
+                // Vérification du type de fichier
+                if (!file.type.match(/image.*/)) {
+                    Swal.fire({
+                        title: 'Format invalide',
+                        text: 'Veuillez déposer une image valide (JPG, PNG, GIF...)',
+                        icon: 'error'
+                    });
+                    return;
+                }
+                
+                // Vérification de la taille du fichier (max 5 MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    Swal.fire({
+                        title: 'Fichier trop volumineux',
+                        text: 'L\'image ne doit pas dépasser 5 MB',
+                        icon: 'error'
+                    });
+                    return;
+                }
+                
+                // Affecter le fichier au input pour le formulaire
+                partnerImage.files = files;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    partnerImagePreview.innerHTML = `
+                        <div class="preview-container">
+                            <img src="${e.target.result}" alt="Aperçu de l'image" class="preview-image">
+                            <div class="image-preview-remove" id="partner-image-remove">
+                                <i class="fas fa-times"></i> Supprimer
+                            </div>
+                        </div>
+                    `;
+                    partnerImagePreview.style.display = 'block';
+                    
+                    document.getElementById('partner-image-remove').addEventListener('click', function() {
+                        partnerImage.value = '';
+                        partnerImagePreview.style.display = 'none';
+                        partnerImagePreview.innerHTML = '';
+                    });
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // Clic sur la zone pour ouvrir le sélecteur de fichier
+        partnerImageDrop.addEventListener('click', function() {
+            partnerImage.click();
+        });
+        
+        // Ajout de styles pour l'aperçu
+        const styleElement = document.createElement('style');
+        styleElement.textContent = `
+            #partner-image-preview {
+                margin-top: 15px;
+                background-color: #f8f9fa;
+                border-radius: 5px;
+                padding: 10px;
+            }
+            .preview-container {
+                position: relative;
+                display: inline-block;
+            }
+            .preview-image {
+                max-width: 100%;
+                max-height: 250px;
+                border-radius: 4px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .image-preview-remove {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background-color: rgba(255,255,255,0.8);
+                color: #dc3545;
+                border-radius: 4px;
+                padding: 5px 10px;
+                cursor: pointer;
+                transition: all 0.2s;
+                font-size: 14px;
+            }
+            .image-preview-remove:hover {
+                background-color: #dc3545;
+                color: white;
+            }
+            #partner-image-drop {
+                border: 2px dashed #ccc;
+                border-radius: 5px;
+                padding: 30px;
+                text-align: center;
+                color: #6c757d;
+                transition: all 0.2s;
+                cursor: pointer;
+            }
+            #partner-image-drop.highlighted {
+                border-color: #007bff;
+                background-color: rgba(0, 123, 255, 0.05);
+            }
+            #partner-image-drop i {
+                font-size: 24px;
+                margin-bottom: 10px;
+                color: #007bff;
+            }
+        `;
+        document.head.appendChild(styleElement);
+    }
+}
