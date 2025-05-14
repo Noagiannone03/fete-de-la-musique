@@ -266,17 +266,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-
-// Gestionnaire pour fermer le dropdown des partenaires si on clique ailleurs
-function handleDocumentClick(event) {
-  const dropdown = document.getElementById('event-partners-dropdown');
-  const inputWrapper = document.querySelector('#event-partners-input').parentElement;
-  
-  if (dropdown && !inputWrapper.contains(event.target) && !dropdown.contains(event.target)) {
-    dropdown.style.display = 'none';
-  }
-}
-
 // DOM Elements
 const eventForm = document.getElementById('event-form');
 const summerEventForm = document.getElementById('summer-event-form');
@@ -2635,6 +2624,8 @@ class PartnerManager {
         this.partners = [];
     }
 
+
+    
     // Load partners from Firebase
     async loadPartners() {
         try {
@@ -2673,7 +2664,7 @@ class PartnerManager {
         }
     }
 
-    // Modifiez la méthode renderPartners pour afficher un tableau
+// Modification de la méthode renderPartners
 renderPartners() {
     const container = document.getElementById(this.containerId);
     const loading = document.getElementById(this.loadingId);
@@ -2699,7 +2690,9 @@ renderPartners() {
                     <th>Nom</th>
                     <th>Type</th>
                     <th>Informations</th>
-                    <th>Site Web / réseaux sociaux</th>
+                    <th>Adresse</th>
+                    <th>Téléphone</th>
+                    <th>Site Web</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -2719,6 +2712,8 @@ renderPartners() {
                 <td>${partner.name || '-'}</td>
                 <td>${formattedType}</td>
                 <td><div class="truncate-text">${infoText}</div></td>
+                <td>${partner.address || '-'}</td>
+                <td>${partner.phone || '-'}</td>
                 <td>${partner.website ? 
                     `<a href="${partner.website}" target="_blank" title="${partner.website}">
                         <i class="fas fa-external-link-alt"></i> Site
@@ -2768,9 +2763,7 @@ renderPartners() {
                     </div>
                     <div class="partner-info">${partner.info || ''}</div>
                     <div class="partner-actions">
-                        <a href="${partner.mapsUrl}" target="_blank" class="partner-link">
-                            <i class="fas fa-map-marker-alt"></i> Voir sur la carte
-                        </a>
+                
                         <div class="partner-buttons">
                             <button class="view-partner" title="Voir les détails">
                                 <i class="fas fa-eye"></i>
@@ -2837,43 +2830,47 @@ async viewPartner(partnerId) {
             const formattedType = this.formatPartnerType(partnerData.type);
             
             // Création du contenu HTML pour l'affichage
-            const viewHtml = `
-                <div class="swal-partner-details">
-                    <div class="partner-detail">
-                        <h4>Nom</h4>
-                        <p>${partnerData.name || '-'}</p>
-                    </div>
-                    <div class="partner-detail">
-                        <h4>Type d'établissement</h4>
-                        <p>${formattedType}</p>
-                    </div>
-                    <div class="partner-detail">
-                        <h4>Informations</h4>
-                        <p>${partnerData.info || '-'}</p>
-                    </div>
-                    <div class="partner-detail">
-                        <h4>URL Google Maps</h4>
-                        <p>${partnerData.mapsUrl ? 
-                            `<a href="${partnerData.mapsUrl}" target="_blank">${partnerData.mapsUrl}</a>` : 
-                            '-'
-                        }</p>
-                    </div>
-                    <div class="partner-detail">
-                        <h4>Site Web</h4>
-                        <p>${partnerData.website ? 
-                            `<a href="${partnerData.website}" target="_blank">${partnerData.website}</a>` : 
-                            '-'
-                        }</p>
-                    </div>
-                    ${partnerData.imageUrl ? `
-                    <div class="partner-detail">
-                        <h4>Image</h4>
-                        <div class="partner-image-view">
-                            <img src="${partnerData.imageUrl}" alt="${partnerData.name}" style="max-width: 100%; max-height: 300px;">
-                        </div>
-                    </div>` : ''}
-                </div>
-            `;
+            // Dans la méthode viewPartner, chercher le bloc de code qui crée le contenu HTML pour l'affichage
+// et modifier comme suit:
+
+const viewHtml = `
+    <div class="swal-partner-details">
+        <div class="partner-detail">
+            <h4>Nom</h4>
+            <p>${partnerData.name || '-'}</p>
+        </div>
+        <div class="partner-detail">
+            <h4>Type d'établissement</h4>
+            <p>${formattedType}</p>
+        </div>
+        <div class="partner-detail">
+            <h4>Informations</h4>
+            <p>${partnerData.info || '-'}</p>
+        </div>
+        <div class="partner-detail">
+            <h4>Adresse</h4>
+            <p>${partnerData.address || '-'}</p>
+        </div>
+        <div class="partner-detail">
+            <h4>Téléphone</h4>
+            <p>${partnerData.phone ? `<a href="tel:${partnerData.phone}">${partnerData.phone}</a>` : '-'}</p>
+        </div>
+        <div class="partner-detail">
+            <h4>Site Web</h4>
+            <p>${partnerData.website ? 
+                `<a href="${partnerData.website}" target="_blank">${partnerData.website}</a>` : 
+                '-'
+            }</p>
+        </div>
+        ${partnerData.imageUrl ? `
+        <div class="partner-detail">
+            <h4>Image</h4>
+            <div class="partner-image-view">
+                <img src="${partnerData.imageUrl}" alt="${partnerData.name}" style="max-width: 100%; max-height: 300px;">
+            </div>
+        </div>` : ''}
+    </div>
+`;
             
             // Afficher les détails dans un SweetAlert
             Swal.fire({
@@ -2972,46 +2969,50 @@ async editPartner(partnerId) {
         
         const partnerData = partnerDoc.data();
         
-        // Création du formulaire d'édition
         const formHtml = `
-            <form id="edit-partner-form" class="swal-partner-form">
-                <div class="form-group">
-                    <label for="edit-name">Nom*</label>
-                    <input type="text" id="edit-name" class="swal2-input" value="${partnerData.name || ''}" required>
-                </div>
-                <div class="form-group">
-                    <label for="edit-type">Type d'établissement</label>
-                    <select id="edit-type" class="swal2-select">
-                        <option value="restaurant" ${partnerData.type === 'restaurant' ? 'selected' : ''}>Restaurant</option>
-                        <option value="hotel" ${partnerData.type === 'hotel' ? 'selected' : ''}>Hôtel</option>
-                        <option value="venue" ${partnerData.type === 'venue' ? 'selected' : ''}>Lieu</option>
-                        <option value="other" ${partnerData.type === 'other' ? 'selected' : ''}>Autre</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="edit-info">Informations</label>
-                    <textarea id="edit-info" class="swal2-textarea">${partnerData.info || ''}</textarea>
-                </div>
-                <div class="form-group">
-                    <label for="edit-maps-url">URL Google Maps</label>
-                    <input type="url" id="edit-maps-url" class="swal2-input" value="${partnerData.mapsUrl || ''}">
-                </div>
-                <div class="form-group">
-                    <label for="edit-website">Site Web</label>
-                    <input type="url" id="edit-website" class="swal2-input" value="${partnerData.website || ''}">
-                </div>
-                <div class="form-group">
-                    <label for="edit-image">Image</label>
-                    <input type="file" id="edit-image" class="swal2-file" accept="image/*">
-                    ${partnerData.imageUrl ? `
-                    <div class="current-image">
-                        <p>Image actuelle:</p>
-                        <img src="${partnerData.imageUrl}" alt="Image actuelle" style="max-width: 100%; max-height: 200px; margin-top: 10px;">
-                    </div>` : ''}
-                    <div id="image-preview" class="image-preview"></div>
-                </div>
-            </form>
-        `;
+    <form id="edit-partner-form" class="swal-partner-form">
+        <div class="form-group">
+            <label for="edit-name">Nom*</label>
+            <input type="text" id="edit-name" class="swal2-input" value="${partnerData.name || ''}" required>
+        </div>
+        <div class="form-group">
+            <label for="edit-type">Type d'établissement</label>
+            <select id="edit-type" class="swal2-select">
+                <option value="restaurant" ${partnerData.type === 'restaurant' ? 'selected' : ''}>Restaurant</option>
+                <option value="brasserie" ${partnerData.type === 'brasserie' ? 'selected' : ''}>Brasserie</option>
+                <option value="bar" ${partnerData.type === 'bar' ? 'selected' : ''}>Bar</option>
+                <option value="cafe" ${partnerData.type === 'cafe' ? 'selected' : ''}>Café</option>
+                <option value="autre" ${partnerData.type === 'autre' ? 'selected' : ''}>Autre établissement</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="edit-info">Informations</label>
+            <textarea id="edit-info" class="swal2-textarea">${partnerData.info || ''}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="edit-address">Adresse</label>
+            <input type="text" id="edit-address" class="swal2-input" value="${partnerData.address || ''}">
+        </div>
+        <div class="form-group">
+            <label for="edit-phone">Téléphone</label>
+            <input type="tel" id="edit-phone" class="swal2-input" value="${partnerData.phone || ''}">
+        </div>
+        <div class="form-group">
+            <label for="edit-website">Site Web</label>
+            <input type="url" id="edit-website" class="swal2-input" value="${partnerData.website || ''}">
+        </div>
+        <div class="form-group">
+            <label for="edit-image">Image</label>
+            <input type="file" id="edit-image" class="swal2-file" accept="image/*">
+            ${partnerData.imageUrl ? `
+            <div class="current-image">
+                <p>Image actuelle:</p>
+                <img src="${partnerData.imageUrl}" alt="Image actuelle" style="max-width: 100%; max-height: 200px; margin-top: 10px;">
+            </div>` : ''}
+            <div id="image-preview" class="image-preview"></div>
+        </div>
+    </form>
+`;
         
         // Affichage du formulaire d'édition
         const result = await Swal.fire({
@@ -3058,14 +3059,15 @@ async editPartner(partnerId) {
                     Swal.showLoading();
                     
                     // Collecte des données du formulaire
-                    const formData = {
-                        name: document.getElementById('edit-name').value,
-                        type: document.getElementById('edit-type').value,
-                        info: document.getElementById('edit-info').value,
-                        mapsUrl: document.getElementById('edit-maps-url').value,
-                        website: document.getElementById('edit-website').value,
-                        updatedAt: serverTimestamp()
-                    };
+                   const formData = {
+    name: document.getElementById('edit-name').value,
+    type: document.getElementById('edit-type').value,
+    info: document.getElementById('edit-info').value,
+    address: document.getElementById('edit-address').value,
+    phone: document.getElementById('edit-phone').value,
+    website: document.getElementById('edit-website').value,
+    updatedAt: serverTimestamp()
+};
                     
                     // Gestion de l'image en Base64
                     const imageFile = document.getElementById('edit-image').files[0];
@@ -3322,8 +3324,9 @@ function initializePartnerFormHandlers(partnerManager) {
             const name = document.getElementById('partner-name').value;
             const type = document.getElementById('partner-type').value;
             const info = document.getElementById('partner-info').value;
-            const mapsUrl = document.getElementById('partner-maps-url').value;
             const website = document.getElementById('partner-website').value;
+            const address = document.getElementById('partner-address').value;
+const phone = document.getElementById('partner-phone').value;
             
             // Récupérer l'ID du partenaire s'il s'agit d'une mise à jour
             const submitButton = document.getElementById('partner-submit');
@@ -3339,14 +3342,16 @@ function initializePartnerFormHandlers(partnerManager) {
             
             try {
                 // Créer l'objet pour les données du partenaire
-                const partnerData = {
-                    name,
-                    type,
-                    info,
-                    mapsUrl,
-                    website: website || null,
-                    updatedAt: serverTimestamp()
-                };
+               const partnerData = {
+    name,
+    type,
+    info,
+    website: website || null,
+    address: address || null,
+    phone: phone || null,
+    updatedAt: serverTimestamp()
+};
+
                 
                 // Si c'est une nouvelle entrée, ajouter la date de création
                 if (!isUpdate) {
@@ -3382,7 +3387,7 @@ function initializePartnerFormHandlers(partnerManager) {
                 
                 // Réinitialiser le formulaire mais ne pas le faire disparaître
                 document.getElementById('partner-name').value = '';
-                document.getElementById('partner-type').selectedIndex = 0;
+                document.getElementById('partner-type').value = '';
                 document.getElementById('partner-info').value = '';
                 document.getElementById('partner-maps-url').value = '';
                 document.getElementById('partner-website').value = '';
@@ -3603,8 +3608,9 @@ function updatePartnerFormSubmitBehavior() {
             const name = document.getElementById('partner-name').value;
             const type = document.getElementById('partner-type').value;
             const info = document.getElementById('partner-info').value;
-            const mapsUrl = document.getElementById('partner-maps-url').value;
             const website = document.getElementById('partner-website').value;
+            const address = document.getElementById('partner-address').value;
+const phone = document.getElementById('partner-phone').value;
             
             // Récupérer l'ID du partenaire s'il s'agit d'une mise à jour
             const submitButton = document.getElementById('partner-submit');
@@ -3621,13 +3627,14 @@ function updatePartnerFormSubmitBehavior() {
             try {
                 // Créer l'objet pour les données du partenaire
                 const partnerData = {
-                    name,
-                    type,
-                    info,
-                    mapsUrl,
-                    website: website || null,
-                    updatedAt: serverTimestamp()
-                };
+    name,
+    type,
+    info,
+    website: website || null,
+    address: address || null,
+    phone: phone || null,
+    updatedAt: serverTimestamp()
+};
                 
                 // Si c'est une nouvelle entrée, ajouter la date de création
                 if (!isUpdate) {
@@ -3666,10 +3673,11 @@ function updatePartnerFormSubmitBehavior() {
                 // IMPORTANT: Ne PAS faire disparaître le formulaire ici
                 // Simplement vider les champs
                 document.getElementById('partner-name').value = '';
-                document.getElementById('partner-type').selectedIndex = 0;
+                document.getElementById('partner-type').value = '';
                 document.getElementById('partner-info').value = '';
-                document.getElementById('partner-maps-url').value = '';
                 document.getElementById('partner-website').value = '';
+                document.getElementById('partner-address').value = '';
+document.getElementById('partner-phone').value = '';
                 
                 // Réinitialiser l'aperçu de l'image
                 document.getElementById('partner-image-preview').style.display = 'none';
@@ -4417,24 +4425,41 @@ function initMultiSelect(id, getOptionsFunc) {
     renderSelected();
 }
 
-// Fonctions pour obtenir les données
-async function getAllGenres() {
+function getAllGenres() {
+    // Genres par défaut (même si Firestore est vide)
+    const defaultGenres = [
+        { value: "good-vibes", label: "Good vibes" },
+        { value: "chill", label: "Chill" },
+        { value: "punchy", label: "Punchy" },
+        { value: "survolte", label: "Survolté" }
+    ];
+    
     try {
-        const genresSnapshot = await getDocs(collection(db, "genres"));
-        const genres = [];
+        // On peut toujours essayer de récupérer depuis Firestore
+        // et fusionner avec nos valeurs par défaut
+        const genresSnapshot = getDocs(collection(db, "genres"));
         
-        genresSnapshot.forEach(doc => {
-            const data = doc.data();
-            genres.push({
-                value: doc.id,
-                label: data.name || 'Genre sans nom'
+        // Si on a des données de Firestore, on les ajoute (asynchrone)
+        genresSnapshot.then((snapshot) => {
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                // On évite les doublons (si un genre existe déjà par défaut)
+                if (!defaultGenres.some(g => g.value === doc.id)) {
+                    defaultGenres.push({
+                        value: doc.id,
+                        label: data.name || 'Genre sans nom'
+                    });
+                }
             });
+        }).catch(error => {
+            console.error("Erreur lors de la récupération des genres:", error);
         });
         
-        return genres;
+        // On retourne les genres par défaut immédiatement
+        return defaultGenres;
     } catch (error) {
         console.error("Erreur lors de la récupération des genres:", error);
-        return [];
+        return defaultGenres; // En cas d'erreur, on retourne au moins les genres par défaut
     }
 }
 

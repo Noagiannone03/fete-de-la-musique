@@ -474,30 +474,27 @@
                 </div>
                 <div class="form-group">
                     <label for="partner-type" class="form-label">Type d'établissement *</label>
-                    <div class="custom-select-wrapper">
-                        <select id="partner-type" class="custom-select" required>
-                            <option value="" disabled selected>Sélectionner un type</option>
-                            <option value="restaurant">Restaurant</option>
-                            <option value="brasserie">Brasserie</option>
-                            <option value="bar">Bar</option>
-                            <option value="cafe">Café</option>
-                            <option value="autre">Autre</option>
-                        </select>
-                        <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
-                    </div>
+                                        <input type="text" id="partner-type" class="form-input" placeholder="(Ecrire en MAJUSCULE)" required>
+
+                  
                 </div>
                 <div class="form-group col-span-2">
                     <label for="partner-info" class="form-label">Informations pratiques *</label>
                     <textarea id="partner-info" class="form-input" rows="3" placeholder="Horaires, spécialités, etc." required></textarea>
                 </div>
-                <div class="form-group">
-                    <label for="partner-maps-url" class="form-label">URL Google Maps *</label>
-                    <input type="url" id="partner-maps-url" class="form-input" placeholder="https://maps.google.com/..." required>
-                </div>
+               <div class="form-group">
+    <label for="partner-address">Adresse</label>
+    <input type="text" id="partner-address" class="form-input" placeholder="Adresse du partenaire">
+</div>
+<div class="form-group">
+    <label for="partner-phone">Numéro de téléphone</label>
+    <input type="tel" id="partner-phone" class="form-input" placeholder="Ex: +33 1 23 45 67 89">
+</div>
                 <div class="form-group">
                     <label for="partner-website" class="form-label">Site web</label>
                     <input type="url" id="partner-website" class="form-input" placeholder="https://...">
                 </div>
+  
                 <div class="form-group col-span-2">
                     <div class="file-input-container">
                         <label class="form-label">Logo du partenaire *</label>
@@ -584,22 +581,16 @@
                     <input type="text" id="sound-point-name" class="form-input" placeholder="Nom du point de son" required>
                 </div>
                 
-                <div class="form-group">
-                    <label for="sound-point-type" class="form-label">Type de point *</label>
-                    <div class="custom-select-wrapper">
-                        <select id="sound-point-type" class="custom-select" required>
-                            <option value="" disabled selected>Sélectionner un type</option>
-                            <option value="soundsystem">Sound System</option>
-                            <option value="dj">DJ Set</option>
-                            <option value="live">Live</option>
-                            <option value="autre">Autre</option>
-                        </select>
-                        <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
-                    </div>
+
+                 <div class="form-group">
+                    <label for="sound-point-name" class="form-label">Styles de musiques</label>
+                    <input type="text" id="sound-point-type" class="form-input" placeholder="ex : reggae, rap...(ecrire en minuscule + séparé par des virgules)" required>
                 </div>
+
+               
                 
                 <div class="form-group col-span-2">
-                    <label for="sound-point-genres" class="form-label">Genres musicaux *</label>
+                    <label for="sound-point-genres" class="form-label">Genres</label>
                     <div class="multiselect-wrapper">
                         <div class="multiselect-input-wrapper">
                             <input type="text" id="sound-point-genres-input" class="multiselect-search" placeholder="Rechercher ou ajouter un genre">
@@ -612,7 +603,7 @@
                         <input type="hidden" id="sound-point-genres">
                     </div>
                 </div>
-                
+ 
                 <div class="form-group">
                     <label for="sound-point-gps" class="form-label">Coordonnées GPS *</label>
                     <input type="text" id="sound-point-gps" class="form-input" placeholder="Ex: 43°07'53.3&quot;N 5°55'41.4&quot;E" required>
