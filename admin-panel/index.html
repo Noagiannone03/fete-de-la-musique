@@ -80,16 +80,20 @@
                 </a>
                
                 <a href="#" class="menu-item" data-page="summer-events">
-                    <i class="fas fa-sun"></i>
+                    <i class="fas fa-handshake"></i>
                     <span>Liste des partenaires</span>
                 </a>
                 <a href="#" class="menu-item" data-page="add-event">
                     <i class="fas fa-plus-circle"></i>
-                    <span>Ajouter un événement</span>
+                    <span>Ajouter un artiste</span>
                 </a>
                   <a href="#" class="menu-item" data-page="add-event">
-                    <i class="fas fa-plus-circle"></i>
+                    <i class="fas fa-handshake"></i>
                     <span>Ajouter un partenaire</span>
+                </a>
+                 <a href="#" class="menu-item" data-page="pointdeson">
+                    <i class="fas fa-music"></i>
+                    <span>Ajouter un point de son</span>
                 </a>
             </div>
 
@@ -110,7 +114,7 @@
                 <div class="page-header">
                     <h1 class="page-title">Tableau de bord</h1>
                     <div class="page-actions">
-                        <button class="btn btn-primary" id="refresh-data">
+                        <button class="btn btn-primary" id="refresh-data" onclick="location.reload();">
                             <i class="fas fa-sync-alt"></i>
                             Rafraîchir
                         </button>
@@ -151,7 +155,7 @@
                 <!-- Recent Events -->
                 <div class="card">
                     <div class="card-header">
-                        <h2 class="card-title">Liste des événements FDLM</h2>
+                        <h2 class="card-title">Liste des artistes FDLM</h2>
                         <div class="card-actions">
                             <input type="text" id="events-search" class="form-input" placeholder="Rechercher..." style="width: 200px;">
                         </div>
@@ -251,13 +255,13 @@
         <!-- Add Event Page -->
 <div id="add-event-page" class="page" >
     <div class="page-header">
-        <h1 class="page-title">Ajouter un événement</h1>
+        <h1 class="page-title">Ajouter un artiste</h1>
     </div>
 
     <div class="card">
         <div class="card-header">
             <div class="tab-nav">
-                <button class="tab-button active" data-tab="regular-event">Événement standard</button>
+                <button class="tab-button active" data-tab="regular-event">Artiste fête de la musique</button>
                 <button class="tab-button" data-tab="summer-event">Événement d'été</button>
             </div>
         </div>
@@ -270,8 +274,8 @@
                         <input type="text" id="event-title" class="form-input" placeholder="Titre de l'événement" required>
                     </div>
                     <div class="form-group">
-                        <label for="event-subtitle" class="form-label">Sous-titre</label>
-                        <input type="text" id="event-subtitle" class="form-input" placeholder="Sous-titre (optionnel)">
+                        <label for="event-subtitle" class="form-label">style musical</label>
+                        <input type="text" id="event-subtitle" class="form-input" placeholder="ex : salsa ...(tout en minuscule + séparer avec des virgules)">
                     </div>
                     <div class="form-group">
                         <label for="event-location" class="form-label">Point de son</label>
@@ -305,10 +309,7 @@
                         <label for="event-end-date" class="form-label">Date de fin *</label>
                         <input type="datetime-local" id="event-end-date" class="form-input" required>
                     </div>
-                    <div class="form-group">
-                        <label for="event-location-url" class="form-label">URL google maps du lieu</label>
-                        <input type="url" id="event-location-url" class="form-input" placeholder="https://maps.google.com/...">
-                    </div>
+                
                     <div class="form-group">
                         <label for="event-plus-url" class="form-label">URL Plus d'info</label>
                         <input type="url" id="event-plus-url" class="form-input" placeholder="https://...">
@@ -317,23 +318,10 @@
                         <label for="event-description" class="form-label">Description *</label>
                         <textarea id="event-description" class="form-input" rows="4" placeholder="Description détaillée de l'événement" required></textarea>
                     </div>
-                    <div class="form-group col-span-2">
-                        <label for="event-partners" class="form-label">Partenaires</label>
-                        <div class="multiselect-wrapper">
-                            <div class="multiselect-input-wrapper">
-                                <input type="text" id="event-partners-input" class="multiselect-search" placeholder="Rechercher ou ajouter un partenaire">
-                                <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
-                            </div>
-                            <div class="multiselect-dropdown" id="event-partners-dropdown">
-                                <!-- Options will be added by JavaScript -->
-                            </div>
-                            <div class="selected-items" id="event-partners-selected"></div>
-                            <input type="hidden" id="event-partners">
-                        </div>
-                    </div>
+                   
                     <div class="form-group col-span-2">
                         <div class="file-input-container">
-                            <label class="form-label">Image de l'événement</label>
+                            <label class="form-label">Image de l'artiste</label>
                             <div class="file-input-box" id="event-image-drop">
                                 <div class="file-input-icon">
                                     <i class="fas fa-cloud-upload-alt"></i>
@@ -370,19 +358,15 @@
                         <input type="text" id="summer-event-title" class="form-input" placeholder="Titre de l'événement" required>
                     </div>
                     <div class="form-group">
-                        <label for="summer-event-subtitle" class="form-label">Sous-titre</label>
-                        <input type="text" id="summer-event-subtitle" class="form-input" placeholder="Sous-titre (optionnel)">
+                        <label for="summer-event-subtitle" class="form-label">Style musical</label>
+                        <input type="text" id="summer-event-subtitle" class="form-input" placeholder="ex : salsa ...(tout en minuscule + séparer avec des virgules)">
                     </div>
                     <div class="form-group">
-                        <label for="summer-event-location" class="form-label">Point de son</label>
-                        <div class="custom-select-wrapper">
-                            <select id="summer-event-location" class="custom-select" required>
-                                <option value="" disabled selected>Sélectionner un point de son</option>
-                                
-                                <!-- Options will be added by JavaScript -->
-                            </select>
-                            <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
-                        </div>
+                        <label for="summer-event-location" class="form-label">Lieux</label>
+                
+                                                    <input type="text" id="summer-event-location" class="form-input" placeholder="lieu ou se déroule l'événement" required>
+
+                        
                     </div>
                     <div class="form-group">
                         <label for="summer-event-genre" class="form-label">Genre *</label>
@@ -520,7 +504,7 @@
                         <div class="file-input-box" id="partner-image-drop">
                             <div class="file-input-icon">
                                 <i class="fas fa-cloud-upload-alt"></i>
-                            </div>
+                        </div>
                             <div class="file-input-text">Glissez-déposez une image ou cliquez pour choisir</div>
                             <div class="file-input-help">PNG, JPG ou JPEG (max. 2MB)</div>
                             <input type="file" id="partner-image" class="file-input" accept="image/*" required>
@@ -545,8 +529,127 @@
             </form>
         </div>
     </div>
+
+
+    
 </div>
 
+
+
+
+
+
+
+
+<!-- Ajouter un Point de Son Page - Version simplifiée -->
+<div id="pointdeson-page" class="page">
+    <div class="page-header">
+        <h1 class="page-title">Points de Son</h1>
+    </div>
+
+
+       <!-- Liste des points de son existants -->
+    <div class="card mt-6">
+        <div class="card-header">
+            <h2 class="card-title">Points de son existants</h2>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="data-table" id="sound-points-table">
+                 <thead>
+    <tr>
+        <th>Nom</th>
+        <th>Type</th>
+        <th>Genres</th>
+        <th>Coordonnées GPS</th>
+        <th>Partenaires</th>
+        <th>Actions</th>
+    </tr>
+</thead>
+                    <tbody id="sound-points-list">
+                        <!-- Les points de son seront ajoutés ici par JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="card" style="margin-top: 2%;">
+        <div class="card-header">
+            <h2 class="card-title">Ajouter un Point de Son</h2>
+        </div>
+        <div class="card-body">
+            <form id="sound-point-form" class="form-grid">
+                <div class="form-group">
+                    <label for="sound-point-name" class="form-label">Nom du point de son *</label>
+                    <input type="text" id="sound-point-name" class="form-input" placeholder="Nom du point de son" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="sound-point-type" class="form-label">Type de point *</label>
+                    <div class="custom-select-wrapper">
+                        <select id="sound-point-type" class="custom-select" required>
+                            <option value="" disabled selected>Sélectionner un type</option>
+                            <option value="soundsystem">Sound System</option>
+                            <option value="dj">DJ Set</option>
+                            <option value="live">Live</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                        <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
+                    </div>
+                </div>
+                
+                <div class="form-group col-span-2">
+                    <label for="sound-point-genres" class="form-label">Genres musicaux *</label>
+                    <div class="multiselect-wrapper">
+                        <div class="multiselect-input-wrapper">
+                            <input type="text" id="sound-point-genres-input" class="multiselect-search" placeholder="Rechercher ou ajouter un genre">
+                            <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
+                        </div>
+                        <div class="multiselect-dropdown" id="sound-point-genres-dropdown">
+                            <!-- Options will be added by JavaScript -->
+                        </div>
+                        <div class="selected-items" id="sound-point-genres-selected"></div>
+                        <input type="hidden" id="sound-point-genres">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="sound-point-gps" class="form-label">Coordonnées GPS *</label>
+                    <input type="text" id="sound-point-gps" class="form-input" placeholder="Ex: 43°07'53.3&quot;N 5°55'41.4&quot;E" required>
+                </div>
+                
+             
+                
+                <div class="form-group col-span-2">
+                    <label for="sound-point-partners" class="form-label">Partenaires</label>
+                    <div class="multiselect-wrapper">
+                        <div class="multiselect-input-wrapper">
+                            <input type="text" id="sound-point-partners-input" class="multiselect-search" placeholder="Rechercher ou ajouter un partenaire">
+                            <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
+                        </div>
+                        <div class="multiselect-dropdown" id="sound-point-partners-dropdown">
+                            <!-- Options will be added by JavaScript -->
+                        </div>
+                        <div class="selected-items" id="sound-point-partners-selected"></div>
+                        <input type="hidden" id="sound-point-partners">
+                    </div>
+                </div>
+                
+                <div class="form-group col-span-2">
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" id="sound-point-cancel">Annuler</button>
+                        <button type="submit" class="btn btn-primary" id="sound-point-submit">
+                            <span id="sound-point-submit-text">Ajouter le point de son</span>
+                            <span id="sound-point-submit-spinner" class="spinner" style="display: none;"></span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+ 
+</div>
         </div>
     </div>
 

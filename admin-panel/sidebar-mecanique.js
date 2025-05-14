@@ -93,12 +93,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Trouver tous les éléments de menu
         const allMenuItems = document.querySelectorAll('.sidebar-menu .menu-item');
         
-        // Map corrigé - la page summer-events est distincte de partners-list
+        // Map corrigé - ajout de la page pointdeson
         const linkToPageMap = {
             'dashboard': 'dashboard',
-            'summer-events': 'summer-events', // Maintenir "summer-events" comme une page distincte
+            'summer-events': 'summer-events',
             'add-event': 'add-event',
-            'add-partner': 'add-partner'
+            'add-partner': 'add-partner',
+            'pointdeson': 'pointdeson' // Correction pour utiliser pointdeson comme ID
         };
         
         // Corriger les attributs data-page
@@ -114,6 +115,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const spanText = item.querySelector('span')?.textContent.trim();
             if (spanText === 'Ajouter un partenaire') {
                 item.setAttribute('data-page', 'add-partner');
+            }
+            
+            // Si c'est le lien "Ajouter un point de son", s'assurer qu'il pointe vers pointdeson
+            if (spanText === 'Ajouter un point de son') {
+                item.setAttribute('data-page', 'pointdeson');
             }
         });
     }
@@ -136,6 +142,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const addPartnerPage = document.getElementById('add-partner-page');
         if (!addPartnerPage) {
             console.warn("La page 'add-partner-page' n'a pas été trouvée.");
+        }
+        
+        // S'assurer que la page pointdeson existe
+        const pointDesonPage = document.getElementById('pointdeson-page');
+        if (!pointDesonPage) {
+            console.warn("La page 'pointdeson-page' n'a pas été trouvée.");
         }
     }
     
@@ -196,38 +208,35 @@ document.addEventListener('DOMContentLoaded', function() {
         document.head.appendChild(styleElement);
     }
     
-   
+    // Initialisation de la page "Points de Son"
+    function initSoundPointPage() {
+        const soundPointPage = document.getElementById('pointdeson-page');
+        if (soundPointPage) {
+            // Si vous avez besoin d'initialiser des fonctionnalités spécifiques à cette page
+            console.log("Initialisation de la page 'Points de Son'");
+            
+            // Initialiser le formulaire si initSoundPointForm existe
+            if (typeof initSoundPointForm === 'function') {
+                initSoundPointForm();
+            }
+        }
+    }
     
     // Exécuter les fonctions de mise en place
     setupMenuLinks();
     fixPageIds();
     addAnimationStyles();
-    addDashboardNavigation();
+    
+    // Initialiser la navigation du dashboard si la fonction existe
+    if (typeof addDashboardNavigation === 'function') {
+        addDashboardNavigation();
+    }
+    
+    // Initialiser la page des points de son
+    initSoundPointPage();
     
     // Initialiser la page d'accueil (dashboard)
     showPage('dashboard');
-});
-
-
-
-
-// Correction des problèmes HTML et ajout de fonctionnalités
-
-document.addEventListener('DOMContentLoaded', function() {
-    // 1. Correction des liens du menu de navigation
-    fixNavigationLinks();
-    
-    // 2. Ajout des en-têtes de tableau manquants
-    addTableHeaders();
-    
-    // 3. Configuration du compteur pour la fête de la musique
-    setupCountdownTimer();
-    
-    // 4. Simulation des données pour le tableau de bord
-    setupDashboardData();
-    
-    // 5. Assurer que la page des événements d'été est accessible depuis le dashboard
-    setupSummerEventsNavigation();
 });
 
 // Fonction pour corriger les liens de navigation
@@ -240,7 +249,8 @@ function fixNavigationLinks() {
         'Tableau de bord': 'dashboard',
         'Liste des partenaires': 'partners-list',
         'Ajouter un événement': 'add-event',
-        'Ajouter un partenaire': 'add-partner'
+        'Ajouter un partenaire': 'add-partner',
+        'Ajouter un point de son': 'pointdeson' // Modifié pour utiliser pointdeson au lieu de add-sound-point
     };
     
     // Mettre à jour les attributs data-page en fonction du texte
@@ -254,11 +264,6 @@ function fixNavigationLinks() {
         }
     });
 }
-
-
-
-
-
 
 // Fonction pour configurer la navigation entre le dashboard et les événements d'été
 function setupSummerEventsNavigation() {
@@ -338,3 +343,25 @@ function setupSummerEventsNavigation() {
     `;
     document.head.appendChild(styleElement);
 }
+
+// Initialiser toutes les fonctionalités au chargement du document
+document.addEventListener('DOMContentLoaded', function() {
+    // Correction des liens du menu de navigation
+    fixNavigationLinks();
+    
+    // Configuration de la navigation pour les événements d'été
+    setupSummerEventsNavigation();
+    
+    // Initialiser d'autres fonctions si elles existent
+    if (typeof addTableHeaders === 'function') {
+        addTableHeaders();
+    }
+    
+    if (typeof setupCountdownTimer === 'function') {
+        setupCountdownTimer();
+    }
+    
+    if (typeof setupDashboardData === 'function') {
+        setupDashboardData();
+    }
+});

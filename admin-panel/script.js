@@ -24,24 +24,90 @@ const auth = getAuth(app);
 let eventImageFile = null;
 let summerEventImageFile = null;
 
-// Hard-coded data (remplace la récupération depuis Firestore)
-const locations = [
-     'Place de la République',
-    'Parc des expositions',
-    'Salle des fêtes',
-    'Théâtre municipal',
-    'Place du marché'
-];
+// Déclaration du tableau locations comme avant, mais vide au départ
+let locations = [];
+
+// Fonction pour charger les points de son depuis Firebase
+async function loadSoundPointsininput() {
+  try {
+    const soundPointsCollection = collection(db, 'sound_points');
+    const querySnapshot = await getDocs(soundPointsCollection);
+    
+    // Vider le tableau existant
+    locations = [];
+    
+    querySnapshot.forEach((doc) => {
+      // Pour chaque document, récupérer le champ "name"
+      if (doc.data().name) {
+        locations.push(doc.data().name);
+      }
+    });
+    
+    // Si aucun point de son n'est trouvé dans Firebase, utiliser les valeurs par défaut
+    if (locations.length === 0) {
+      locations = [
+        'Place de la République',
+        'Parc des expositions',
+        'Salle des fêtes',
+        'Théâtre municipal',
+        'Place du marché'
+      ];
+    }
+    
+    // À ce stade, actualiser la liste déroulante des points de son
+    updateSoundPointsDropdown();
+    
+  } catch (error) {
+    console.error("Erreur lors de la récupération des points de son:", error);
+    // En cas d'erreur, utiliser les valeurs par défaut
+    locations = [
+      'Place de la République',
+      'Parc des expositions',
+      'Salle des fêtes',
+      'Théâtre municipal',
+      'Place du marché'
+    ];
+    
+    // Actualiser la liste déroulante avec les valeurs par défaut
+    updateSoundPointsDropdown();
+  }
+}
+
+// Fonction pour mettre à jour la liste déroulante des points de son
+function updateSoundPointsDropdown() {
+  // Récupérer le select des points de son
+  const soundPointsSelect = document.getElementById('event-location');
+  
+  // S'assurer que nous avons bien trouvé le bon élément
+  if (!soundPointsSelect) {
+    console.error("Select des points de son non trouvé");
+    return;
+  }
+  
+  // Conserver uniquement l'option par défaut
+  soundPointsSelect.innerHTML = '<option value="" disabled selected>Sélectionner un point de son</option>';
+  
+  // Ajouter chaque point de son comme option
+  locations.forEach(location => {
+    const option = document.createElement('option');
+    option.value = location;
+    option.textContent = location;
+    soundPointsSelect.appendChild(option);
+  });
+}
+
+// Initialiser les fonctionnalités liées aux points de son
+document.addEventListener('DOMContentLoaded', () => {
+  // Charger les points de son depuis Firebase
+  loadSoundPointsininput();
+});
 
 const genres = [
-    'Rock',
-    'Pop',
-    'Jazz',
-    'Classique',
-    'Hip-Hop',
-    'Électronique'
+    'Good vibes',
+    'Chill',
+    'Punchy',
+    'Survolté'
 ];
-
 
 // Déclaration du tableau partners comme avant, mais vide au départ
 let partners = [];
@@ -73,8 +139,8 @@ async function loadPartners() {
       ];
     }
     
-    // À ce stade, actualiser la liste déroulante avec les nouvelles valeurs
-    updateMultiselectDropdown();
+    // À ce stade, actualiser uniquement la liste déroulante des partenaires
+    updatePartnersDropdown();
     
   } catch (error) {
     console.error("Erreur lors de la récupération des partenaires:", error);
@@ -88,93 +154,128 @@ async function loadPartners() {
     ];
     
     // Actualiser la liste déroulante avec les valeurs par défaut
-    updateMultiselectDropdown();
+    updatePartnersDropdown();
   }
 }
 
-// Fonction pour mettre à jour la liste déroulante multiselect
-function updateMultiselectDropdown() {
-  // Récupérer le conteneur dropdown
-  const dropdown = document.getElementById('event-partners-dropdown');
+// Fonction pour mettre à jour uniquement la liste déroulante des partenaires
+function updatePartnersDropdown() {
+  // Récupérer spécifiquement le dropdown des partenaires
+  const partnersDropdown = document.getElementById('event-partners-dropdown');
+  
+  // S'assurer que nous avons bien trouvé le bon élément
+  if (!partnersDropdown) {
+    console.error("Dropdown des partenaires non trouvé");
+    return;
+  }
   
   // Vider le dropdown actuel
-  dropdown.innerHTML = '';
+  partnersDropdown.innerHTML = '';
   
-  // Ajouter chaque partenaire comme option dans le format spécifique requis
+  // Ajouter chaque partenaire comme option
   partners.forEach(partner => {
     const option = document.createElement('div');
     option.className = 'multiselect-option';
     option.setAttribute('data-id', partner);
     option.setAttribute('data-name', partner);
     option.textContent = partner;
-    dropdown.appendChild(option);
+    partnersDropdown.appendChild(option);
   });
   
-  // Si vous avez besoin de réattacher des écouteurs d'événements après avoir mis à jour les options
-  attachEventListeners();
+  // Réattacher les écouteurs d'événements spécifiquement pour les options de partenaires
+  attachPartnersEventListeners();
 }
 
-// Fonction pour réattacher les écouteurs d'événements si nécessaire
-function attachEventListeners() {
-  // Réattacher les écouteurs d'événements aux nouvelles options
-  const options = document.querySelectorAll('.multiselect-option');
-  options.forEach(option => {
-    option.addEventListener('click', function() {
-      // Votre code de gestion de clic sur une option
-      // Par exemple, ajouter l'élément sélectionné à la section "selected-items"
-      const id = this.getAttribute('data-id');
-      const name = this.getAttribute('data-name');
-      
-      // Vérifier si l'élément est déjà sélectionné
-      const selectedContainer = document.getElementById('event-partners-selected');
-      if (!selectedContainer.querySelector(`[data-id="${id}"]`)) {
-        // Créer un nouvel élément sélectionné
-        const selectedItem = document.createElement('div');
-        selectedItem.className = 'selected-item';
-        selectedItem.setAttribute('data-id', id);
-        selectedItem.innerHTML = `
-          ${name}
-          <span class="remove-item"><i class="fas fa-times"></i></span>
-        `;
-        
-        // Ajouter l'élément à la section des éléments sélectionnés
-        selectedContainer.appendChild(selectedItem);
-        
-        // Mettre à jour le champ caché
-        updateHiddenField();
-        
-        // Ajouter l'écouteur d'événement pour supprimer l'élément
-        selectedItem.querySelector('.remove-item').addEventListener('click', function(e) {
-          e.stopPropagation();
-          selectedItem.remove();
-          updateHiddenField();
-        });
-      }
-      
-      // Fermer le dropdown (facultatif)
-      // dropdown.style.display = 'none';
-    });
+// Fonction pour réattacher les écouteurs d'événements uniquement pour les options de partenaires
+function attachPartnersEventListeners() {
+  // Cibler uniquement les options dans le dropdown des partenaires
+  const partnerOptions = document.querySelectorAll('#event-partners-dropdown .multiselect-option');
+  
+  partnerOptions.forEach(option => {
+    // Supprimer d'abord les anciens écouteurs pour éviter les doublons
+    option.removeEventListener('click', handlePartnerOptionClick);
+    
+    // Ajouter un nouvel écouteur
+    option.addEventListener('click', handlePartnerOptionClick);
   });
 }
 
-// Fonction pour mettre à jour le champ caché avec les valeurs sélectionnées
-function updateHiddenField() {
+// Gestionnaire d'événement pour le clic sur une option de partenaire
+function handlePartnerOptionClick(event) {
+  const id = this.getAttribute('data-id');
+  const name = this.getAttribute('data-name');
+  
+  // Vérifier si l'élément est déjà sélectionné
+  const selectedContainer = document.getElementById('event-partners-selected');
+  if (!selectedContainer.querySelector(`[data-id="${id}"]`)) {
+    // Créer un nouvel élément sélectionné
+    const selectedItem = document.createElement('div');
+    selectedItem.className = 'selected-item';
+    selectedItem.setAttribute('data-id', id);
+    selectedItem.innerHTML = `
+      ${name}
+      <span class="remove-item"><i class="fas fa-times"></i></span>
+    `;
+    
+    // Ajouter l'élément à la section des éléments sélectionnés
+    selectedContainer.appendChild(selectedItem);
+    
+    // Mettre à jour le champ caché des partenaires
+    updatePartnersHiddenField();
+    
+    // Ajouter l'écouteur d'événement pour supprimer l'élément
+    selectedItem.querySelector('.remove-item').addEventListener('click', function(e) {
+      e.stopPropagation();
+      selectedItem.remove();
+      updatePartnersHiddenField();
+    });
+  }
+}
+
+// Fonction pour mettre à jour uniquement le champ caché des partenaires
+function updatePartnersHiddenField() {
   const selectedItems = document.querySelectorAll('#event-partners-selected .selected-item');
   const selectedValues = Array.from(selectedItems).map(item => item.getAttribute('data-id'));
   document.getElementById('event-partners').value = JSON.stringify(selectedValues);
 }
 
-// Appeler cette fonction au chargement de la page ou au moment approprié
+// Initialiser uniquement les fonctionnalités liées aux partenaires
 document.addEventListener('DOMContentLoaded', () => {
+  // Charger les partenaires depuis Firebase
   loadPartners();
   
-  // Réattacher les écouteurs d'événements pour l'input de recherche
-  const searchInput = document.getElementById('event-partners-input');
- 
- 
+  // Réattacher les écouteurs d'événements pour l'input de recherche des partenaires
+  const partnersSearchInput = document.getElementById('event-partners-input');
   
- 
+  if (partnersSearchInput) {
+    // Supprimer les anciens écouteurs pour éviter les doublons
+    partnersSearchInput.removeEventListener('click', handlePartnersInputClick);
+    partnersSearchInput.removeEventListener('input', handlePartnersInputSearch);
+    
+    // Gestion de l'affichage du dropdown au clic sur l'input
+    partnersSearchInput.addEventListener('click', handlePartnersInputClick);
+    
+    // Gestion de la recherche
+    partnersSearchInput.addEventListener('input', handlePartnersInputSearch);
+  }
+  
+  // Ajouter un écouteur global pour fermer le dropdown des partenaires
+  document.removeEventListener('click', handleDocumentClick);
+  document.addEventListener('click', handleDocumentClick);
 });
+
+
+
+
+// Gestionnaire pour fermer le dropdown des partenaires si on clique ailleurs
+function handleDocumentClick(event) {
+  const dropdown = document.getElementById('event-partners-dropdown');
+  const inputWrapper = document.querySelector('#event-partners-input').parentElement;
+  
+  if (dropdown && !inputWrapper.contains(event.target) && !dropdown.contains(event.target)) {
+    dropdown.style.display = 'none';
+  }
+}
 
 // DOM Elements
 const eventForm = document.getElementById('event-form');
@@ -310,7 +411,6 @@ function initializeHardcodedData() {
     try {
         // Populate dropdowns
         populateSelectDropdown('event-location', locations);
-        populateSelectDropdown('summer-event-location', locations);
         populateMultiselectDropdown('event-genre', genres);
         populateMultiselectDropdown('summer-event-genre', genres);
         populateMultiselectDropdown('event-partners', partners);
@@ -559,10 +659,8 @@ function extractValue(item) {
         genre:       genresArray,
         startDate:   Timestamp.fromDate(new Date(event.startDate)),
         endDate:     Timestamp.fromDate(new Date(event.endDate)),
-        locationUrl: event.locationUrl || null,
         plusUrl:     event.plusUrl     || null,
         description: event.description || "",
-        partners:    partnersArray,
         imageUrl:    event.imageUrl || null,
         createdAt:   Timestamp.now(),
         updatedAt:   Timestamp.now()
@@ -662,11 +760,10 @@ if (eventForm) {
             const genreInput = document.getElementById('event-genre');
             const startDateInput = document.getElementById('event-start-date');
             const endDateInput = document.getElementById('event-end-date');
-            const locationUrlInput = document.getElementById('event-location-url');
             const moreUrlInput = document.getElementById('event-plus-url');
 
             const descriptionInput = document.getElementById('event-description');
-            const partnersInput = document.getElementById('event-partners');
+           
             
             if (!titleInput || !locationSelect || !genreInput || !startDateInput || 
                 !endDateInput || !descriptionInput) {
@@ -681,11 +778,10 @@ if (eventForm) {
             const genres = genresValue ? JSON.parse(genresValue) : [];
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
-            const locationUrl = locationUrlInput ? locationUrlInput.value : '';
+           
             const moreUrl = moreUrlInput ? moreUrlInput.value : '';
             const description = descriptionInput.value;
-            const partnersValue = partnersInput ? partnersInput.value : '[]';
-            const partners = partnersValue ? JSON.parse(partnersValue) : [];
+            
             
             // Validate data
             if (!title || !location || genres.length === 0 || !startDate || !endDate || !description) {
@@ -702,10 +798,9 @@ if (eventForm) {
                 genres,
                 startDate,
                 endDate,
-                locationUrl,
+        
                 moreUrl,
                 description,
-                partners
             };
             
             // Convertir l'image en Base64 si présente
@@ -745,6 +840,7 @@ if (eventForm) {
             
             // Show success message
             showToast("Événement ajouté avec succès");
+            
         } catch (error) {
             console.error("Error submitting event form:", error);
             showToast("Erreur lors de l'ajout de l'événement: " + error.message, "error");
@@ -874,8 +970,8 @@ if (summerEventForm) {
             
             const title = titleInput.value;
             const subtitle = subtitleInput ? subtitleInput.value : '';
-            const location = locationSelect.value;
-            const locationName = locationSelect.options[locationSelect.selectedIndex].text;
+            const location = locationSelect ? subtitleInput.value : '';
+            const locationName = locationSelect ? subtitleInput.value : '';;
             const genresValue = genreInput.value;
             const genres = genresValue ? JSON.parse(genresValue) : [];
             const organizer = organizerInput.value;
@@ -946,6 +1042,8 @@ if (summerEventForm) {
             
             // Show success message
             showToast("Événement d'été ajouté avec succès");
+       
+
         } catch (error) {
             console.error("Error submitting summer event form:", error);
             showToast("Erreur lors de l'ajout de l'événement d'été: " + error.message, "error");
@@ -1663,10 +1761,6 @@ async viewEvent(eventId) {
                         <h4>Date de fin</h4>
                         <p>${endDateFormatted}</p>
                     </div>
-                    <div class="event-detail">
-                        <h4>Partenaires</h4>
-                        <p>${partnersDisplay}</p>
-                    </div>
                 `;
             }
             
@@ -1686,13 +1780,7 @@ async viewEvent(eventId) {
                         <h4>Lieu</h4>
                         <p>${location}</p>
                     </div>
-                    <div class="event-detail">
-                        <h4>URL du lieu</h4>
-                        <p>${locationUrl ? 
-                            `<a href="${locationUrl}" target="_blank">${locationUrl}</a>` : 
-                            '-'
-                        }</p>
-                    </div>
+                    
                     <div class="event-detail">
                         <h4>Genre</h4>
                         <p>${genreDisplay}</p>
@@ -1891,10 +1979,7 @@ async editEvent(eventId, eventData = null) {
                     <label for="edit-end-date">Date de fin</label>
                     <input type="datetime-local" id="edit-end-date" class="swal2-input" value="${endDateInput}">
                 </div>
-                <div class="form-group">
-                    <label for="edit-partners">Partenaires (séparés par des virgules)</label>
-                    <input type="text" id="edit-partners" class="swal2-input" value="${partnersValue}">
-                </div>
+             
             `;
         }
         
@@ -1914,10 +1999,7 @@ async editEvent(eventId, eventData = null) {
                     <label for="edit-location">Lieu</label>
                     <input type="text" id="edit-location" class="swal2-input" value="${location}">
                 </div>
-                <div class="form-group">
-                    <label for="edit-location-url">URL du lieu</label>
-                    <input type="url" id="edit-location-url" class="swal2-input" value="${locationUrl}">
-                </div>
+               
                 <div class="form-group">
                     <label for="edit-genre">Genre (séparés par des virgules)</label>
                     <input type="text" id="edit-genre" class="swal2-input" value="${genreValue}">
@@ -1988,7 +2070,6 @@ async editEvent(eventId, eventData = null) {
                         title: document.getElementById('edit-title').value,
                         subtitle: document.getElementById('edit-subtitle').value,
                         location: document.getElementById('edit-location').value,
-                        locationUrl: document.getElementById('edit-location-url').value,
                         description: document.getElementById('edit-description').value,
                         updatedAt: serverTimestamp()
                     };
@@ -2019,13 +2100,7 @@ async editEvent(eventId, eventData = null) {
                             formData.endDate = Timestamp.fromDate(new Date(endDateValue));
                         }
                         
-                        // Gestion des partenaires
-                        const partnersValue = document.getElementById('edit-partners').value;
-                        if (partnersValue) {
-                            formData.partners = partnersValue.split(',').map(p => p.trim()).filter(p => p);
-                        } else {
-                            formData.partners = [];
-                        }
+                       
                     }
                     
                     // Gestion du genre pour tous les types d'événements
@@ -2319,7 +2394,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     },
                     { 
                         key: 'subtitle', 
-                        label: 'Sous-titre',
+                        label: 'Style musical',
                         formatter: function(event) {
                             return `${event.subtitle || ''}`;
                         }
@@ -2356,16 +2431,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 : event.genre;
                         }
                     },
-                    { 
-                        key: 'partners', 
-                        label: 'Partenaires',
-                        formatter: function(event) {
-                            if (!event.partners) return '-';
-                            return Array.isArray(event.partners) 
-                                ? event.partners.map(p => p.name || p).join(', ')
-                                : event.partners;
-                        }
-                    },
+                  
                     { 
                         key: 'description', 
                         label: 'Description',
@@ -2403,7 +2469,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     },
                     { 
                         key: 'subtitle', 
-                        label: 'Sous-titre',
+                        label: 'Style musical',
                         formatter: function(event) {
                             return `${event.subtitle || ''}`;
                         }
@@ -3672,16 +3738,25 @@ document.addEventListener('DOMContentLoaded', function() {
     window.partnerManager.loadPartners();
 });
 
-
-// Image upload preview handler - Amélioré
+// Fonction améliorée pour initialiser la prévisualisation d'image
 function initializeImagePreview() {
     const partnerImage = document.getElementById('partner-image');
     const partnerImageDrop = document.getElementById('partner-image-drop');
     const partnerImagePreview = document.getElementById('partner-image-preview');
     
+    console.log("Initialisation de la prévisualisation d'image:", {
+        imageInput: partnerImage,
+        dropZone: partnerImageDrop,
+        previewContainer: partnerImagePreview
+    });
+    
     if (partnerImage && partnerImageDrop && partnerImagePreview) {
+        // Masquer la prévisualisation au départ
+        partnerImagePreview.style.display = 'flex';
+        
         // Gestionnaire de changement de fichier
         partnerImage.addEventListener('change', function() {
+            console.log("Changement de fichier détecté:", this.files);
             if (this.files && this.files[0]) {
                 const file = this.files[0];
                 
@@ -3710,6 +3785,7 @@ function initializeImagePreview() {
                 const reader = new FileReader();
                 
                 reader.onload = function(e) {
+                    console.log("Image chargée, mise à jour de la prévisualisation");
                     partnerImagePreview.innerHTML = `
                         <div class="preview-container">
                             <img src="${e.target.result}" alt="Aperçu de l'image" class="preview-image">
@@ -3718,16 +3794,27 @@ function initializeImagePreview() {
                             </div>
                         </div>
                     `;
+                    // S'assurer que l'élément est visible
                     partnerImagePreview.style.display = 'block';
                     
                     // Ajouter un gestionnaire pour supprimer l'image
-                    document.getElementById('partner-image-remove').addEventListener('click', function() {
-                        partnerImage.value = ''; // Réinitialiser le champ de fichier
-                        partnerImagePreview.style.display = 'none';
-                        partnerImagePreview.innerHTML = '';
-                    });
+                    const removeButton = document.getElementById('partner-image-remove');
+                    if (removeButton) {
+                        removeButton.addEventListener('click', function() {
+                            partnerImage.value = ''; // Réinitialiser le champ de fichier
+                            partnerImagePreview.style.display = 'none';
+                            partnerImagePreview.innerHTML = '';
+                        });
+                    } else {
+                        console.error("Bouton de suppression non trouvé");
+                    }
                 };
                 
+                reader.onerror = function(error) {
+                    console.error("Erreur lors de la lecture du fichier:", error);
+                };
+                
+                // Lire le fichier
                 reader.readAsDataURL(file);
             }
         });
@@ -3876,3 +3963,508 @@ function initializeImagePreview() {
         document.head.appendChild(styleElement);
     }
 }
+
+
+
+
+
+
+
+
+// Variables globales
+let currentSoundPoints = [];
+
+// Fonction pour extraire la valeur d'un objet
+function extractValued(obj) {
+    return obj.value || obj;
+}
+
+// Ajouter un point de son à Firestore
+async function addSoundPoint(soundPoint) {
+    try {
+        if (!soundPoint.name || !soundPoint.gpsCoordinates) {
+            throw new Error("Données du point de son manquantes");
+        }
+        
+        const genresArray = (soundPoint.genres || []).map(extractValued);
+        const partnersArray = (soundPoint.partners || []).map(extractValued);
+        
+        const docRef = await addDoc(collection(db, "sound_points"), {
+            name: soundPoint.name,
+            type: soundPoint.type || "autre",
+            genres: genresArray,
+            gpsCoordinates: soundPoint.gpsCoordinates,
+            partners: partnersArray,
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now()
+        });
+        
+        await loadSoundPoints(); // Recharger la liste après ajout
+        return docRef.id;
+    } catch (error) {
+        console.error("Erreur lors de l'ajout du point de son:", error);
+        throw error;
+    }
+}
+
+// Supprimer un point de son de Firestore
+async function deleteSoundPoint(id) {
+    try {
+        await deleteDoc(doc(db, "sound_points", id));
+        await loadSoundPoints(); // Recharger la liste après suppression
+        showToast("Point de son supprimé avec succès");
+    } catch (error) {
+        console.error("Erreur lors de la suppression du point de son:", error);
+        showToast("Erreur lors de la suppression du point de son", "error");
+    }
+}
+
+// Voir les détails d'un point de son
+function viewSoundPoint(id) {
+    const soundPoint = currentSoundPoints.find(point => point.id === id);
+    if (!soundPoint) return;
+    
+    // Créer une boîte de dialogue modale pour afficher les détails
+    // Cette fonction est un exemple et devrait être adaptée selon votre système de modales
+    showModal('Détails du point de son', `
+        <h2>${soundPoint.name}</h2>
+        <p><strong>Type:</strong> ${getTypeLabel(soundPoint.type)}</p>
+        <p><strong>Genres:</strong> ${soundPoint.genres.join(', ')}</p>
+        <p><strong>Coordonnées GPS:</strong> ${soundPoint.gpsCoordinates}</p>
+        <p><strong>Description:</strong> ${soundPoint.description}</p>
+        ${soundPoint.partners && soundPoint.partners.length > 0 ? 
+          `<p><strong>Partenaires:</strong> ${soundPoint.partners.join(', ')}</p>` : ''}
+    `);
+}
+
+// Obtenir le label lisible pour un type de point de son
+function getTypeLabel(type) {
+    const typeMap = {
+        'soundsystem': 'Sound System',
+        'dj': 'DJ Set',
+        'live': 'Live',
+        'autre': 'Autre'
+    };
+    return typeMap[type] || type;
+}
+
+async function loadSoundPoints() {
+    try {
+        const soundPointsListElement = document.getElementById('sound-points-list');
+        if (!soundPointsListElement) {
+            console.error("Élément de liste des points de son introuvable");
+            return;
+        }
+        
+        // Vider la liste actuelle
+        soundPointsListElement.innerHTML = '';
+        currentSoundPoints = [];
+        
+        // Obtenir les données de Firestore
+        const soundPointsSnapshot = await getDocs(query(collection(db, "sound_points"), orderBy("createdAt", "desc")));
+        
+        if (soundPointsSnapshot.empty) {
+            soundPointsListElement.innerHTML = '<tr><td colspan="6" class="text-center">Aucun point de son trouvé</td></tr>';
+            return;
+        }
+        
+        // Créer une ligne de tableau pour chaque point de son
+        soundPointsSnapshot.forEach(doc => {
+            const data = doc.data();
+            const soundPoint = {
+                id: doc.id,
+                ...data
+            };
+            currentSoundPoints.push(soundPoint);
+            
+            // Traitement des genres
+            const genres = data.genres || [];
+            let genresStr = genres.join(', ');
+            if (genresStr.length > 30) {
+                genresStr = genresStr.substring(0, 27) + '...';
+            }
+            
+            // Traitement des partenaires
+            const partners = data.partners || [];
+            let partnersStr = partners.join(', ');
+            if (partnersStr.length > 30) {
+                partnersStr = partnersStr.substring(0, 27) + '...';
+            }
+            
+            // Créer une ligne de tableau
+            const row = document.createElement('tr');
+            row.setAttribute('data-id', doc.id);
+            row.setAttribute('data-collection', 'sound_points');
+            row.innerHTML = `
+                <td>${data.name}</td>
+                <td>${getTypeLabel(data.type)}</td>
+                <td><div class="truncate-text">${genresStr}</div></td>
+                <td>${data.gpsCoordinates}</td>
+                <td><div class="truncate-text">${partnersStr}</div></td>
+                <td class="table-actions">
+                    
+                    <button class="action-delete delete-sound-point" title="Supprimer">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            
+            soundPointsListElement.appendChild(row);
+        });
+        
+        // Ajouter des écouteurs pour les boutons d'action
+        attachActionListeners();
+        
+    } catch (error) {
+        console.error("Erreur lors du chargement des points de son:", error);
+    }
+}
+
+// Attacher des écouteurs d'événements aux boutons d'action
+function attachActionListeners() {
+    // Boutons de visualisation
+    const viewButtons = document.querySelectorAll('.view-sound-point');
+    viewButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const row = this.closest('tr');
+            const id = row.getAttribute('data-id');
+            viewSoundPoint(id);
+        });
+    });
+    
+    // Boutons de suppression
+    const deleteButtons = document.querySelectorAll('.delete-sound-point');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const row = this.closest('tr');
+            const id = row.getAttribute('data-id');
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce point de son ?')) {
+                deleteSoundPoint(id);
+            }
+        });
+    });
+    
+    // Note: Les boutons d'édition nécessiteraient une fonction d'édition supplémentaire
+    const editButtons = document.querySelectorAll('.edit-sound-point');
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const row = this.closest('tr');
+            const id = row.getAttribute('data-id');
+            alert('Fonctionnalité d\'édition à implémenter');
+            // editSoundPoint(id); // À implémenter
+        });
+    });
+}
+
+// Initialisation du formulaire de point de son
+function initSoundPointForm() {
+    const soundPointForm = document.getElementById('sound-point-form');
+    const soundPointCancelButton = document.getElementById('sound-point-cancel');
+    
+    // Chargement initial des points de son
+    loadSoundPoints();
+    
+    // Initialisation des sélecteurs multiples pour les genres et partenaires
+    initMultiSelect('sound-point-genres', getAllGenres);
+    initMultiSelect('sound-point-partners', getAllPartners);
+    
+    // Gérer la soumission du formulaire
+    if (soundPointForm) {
+        soundPointForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitButton = document.getElementById('sound-point-submit');
+            const submitText = document.getElementById('sound-point-submit-text');
+            const submitSpinner = document.getElementById('sound-point-submit-spinner');
+            
+            if (!submitButton || !submitText || !submitSpinner) {
+                console.error("Éléments du bouton de soumission introuvables");
+                showToast("Erreur dans le formulaire", "error");
+                return;
+            }
+            
+            // Désactiver le bouton et afficher le spinner
+            submitButton.disabled = true;
+            submitText.style.display = 'none';
+            submitSpinner.style.display = 'inline-block';
+            
+            try {
+                // Récupérer les valeurs du formulaire
+                const nameInput = document.getElementById('sound-point-name');
+                const typeSelect = document.getElementById('sound-point-type');
+                const genresInput = document.getElementById('sound-point-genres');
+                const gpsInput = document.getElementById('sound-point-gps');
+               
+                const partnersInput = document.getElementById('sound-point-partners');
+                
+                if (!nameInput || !typeSelect || !genresInput || !gpsInput) {
+                    throw new Error("Éléments de formulaire requis introuvables");
+                }
+                
+                const name = nameInput.value;
+                const type = typeSelect.value;
+                const genresValue = genresInput.value;
+                const genres = genresValue ? JSON.parse(genresValue) : [];
+                const gpsCoordinates = gpsInput.value;
+        
+                const partnersValue = partnersInput ? partnersInput.value : '[]';
+                const partners = partnersValue ? JSON.parse(partnersValue) : [];
+                
+                // Valider les données
+                if (!name || !type || genres.length === 0 || !gpsCoordinates ) {
+                    showToast("Veuillez remplir tous les champs obligatoires", "error");
+                    submitButton.disabled = false;
+                    submitText.style.display = 'inline-block';
+                    submitSpinner.style.display = 'none';
+                    return;
+                }
+                
+                // Créer l'objet du point de son
+                const soundPoint = {
+                    name,
+                    type,
+                    genres,
+                    gpsCoordinates,
+                    partners
+                };
+                
+                // Ajouter à Firestore
+                const soundPointId = await addSoundPoint(soundPoint);
+                
+                // Réinitialiser le formulaire
+                soundPointForm.reset();
+                
+                const genreSelectedElement = document.getElementById('sound-point-genres-selected');
+                if (genreSelectedElement) {
+                    genreSelectedElement.innerHTML = '';
+                }
+                
+                const partnersSelectedElement = document.getElementById('sound-point-partners-selected');
+                if (partnersSelectedElement) {
+                    partnersSelectedElement.innerHTML = '';
+                }
+                
+                // Afficher un message de succès
+                showToast("Point de son ajouté avec succès");
+                
+            } catch (error) {
+                console.error("Erreur lors de la soumission du formulaire de point de son:", error);
+                showToast("Erreur lors de l'ajout du point de son: " + error.message, "error");
+            } finally {
+                // Réactiver le bouton et masquer le spinner
+                submitButton.disabled = false;
+                submitText.style.display = 'inline-block';
+                submitSpinner.style.display = 'none';
+            }
+        });
+    }
+    
+    // Gérer le bouton d'annulation
+    if (soundPointCancelButton) {
+        soundPointCancelButton.addEventListener('click', function() {
+            if (soundPointForm) {
+                soundPointForm.reset();
+                
+                const genreSelectedElement = document.getElementById('sound-point-genres-selected');
+                if (genreSelectedElement) {
+                    genreSelectedElement.innerHTML = '';
+                }
+                
+                const partnersSelectedElement = document.getElementById('sound-point-partners-selected');
+                if (partnersSelectedElement) {
+                    partnersSelectedElement.innerHTML = '';
+                }
+            }
+        });
+    }
+}
+
+// Initialiser un sélecteur multiple
+function initMultiSelect(id, getOptionsFunc) {
+    const input = document.getElementById(`${id}-input`);
+    const dropdown = document.getElementById(`${id}-dropdown`);
+    const selected = document.getElementById(`${id}-selected`);
+    const hiddenInput = document.getElementById(id);
+    
+    if (!input || !dropdown || !selected || !hiddenInput) {
+        console.error(`Éléments pour le multi-select ${id} introuvables`);
+        return;
+    }
+    
+    // Initialiser les valeurs sélectionnées
+    let selectedItems = [];
+    
+    // Mettre à jour l'entrée cachée
+    function updateHiddenInput() {
+        hiddenInput.value = JSON.stringify(selectedItems);
+    }
+    
+    // Rendre les éléments sélectionnés
+    function renderSelected() {
+        selected.innerHTML = '';
+        selectedItems.forEach(item => {
+            const itemElement = document.createElement('div');
+            itemElement.className = 'selected-item';
+            itemElement.innerHTML = `
+                <span class="selected-item-text">${item.label}</span>
+                <span class="selected-item-remove" data-value="${item.value}">
+                    <i class="fas fa-times"></i>
+                </span>
+            `;
+            selected.appendChild(itemElement);
+        });
+        
+        // Ajouter des écouteurs pour les boutons de suppression
+        const removeButtons = selected.querySelectorAll('.selected-item-remove');
+        removeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const value = this.getAttribute('data-value');
+                selectedItems = selectedItems.filter(item => item.value !== value);
+                renderSelected();
+                updateHiddenInput();
+            });
+        });
+        
+        updateHiddenInput();
+    }
+    
+    // Remplir le dropdown avec les options
+    async function populateDropdown(query = '') {
+        try {
+            const options = await getOptionsFunc();
+            dropdown.innerHTML = '';
+            
+            // Filtrer les options selon la requête
+            const filteredOptions = options.filter(option => 
+                option.label.toLowerCase().includes(query.toLowerCase()) &&
+                !selectedItems.some(item => item.value === option.value)
+            );
+            
+            // Afficher les options filtrées
+            if (filteredOptions.length > 0) {
+                filteredOptions.forEach(option => {
+                    const optionElement = document.createElement('div');
+                    optionElement.className = 'multiselect-option';
+                    optionElement.textContent = option.label;
+                    optionElement.setAttribute('data-value', option.value);
+                    optionElement.setAttribute('data-label', option.label);
+                    
+                    optionElement.addEventListener('click', function() {
+                        const value = this.getAttribute('data-value');
+                        const label = this.getAttribute('data-label');
+                        
+                        // Ajouter à la sélection
+                        if (!selectedItems.some(item => item.value === value)) {
+                            selectedItems.push({ value, label });
+                            renderSelected();
+                            input.value = '';
+                            dropdown.style.display = 'none';
+                        }
+                    });
+                    
+                    dropdown.appendChild(optionElement);
+                });
+            } else {
+                // Option pour ajouter un nouvel élément
+                if (query.trim() !== '') {
+                    const addOption = document.createElement('div');
+                    addOption.className = 'multiselect-option add-option';
+                    addOption.innerHTML = `<i class="fas fa-plus"></i> Ajouter "${query}"`;
+                    
+                    addOption.addEventListener('click', function() {
+                        const newValue = query.trim();
+                        const newLabel = query.trim();
+                        
+                        // Ajouter à la sélection
+                        if (!selectedItems.some(item => item.value === newValue)) {
+                            selectedItems.push({ value: newValue, label: newLabel });
+                            renderSelected();
+                            input.value = '';
+                            dropdown.style.display = 'none';
+                        }
+                    });
+                    
+                    dropdown.appendChild(addOption);
+                } else {
+                    dropdown.innerHTML = '<div class="multiselect-no-results">Aucun résultat</div>';
+                }
+            }
+        } catch (error) {
+            console.error('Erreur lors du chargement des options:', error);
+            dropdown.innerHTML = '<div class="multiselect-no-results">Erreur de chargement</div>';
+        }
+    }
+    
+    // Écouteurs d'événements
+    input.addEventListener('focus', function() {
+        populateDropdown(this.value);
+        dropdown.style.display = 'block';
+    });
+    
+    input.addEventListener('input', function() {
+        populateDropdown(this.value);
+        dropdown.style.display = 'block';
+    });
+    
+    // Fermer le dropdown lorsqu'on clique ailleurs
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Initialiser
+    renderSelected();
+}
+
+// Fonctions pour obtenir les données
+async function getAllGenres() {
+    try {
+        const genresSnapshot = await getDocs(collection(db, "genres"));
+        const genres = [];
+        
+        genresSnapshot.forEach(doc => {
+            const data = doc.data();
+            genres.push({
+                value: doc.id,
+                label: data.name || 'Genre sans nom'
+            });
+        });
+        
+        return genres;
+    } catch (error) {
+        console.error("Erreur lors de la récupération des genres:", error);
+        return [];
+    }
+}
+
+async function getAllPartners() {
+    try {
+        const partnersSnapshot = await getDocs(collection(db, "partners"));
+        const partners = [];
+        
+        partnersSnapshot.forEach(doc => {
+            const data = doc.data();
+            partners.push({
+                value: doc.id,
+                label: data.name || 'Partenaire sans nom'
+            });
+        });
+        
+        return partners;
+    } catch (error) {
+        console.error("Erreur lors de la récupération des partenaires:", error);
+        return [];
+    }
+}
+
+// Fonction pour afficher une boîte de dialogue modale (à adapter selon votre système)
+function showModal(title, content) {
+    // Cette fonction est un exemple et devrait être adaptée à votre système de modales
+    alert(`${title}\n\n${content.replace(/<[^>]*>?/gm, '')}`);
+}
+
+// Initialiser le formulaire de point de son lorsque le DOM est chargé
+document.addEventListener('DOMContentLoaded', function() {
+    initSoundPointForm();
+});
