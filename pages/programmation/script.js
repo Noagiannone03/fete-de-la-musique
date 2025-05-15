@@ -1,0 +1,1095 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+    
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyCwtimDB_Mai-QPyB6d0yqjJX_d5mQjGY8",
+        authDomain: "fete-de-la-musique-64a6b.firebaseapp.com",
+        projectId: "fete-de-la-musique-64a6b",
+        storageBucket: "fete-de-la-musique-64a6b.firebasestorage.app",
+        messagingSenderId: "1087878331068",
+        appId: "1:1087878331068:web:28719d3278a619cb816eb9",
+        measurementId: "G-MW9YYKP1J8"
+    };
+    
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const analytics = getAnalytics(app);
+    
+    // Global variables
+    let allEvents = [];
+    let currentFilters = {
+        location: 'all',
+        genres: [],
+        startTime: '',
+        endTime: '',
+        locations: []
+    };
+
+
+    let viewMode = 'sound_points'; // 'sound_points' ou 'events'
+let selectedSoundPoint = null;
+let allSoundPoints = [];
+    
+    // DOM Elements
+    const eventList = document.querySelector('.event-list');
+    const tabs = document.querySelectorAll('.tab');
+    const filterChips = document.querySelectorAll('.filter-chip');
+    const locationChips = document.querySelectorAll('.location-chip');
+    const timeSelects = document.querySelectorAll('.time-select');
+    const validateButton = document.querySelector('.validate-button');
+    const filterButton = document.querySelector('.filter-button');
+    const filterOverlay = document.querySelector('.filter-overlay');
+    const backToProgram = document.querySelector('.back-to-program');
+    
+// Fonction améliorée pour formatter le temps avec plus de robustesse
+function formatTime(timestamp) {
+    if (!timestamp) return '00h00';
+    
+    // Inspecter la valeur exacte pour le débogage
+    console.log('Formatting timestamp:', timestamp, 'Type:', typeof timestamp);
+    
+    // Handle different types of timestamp formats
+    let date;
+    
+    if (typeof timestamp === 'object') {
+        // Si c'est un objet Date
+        if (timestamp instanceof Date) {
+            date = timestamp;
+        }
+        // Si c'est un timestamp Firestore (avec seconds et nanoseconds)
+        else if (timestamp.seconds !== undefined) {
+            date = new Date(timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000);
+        }
+        // Si c'est un timestamp avec toDate() (format Firestore)
+        else if (typeof timestamp.toDate === 'function') {
+            date = timestamp.toDate();
+        }
+        // Autre type d'objet - essayer de le traiter comme une date
+        else {
+            date = new Date(timestamp);
+        }
+    } 
+    else if (typeof timestamp === 'number') {
+        // Si c'est un nombre (timestamp Unix)
+        date = new Date(timestamp * 1000); // Secondes vers millisecondes
+    } 
+    else if (typeof timestamp === 'string') {
+        // Si c'est une chaîne comme "5 mai 5555 à 05:55:00 UTC+2"
+        try {
+            // Essayer le parsing standard
+            date = new Date(timestamp);
+            
+            // Si le parsing standard ne fonctionne pas bien, essayer des expressions régulières
+            if (isNaN(date.getTime())) {
+                // Exemple pour votre format: "5 mai 5555 à 05:55:00 UTC+2"
+                const regex = /(\d+)\s+(\w+)\s+(\d+)\s+à\s+(\d+):(\d+):(\d+)\s+UTC([+-]\d+)/;
+                const match = timestamp.match(regex);
+                
+                if (match) {
+                    const [, day, month, year, hours, minutes, seconds, timezone] = match;
+                    
+                    // Convertir le mois en numéro
+                    const monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 
+                                       'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+                    const monthIndex = monthNames.findIndex(m => 
+                        month.toLowerCase().includes(m.toLowerCase()));
+                    
+                    if (monthIndex !== -1) {
+                        // Créer la date
+                        date = new Date(parseInt(year), monthIndex, parseInt(day), 
+                                       parseInt(hours), parseInt(minutes), parseInt(seconds));
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Error parsing date string:', e);
+            return '00h00';
+        }
+    }
+    
+    // Vérifier si la date est valide
+    if (!date || isNaN(date.getTime())) {
+        console.error('Invalid timestamp after processing:', timestamp);
+        return '00h00';
+    }
+    
+    return date.getHours().toString().padStart(2, '0') + 'h' + date.getMinutes().toString().padStart(2, '0');
+}
+    
+    // Function to check if an event is in favorites
+    function isEventFavorite(eventId) {
+        return getCookie('favorite_event_' + eventId) === 'true';
+    }
+    
+    // Function to toggle favorite status
+    function toggleFavorite(eventId, icon) {
+        if (isEventFavorite(eventId)) {
+            deleteCookie('favorite_event_' + eventId);
+            icon.src = '../../assets/pictos/star-card.png';
+        } else {
+            setCookie('favorite_event_' + eventId, 'true', 30);
+            icon.src = '../../assets/pictos/filled-star.png';
+        }
+    }
+    
+    // Function to create loading card skeleton
+    function createLoadingCard() {
+        const card = document.createElement('div');
+        card.className = 'event-card loading';
+        card.innerHTML = `
+            <div class="card-image-container" style="background-color: #eee;">
+                <div class="time-tag" style="background-color: #ddd; color: transparent;">00:00-00:00</div>
+            </div>
+            <div class="card-info">
+                <div class="event-title" style="background-color: #eee; height: 20px; width: 70%; margin-bottom: 10px;"></div>
+                <div class="event-type" style="background-color: #eee; height: 16px; width: 40%; margin-bottom: 15px;"></div>
+                <div class="event-location" style="background-color: #eee; height: 16px; width: 80%; margin-bottom: 10px;"></div>
+                <div class="event-style" style="background-color: #eee; height: 16px; width: 60%; margin-bottom: 10px;"></div>
+            </div>
+        `;
+        return card;
+    }
+    
+    // Function to show loading state with shimmer effect
+    function showLoading() {
+        eventList.innerHTML = '';
+        for (let i = 0; i < 6; i++) {
+            const loadingCard = createLoadingCard();
+            eventList.appendChild(loadingCard);
+        }
+        
+        // Add shimmer effect with CSS
+        const style = document.createElement('style');
+        style.id = 'skeleton-animation';
+        style.textContent = `
+            @keyframes shimmer {
+                0% {
+                    background-position: -200% 0;
+                }
+                100% {
+                    background-position: 200% 0;
+                }
+            }
+            
+            .event-card.loading .card-image-container,
+            .event-card.loading .event-title,
+            .event-card.loading .event-type,
+            .event-card.loading .event-location,
+            .event-card.loading .event-style {
+                background: linear-gradient(90deg, #eee 8%, #f5f5f5 18%, #eee 33%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite linear;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+  // Updated createEventCard function with proper time handling
+function createEventCard(event) {
+    const card = document.createElement('div');
+    card.className = 'event-card';
+    card.setAttribute('data-location', event.location.toLowerCase().includes('mourillon') ? 'mourillon' : 'centre-ville');
+    card.setAttribute('data-id', event.id);
+    card.setAttribute('data-genre', event.genre);
+    
+    // Format start and end time from timestamp
+    const startTime = formatTime(event.timestamp.start);
+    const endTime = formatTime(event.timestamp.end);
+    const timeTag = `${startTime}-${endTime}`;
+    
+    // Set favorite icon based on cookie
+    const favoriteIconSrc = isEventFavorite(event.id) ? 
+        '../../assets/pictos/filled-star.png' : 
+        '../../assets/pictos/star-card.png';
+    
+    card.innerHTML = `
+        <div class="card-image-container">
+            <img src="${event.imageUrl}" alt="${event.title}" class="card-image">
+            <div class="time-tag">${timeTag}</div>
+        </div>
+        <div class="card-info">
+            <h3 class="event-title">${event.title}</h3>
+            <p class="event-type">${event.subtitle}</p>
+            <div class="event-location">
+                <img src="../../assets/pictos/pinMap.png" alt="Location" class="info-icon">
+                <span>${event.location}</span>
+            </div>
+            <div class="event-style">
+                <img src="../../assets/pictos/MusicNoteBeamed.png" alt="Music" class="info-icon">
+                <span>${event.genre}</span>
+            </div>
+            <img src="${favoriteIconSrc}" alt="Favorite" class="favorite-icon" data-id="${event.id}">
+            <img src="../../assets/buttons/plus-info.png" alt="Plus d'infos" class="info-btn" data-id="${event.id}">
+        </div>
+    `;
+    
+    // Add event listener for favorite icon
+    card.querySelector('.favorite-icon').addEventListener('click', function() {
+        toggleFavorite(event.id, this);
+    });
+    
+    // Add event listener for info button
+    card.querySelector('.info-btn').addEventListener('click', function() {
+        showEventDetails(event);
+    });
+    
+    return card;
+}
+
+// Updated showEventDetails function with plusUrl and partners from sound_points
+async function showEventDetails(event) {
+    console.log('Données de l\'événement reçu :', event);
+    
+    // Create a modal or overlay for event details
+    const detailsOverlay = document.createElement('div');
+    detailsOverlay.className = 'event-details-overlay';
+    
+    // Set the favorite icon based on cookie
+    const favoriteIconSrc = isEventFavorite(event.id) ? 
+        '../../assets/pictos/filled-star.png' : 
+        '../../assets/pictos/star-card.png';
+    
+    // Format start and end time from timestamp
+    const startTime = formatTime(event.timestamp.start);
+    const endTime = formatTime(event.timestamp.end);
+    const timeTag = `${startTime}-${endTime}`;
+    
+    // Placeholder for partners that will be fetched
+    let partnersHtml = '<p>Chargement des partenaires...</p>';
+    
+    detailsOverlay.innerHTML = `
+        <div class="event-details-container">
+            <div class="details-header">
+                <div class="details-image-container">
+                    <img src="${event.imageUrl}" alt="${event.title}" class="details-image">
+                    <button class="close-details">×</button>
+                </div>
+                
+                <div class="details-title-section">
+                    <div class="details-title-left">
+                        <h2 class="details-title">${event.title}</h2>
+                        <p class="details-subtitle">${event.subtitle}</p>
+                    </div>
+                    <div class="details-title-right">
+                        <img src="${favoriteIconSrc}" alt="Favorite" class="details-favorite-icon" data-id="${event.id}">
+                    </div>
+                </div>
+                
+                <div class="details-description">
+                    <p>${event.description}</p>
+                </div>
+                
+                ${event.plusUrl ? `
+                <div class="details-more-button">
+                    <a href="${event.plusUrl}" target="_blank">
+                        <img src="../../assets/buttons/savoirplusmarron.png" alt="En savoir plus">
+                    </a>
+                </div>` : ''}
+                
+                <div class="details-info-section">
+                    <div class="details-info-item">
+                        <img src="../../assets/pictos/Clock.png" alt="Time" class="info-icon">
+                        <span>${timeTag}</span>
+                        <span class="details-separator">/</span>
+                        <img src="../../assets/pictos/PinMapmarron.png" alt="Location" class="info-icon">
+                        <span>${event.location}</span>
+                    </div>
+                    
+                    <div class="details-map-button">
+                        <a href="${event.locationUrl}" target="_blank">
+                            <img src="../../assets/buttons/syrendre.png" alt="Comment s'y rendre">
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="details-partners">
+                    <h3>PARTENAIRES</h3>
+                    <div class="partners-grid" id="partners-grid">
+                        ${partnersHtml}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(detailsOverlay);
+    
+    // Add history state to handle back button
+    history.pushState({overlay: 'event-details'}, '');
+    
+    // Animate the overlay
+    setTimeout(() => {
+        detailsOverlay.classList.add('active');
+    }, 10);
+    
+    // Add event listeners
+    detailsOverlay.querySelector('.close-details').addEventListener('click', () => {
+        detailsOverlay.classList.remove('active');
+        setTimeout(() => {
+            detailsOverlay.remove();
+            // Remove history state to avoid double-back
+            history.back();
+        }, 300);
+    });
+    
+    // Add to favorites button
+    const favIcon = detailsOverlay.querySelector('.details-favorite-icon');
+    favIcon.addEventListener('click', () => {
+        const isFav = isEventFavorite(event.id);
+        const favIcons = document.querySelectorAll(`.favorite-icon[data-id="${event.id}"]`);
+        
+        // Toggle the cookie
+        toggleFavorite(event.id, favIcon);
+        
+        // Update other instances of the same favorite icon
+        favIcons.forEach(icon => {
+            icon.src = isFav ? '../../assets/pictos/star-card.png' : '../../assets/pictos/filled-star.png';
+        });
+    });
+    
+    // Fetch partners based on location from sound_points collection
+    fetchPartnersForEvent(event.location, detailsOverlay);
+}
+
+
+// New function to fetch partners for the event
+async function fetchPartnersForEvent(locationName, detailsOverlay) {
+    try {
+        // Step 1: Find the sound_point with the matching name
+        const soundPointsCol = collection(db, "sound_points");
+        const soundPointsSnapshot = await getDocs(soundPointsCol);
+        
+        let soundPointWithPartners = null;
+        
+        soundPointsSnapshot.forEach((doc) => {
+            const soundPointData = doc.data();
+            // Check if name matches the event location
+            if (soundPointData.name && 
+                soundPointData.name.toLowerCase() === locationName.toLowerCase()) {
+                soundPointWithPartners = soundPointData;
+            }
+        });
+        
+        if (!soundPointWithPartners || !soundPointWithPartners.partners || 
+            !Array.isArray(soundPointWithPartners.partners) || 
+            soundPointWithPartners.partners.length === 0) {
+            // No partners found
+            updatePartnersGrid(detailsOverlay, []);
+            return;
+        }
+        
+        // Step 2: Get all partners from the partners collection based on IDs
+        const partnerPromises = soundPointWithPartners.partners.map(async (partnerId) => {
+            try {
+                const partnerDoc = await getDoc(doc(db, "partners", partnerId));
+                if (partnerDoc.exists()) {
+                    return {
+                        id: partnerId,
+                        ...partnerDoc.data()
+                    };
+                }
+                return null;
+            } catch (error) {
+                console.error(`Error fetching partner ${partnerId}:`, error);
+                return null;
+            }
+        });
+        
+        const partners = (await Promise.all(partnerPromises)).filter(partner => partner !== null);
+        
+        // Update the partners grid with fetched partners
+        updatePartnersGrid(detailsOverlay, partners);
+        
+    } catch (error) {
+        console.error("Error fetching partners:", error);
+        updatePartnersGrid(detailsOverlay, []);
+    }
+}
+   
+
+
+// Function to update partners grid in the details overlay
+function updatePartnersGrid(detailsOverlay, partners) {
+    const partnersGrid = detailsOverlay.querySelector('#partners-grid');
+    
+    if (!partnersGrid) return;
+    
+    if (partners.length === 0) {
+        partnersGrid.innerHTML = '<p>Aucun partenaire</p>';
+        return;
+    }
+    
+    // Create HTML for partners
+    const partnersHtml = partners.map(partner => `
+        <div class="partner-logo-container" data-partner-id="${partner.id}">
+            <img src="${partner.imageUrl}" alt="${partner.name || 'Partenaire'}" class="partner-logo">
+        </div>
+    `).join('');
+    
+    partnersGrid.innerHTML = partnersHtml;
+    
+    // Add event listeners to partner logos if needed
+    const partnerLogos = partnersGrid.querySelectorAll('.partner-logo-container');
+    partnerLogos.forEach(logo => {
+        logo.addEventListener('click', () => {
+            const partnerId = logo.getAttribute('data-partner-id');
+            // You can add functionality here to show more partner details if needed
+            console.log('Partner clicked:', partnerId);
+        });
+    });
+}
+// Modify fetchEvents function to also fetch sound points
+async function fetchEvents() {
+    showLoading(); // Show loading state
+    
+    const startTime = Date.now();
+    
+    try {
+        // Fetch sound points first
+        const soundPointsCol = collection(db, "sound_points");
+        const soundPointsSnapshot = await getDocs(soundPointsCol);
+        
+        allSoundPoints = [];
+        soundPointsSnapshot.forEach((doc) => {
+            const soundPointData = doc.data();
+            const soundPoint = {
+                id: doc.id,
+                name: soundPointData.name || 'Point de son sans nom',
+                type: soundPointData.type || '',
+                imageUrl: soundPointData.imageUrl || '../../assets/default-location.jpg',
+                section_toulon: soundPointData.section_toulon || '',
+                genres: soundPointData.genres || []
+            };
+            allSoundPoints.push(soundPoint);
+        });
+        
+        console.log('Loaded sound points:', allSoundPoints.length);
+        
+        // Then fetch events
+        const eventsCol = collection(db, "events");
+        const eventSnapshot = await getDocs(eventsCol);
+        
+        // Process each document
+        allEvents = [];
+        eventSnapshot.forEach((doc) => {
+            const eventData = doc.data();
+            
+            // Inspecter la structure complète des données pour identifier où sont stockés les timestamps
+            console.log('Event data structure:', JSON.stringify(eventData, null, 2));
+            
+            // Extraire les timestamps, en cherchant à plusieurs endroits possibles
+            let startTimestamp = null;
+            let endTimestamp = null;
+            
+            // Vérifier toutes les possibilités de structure de données
+            if (eventData.timestamp) {
+                // Si c'est dans un objet timestamp
+                if (eventData.timestamp.start) startTimestamp = eventData.timestamp.start;
+                if (eventData.timestamp.end) endTimestamp = eventData.timestamp.end;
+            }
+            
+            // Vérifier les champs spécifiques
+            if (eventData.timestamp_start) startTimestamp = eventData.timestamp_start;
+            if (eventData.timestamp_end) endTimestamp = eventData.timestamp_end;
+            
+            // Vérifier les champs startDate et endDate comme mentionnés dans votre message
+            if (eventData.startDate) startTimestamp = eventData.startDate;
+            if (eventData.endDate) endTimestamp = eventData.endDate;
+            
+            // Si d'autres champs pourraient contenir des dates
+            if (eventData.start) startTimestamp = eventData.start;
+            if (eventData.end) endTimestamp = eventData.end;
+            
+            // Si on a un startTime/endTime séparément
+            if (eventData.startTime) startTimestamp = eventData.startTime;
+            if (eventData.endTime) endTimestamp = eventData.endTime;
+            
+            const event = {
+                id: doc.id,
+                title: eventData.title || 'Événement sans titre',
+                subtitle: eventData.subtitle || '',
+                imageUrl: eventData.imageUrl || 'assets/default-event.jpg',
+                location: eventData.location || 'Lieu non spécifié',
+                genre: eventData.genre || 'Genre non spécifié',
+                timestamp: {
+                    start: startTimestamp || 0,
+                    end: endTimestamp || 0
+                },
+                locationUrl: eventData.locationUrl || '',
+                description: eventData.description || 'Aucune description disponible',
+                plusUrl: eventData.plusUrl || '',
+                partners: eventData.partners || []
+            };
+            
+            allEvents.push(event);
+        });
+        
+        console.log('Loaded events:', allEvents.length);
+        
+        // Ensure skeleton loader stays visible for at least 1 second
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, 1000 - elapsedTime);
+        
+        setTimeout(() => {
+            // Remove skeleton animation style
+            const skeletonStyle = document.getElementById('skeleton-animation');
+            if (skeletonStyle) skeletonStyle.remove();
+            
+            // Clear loading state
+            eventList.innerHTML = '';
+            
+            // Initially show sound points view
+            if (viewMode === 'sound_points') {
+                // Hide filter button initially
+                const filterButtonContainer = document.querySelector('.filter-button-container');
+                if (filterButtonContainer) {
+                    filterButtonContainer.style.display = 'none';
+                }
+                filterSoundPointsByTab();
+            } else {
+                // Apply filters to events if in events view
+                applyFilters();
+            }
+        }, remainingTime);
+        
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        
+        // Show error after at least 1 second to avoid flickering
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, 600 - elapsedTime);
+        
+        setTimeout(() => {
+            eventList.innerHTML = '<p style="color: #734432; text-align: center; padding: 20px;">Erreur lors du chargement des données. Veuillez réessayer.</p>';
+        }, remainingTime);
+    }
+}
+
+
+// Fonction pour le débogage - à ajouter pour voir la structure exacte de vos timestamps
+function debugEventTimestamps() {
+    console.log('Debugging all events timestamps:');
+    if (allEvents && allEvents.length > 0) {
+        allEvents.forEach((event, index) => {
+            console.log(`Event ${index + 1}: ${event.title}`);
+            console.log('  Start timestamp:', event.timestamp.start);
+            console.log('  Start formatted:', formatTime(event.timestamp.start));
+            console.log('  End timestamp:', event.timestamp.end);
+            console.log('  End formatted:', formatTime(event.timestamp.end));
+            console.log('---');
+        });
+    } else {
+        console.log('No events loaded yet');
+    }
+}
+    
+
+// Modify applyFilters function to handle multiple genres
+function applyFilters() {
+    // Create a copy of all events
+    let filteredEvents = [...allEvents];
+    
+    // If in sound point view, filter events by selected sound point
+    if (viewMode === 'events' && selectedSoundPoint) {
+        filteredEvents = filteredEvents.filter(event => 
+            event.location.toLowerCase() === selectedSoundPoint.name.toLowerCase()
+        );
+    } 
+    // Otherwise apply location tab filter
+    else if (currentFilters.location !== 'all') {
+        filteredEvents = filteredEvents.filter(event => 
+            event.location.toLowerCase().includes(currentFilters.location.toLowerCase())
+        );
+    }
+    
+    // Apply genre filter - modified to handle comma-separated genres
+    if (currentFilters.genres.length > 0) {
+        filteredEvents = filteredEvents.filter(event => {
+            // Split event genre by comma if it contains multiple genres
+            const eventGenres = event.genre.split(',').map(g => g.trim().toLowerCase());
+            
+            // Check if any of the selected filter genres match any of the event genres
+            return currentFilters.genres.some(filterGenre => 
+                eventGenres.some(eventGenre => 
+                    eventGenre.includes(filterGenre.toLowerCase())
+                )
+            );
+        });
+    }
+    
+    // Apply specific locations filter
+    if (currentFilters.locations.length > 0) {
+        filteredEvents = filteredEvents.filter(event => {
+            return currentFilters.locations.some(location => 
+                event.location.toLowerCase().includes(location.toLowerCase())
+            );
+        });
+    }
+    
+    // Apply time filter
+    if (currentFilters.startTime) {
+        const [startHours, startMinutes] = currentFilters.startTime.split(':').map(Number);
+        const startTimeMinutes = startHours * 60 + startMinutes;
+        
+        filteredEvents = filteredEvents.filter(event => {
+            if (!event.timestamp.start) return true; // Skip if no start time
+            
+            let eventStartDate;
+            if (typeof event.timestamp.start === 'object' && event.timestamp.start.seconds) {
+                eventStartDate = new Date(event.timestamp.start.seconds * 1000);
+            } else if (typeof event.timestamp.start === 'number') {
+                eventStartDate = new Date(event.timestamp.start * 1000);
+            } else {
+                return true; // Skip if invalid timestamp
+            }
+            
+            const eventStartMinutes = eventStartDate.getHours() * 60 + eventStartDate.getMinutes();
+            return eventStartMinutes >= startTimeMinutes;
+        });
+    }
+    
+    if (currentFilters.endTime) {
+        const [endHours, endMinutes] = currentFilters.endTime.split(':').map(Number);
+        const endTimeMinutes = endHours * 60 + endMinutes;
+        
+        filteredEvents = filteredEvents.filter(event => {
+            if (!event.timestamp.end) return true; // Skip if no end time
+            
+            let eventEndDate;
+            if (typeof event.timestamp.end === 'object' && event.timestamp.end.seconds) {
+                eventEndDate = new Date(event.timestamp.end.seconds * 1000);
+            } else if (typeof event.timestamp.end === 'number') {
+                eventEndDate = new Date(event.timestamp.end * 1000);
+            } else {
+                return true; // Skip if invalid timestamp
+            }
+            
+            const eventEndMinutes = eventEndDate.getHours() * 60 + eventEndDate.getMinutes();
+            return eventEndMinutes <= endTimeMinutes;
+        });
+    }
+    
+    // Sort events by start time
+    filteredEvents.sort((a, b) => {
+        const startA = typeof a.timestamp.start === 'object' && a.timestamp.start.seconds ? 
+            a.timestamp.start.seconds : a.timestamp.start;
+        const startB = typeof b.timestamp.start === 'object' && b.timestamp.start.seconds ? 
+            b.timestamp.start.seconds : b.timestamp.start;
+        
+        return startA - startB;
+    });
+    
+    // Update the display
+    updateEventList(filteredEvents);
+}
+    
+    // Function to update event list
+    function updateEventList(events) {
+        eventList.innerHTML = '';
+        
+        if (events.length === 0) {
+            eventList.innerHTML = '<p style="color: #734432; text-align: center; padding: 20px;">Aucun événement ne correspond à vos critères de recherche.</p>';
+            return;
+        }
+        
+        events.forEach(event => {
+            const card = createEventCard(event);
+            eventList.appendChild(card);
+        });
+    }
+    
+    // Cookie functions
+    function setCookie(name, value, days) {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+        document.cookie = name + '=' + value + ';expires=' + expires.toUTCString() + ';path=/';
+    }
+    
+    function getCookie(name) {
+        const nameEQ = name + '=';
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+    
+    function deleteCookie(name) {
+        document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/';
+    }
+    
+    // Favorites functionality
+    function loadFavorites() {
+        const favoritesOverlay = document.querySelector('.favorites-overlay');
+        favoritesOverlay.innerHTML = ''; // Clear previous content
+        
+        // Filter events that are in favorites
+        const favoriteEvents = allEvents.filter(event => isEventFavorite(event.id));
+        
+        if (favoriteEvents.length === 0) {
+            // Show empty state
+            favoritesOverlay.innerHTML = `
+                <div class="favorites-empty">
+                    <img src="../../assets/headline/programmation-outline.png" alt="Icône favoris" id="favorites-icon">
+                    <h3>Vous n'avez pas encore sélectionné de programme favoris</h3>
+                    <img src="../../assets/pictos/material-symbols_stars-outline.png" alt="Icône programme" id="program-icon">
+                    <h3>Rendez-vous sur la programmation pour faire votre choix</h3>
+                    <img src="../../assets/buttons/programmation-button.png" alt="Aller à la programmation" class="action-img" id="go-to-program">
+                </div>
+            `;
+            
+            // Add event listener for "go to program" button
+            document.getElementById('go-to-program').addEventListener('click', () => {
+                favoritesOverlay.classList.remove('active');
+            });
+        } else {
+            // Create header for favorites overlay
+            const favHeader = document.createElement('div');
+            favHeader.style.width = '100%';
+            favHeader.style.padding = '10px 15px';
+            favHeader.innerHTML = `
+                <a href="#" class="back-to-program" id="back-from-favorites">← Retour vers la programmation</a>
+                <img src="../../assets/headline/favoris.png" alt="Mes Favoris" style="width: 70%;
+  max-width: 300px; margin: 20px auto; display: block;">
+            `;
+            favoritesOverlay.appendChild(favHeader);
+            
+            // Create container for favorite events
+            const favoriteContainer = document.createElement('div');
+            favoriteContainer.className = 'event-list';
+            favoriteContainer.style.padding = '0 15px';
+            
+            // Add each favorite event
+            favoriteEvents.forEach(event => {
+                const card = createEventCard(event);
+                favoriteContainer.appendChild(card);
+            });
+            
+            favoritesOverlay.appendChild(favoriteContainer);
+            
+            // Add event listener for back button
+            document.getElementById('back-from-favorites').addEventListener('click', (e) => {
+                e.preventDefault();
+                favoritesOverlay.classList.remove('active');
+            });
+        }
+    }
+    
+    // Document ready function
+    document.addEventListener('DOMContentLoaded', () => {
+        // Fetch events when page loads
+        fetchEvents();
+        
+        // Tab navigation
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                currentFilters.location = tab.getAttribute('data-filter');
+                applyFilters();
+            });
+        });
+        
+        // Menu toggle
+        const menuIcon = document.querySelector('.menu-icon');
+        const menuOverlay = document.querySelector('.menu-overlay');
+        
+        if (menuIcon && menuOverlay) {
+            menuIcon.addEventListener('click', () => {
+                menuOverlay.classList.toggle('active');
+            });
+        }
+        
+        // Favorites toggle
+        const favoritesBtn = document.querySelector('.favorites-btn');
+        const favoritesOverlay = document.querySelector('.favorites-overlay');
+        
+        if (favoritesBtn && favoritesOverlay) {
+            favoritesBtn.addEventListener('click', () => {
+                loadFavorites();
+                favoritesOverlay.classList.toggle('active');
+            });
+        }
+        
+        // Filter button
+        if (filterButton && filterOverlay && backToProgram) {
+            filterButton.addEventListener('click', () => {
+                filterOverlay.classList.add('active');
+            });
+            
+            backToProgram.addEventListener('click', (e) => {
+                e.preventDefault();
+                filterOverlay.classList.remove('active');
+            });
+        }
+        
+        // Genre filter chips
+        filterChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('active');
+            });
+        });
+        
+        // Location filter chips
+        locationChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('active');
+            });
+        });
+        
+        // Validate button for filters
+        if (validateButton) {
+            validateButton.addEventListener('click', () => {
+                // Collect selected genres
+                currentFilters.genres = Array.from(document.querySelectorAll('.filter-chip.active'))
+                    .map(chip => chip.getAttribute('data-filter'));
+                
+                // Collect selected locations
+                currentFilters.locations = Array.from(document.querySelectorAll('.location-chip.active'))
+                    .map(chip => chip.textContent.trim().split('(')[0].trim());
+                
+                // Collect time range
+                if (timeSelects && timeSelects.length >= 2) {
+                    currentFilters.startTime = timeSelects[0].value;
+                    currentFilters.endTime = timeSelects[1].value;
+                }
+                
+                // Apply filters
+                applyFilters();
+                
+                // Close filter overlay
+                filterOverlay.classList.remove('active');
+            });
+        }
+        
+        // Handle history navigation (back button)
+        window.addEventListener('popstate', () => {
+            // Close any open overlays
+            const overlays = document.querySelectorAll('.favorites-overlay, .filter-overlay, .event-details-overlay');
+            overlays.forEach(overlay => {
+                if (overlay.classList.contains('active')) {
+                    overlay.classList.remove('active');
+                    if (overlay.classList.contains('event-details-overlay')) {
+                        setTimeout(() => overlay.remove(), 300);
+                    }
+                }
+            });
+        });
+    });
+
+
+
+
+
+
+
+
+    
+// Add this function to create a sound point card
+function createSoundPointCard(soundPoint) {
+    const card = document.createElement('div');
+    card.className = 'sound-point-card';
+    card.setAttribute('data-section', soundPoint.section_toulon || '');
+    card.setAttribute('data-name', soundPoint.name || '');
+    
+    // Prepare genres display
+    let genresHtml = '';
+    if (soundPoint.genres && Array.isArray(soundPoint.genres) && soundPoint.genres.length > 0) {
+        genresHtml = soundPoint.genres.join(', ');
+    }
+    
+    card.innerHTML = `
+        <div class="card-image-container">
+            <img src="${soundPoint.imageUrl || '../../assets/default-location.jpg'}" alt="${soundPoint.name}" class="card-image">
+        </div>
+        <div class="card-info">
+            <h3 class="event-title">${soundPoint.name || 'Point de son'}</h3>
+            <p class="event-type">${soundPoint.type || ''}</p>
+            <div class="event-style">
+                <img src="../../assets/pictos/MusicNoteBeamed.png" alt="Music" class="info-icon">
+                <span>${genresHtml}</span>
+            </div>
+            <img src="../../assets/buttons/plus-info.png" alt="Plus d'infos" class="sound-point-btn">
+        </div>
+    `;
+    
+    // Add event listener to select this sound point
+    card.addEventListener('click', function() {
+        selectSoundPoint(soundPoint);
+    });
+    
+    return card;
+}
+
+// Add this function to switch to event view filtered by sound point
+function selectSoundPoint(soundPoint) {
+    selectedSoundPoint = soundPoint;
+    viewMode = 'events';
+    
+    // Hide tab navigation and show back button
+    const tabNavigation = document.querySelector('.tab-navigation');
+    if (tabNavigation) {
+        tabNavigation.style.display = 'none';
+    }
+    
+    // Create back button if it doesn't exist
+    let backButton = document.querySelector('.back-to-sound-points');
+    if (!backButton) {
+        backButton = document.createElement('div');
+        backButton.className = 'back-to-sound-points';
+        backButton.innerHTML = '<span>← Revenir aux points de son</span>';
+        backButton.addEventListener('click', showSoundPointsView);
+        document.querySelector('.content').insertBefore(backButton, eventList);
+    } else {
+        backButton.style.display = 'block';
+    }
+    
+    // Show filter button
+    const filterButtonContainer = document.querySelector('.filter-button-container');
+    if (filterButtonContainer) {
+        filterButtonContainer.style.display = 'flex';
+    }
+    
+    // Filter events by the selected sound point
+    let filteredEvents = allEvents.filter(event => 
+        event.location.toLowerCase() === soundPoint.name.toLowerCase()
+    );
+    
+    // Update the event list with filtered events
+    updateEventList(filteredEvents);
+}
+
+// Add this function to switch back to sound points view
+function showSoundPointsView() {
+    viewMode = 'sound_points';
+    selectedSoundPoint = null;
+    
+    // Show tab navigation
+    const tabNavigation = document.querySelector('.tab-navigation');
+    if (tabNavigation) {
+        tabNavigation.style.display = 'flex';
+    }
+    
+    // Hide back button
+    const backButton = document.querySelector('.back-to-sound-points');
+    if (backButton) {
+        backButton.style.display = 'none';
+    }
+    
+    // Hide filter button
+    const filterButtonContainer = document.querySelector('.filter-button-container');
+    if (filterButtonContainer) {
+        filterButtonContainer.style.display = 'none';
+    }
+    
+    // Display sound points
+    filterSoundPointsByTab();
+}
+
+// Add this function to filter sound points by tab selection
+function filterSoundPointsByTab() {
+    const activeTab = document.querySelector('.tab.active');
+    if (!activeTab) return;
+    
+    const filter = activeTab.getAttribute('data-filter');
+    
+    let filteredSoundPoints = [...allSoundPoints];
+    
+    if (filter !== 'all') {
+        filteredSoundPoints = filteredSoundPoints.filter(point => 
+            point.section_toulon && point.section_toulon.toLowerCase() === filter.toLowerCase()
+        );
+    }
+    
+    // Update display with filtered sound points
+    updateSoundPointsList(filteredSoundPoints);
+}
+
+// Add this function to update sound points list
+function updateSoundPointsList(soundPoints) {
+    eventList.innerHTML = '';
+    
+    if (soundPoints.length === 0) {
+        eventList.innerHTML = '<p style="color: #734432; text-align: center; padding: 20px;">Aucun point de son trouvé.</p>';
+        return;
+    }
+    
+    soundPoints.forEach(soundPoint => {
+        const card = createSoundPointCard(soundPoint);
+        eventList.appendChild(card);
+    });
+}
+
+
+
+// Add CSS styles for the new elements
+document.addEventListener('DOMContentLoaded', () => {
+    // Add CSS for sound point cards and back button
+    const style = document.createElement('style');
+    style.textContent = `
+        .sound-point-card {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .back-to-sound-points {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            color: #734432;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .back-to-sound-points span {
+            margin-left: 5px;
+        }
+        
+        .sound-point-btn {
+            position: absolute;
+            right: 15px;
+            bottom: 15px;
+            width: 40px;
+            cursor: pointer;
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Modify tab navigation event listeners
+    tabs.forEach(tab => {
+        const originalClick = tab.onclick;
+        tab.onclick = null; // Remove previous listener
+        
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
+            currentFilters.location = tab.getAttribute('data-filter');
+            
+            if (viewMode === 'sound_points') {
+                filterSoundPointsByTab();
+            } else {
+                applyFilters();
+            }
+        });
+    });
+    
+    // Make sure filter button is initially hidden
+    setTimeout(() => {
+        const filterButtonContainer = document.querySelector('.filter-button-container');
+        if (filterButtonContainer && viewMode === 'sound_points') {
+            filterButtonContainer.style.display = 'none';
+        }
+    }, 100);
+});

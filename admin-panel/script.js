@@ -4,13 +4,23 @@ import { getFirestore, collection, getDocs, doc, getDoc, addDoc, updateDoc, dele
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import { browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
+
+
+  // **ICI** : import Storage depuis le CDN, pas "firebase/storage"
+  import {
+    getStorage,
+    ref as storageRef,
+    uploadBytes,
+    getDownloadURL
+  } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
+
+
 // Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyCwtimDB_Mai-QPyB6d0yqjJX_d5mQjGY8",
     authDomain: "fete-de-la-musique-64a6b.firebaseapp.com",
     projectId: "fete-de-la-musique-64a6b",
-    storageBucket: "fete-de-la-musique-64a6b.appspot.com",
-    messagingSenderId: "1087878331068",
+  storageBucket: "fete-de-la-musique-64a6b.firebasestorage.app", 
     appId: "1:1087878331068:web:28719d3278a619cb816eb9",
     measurementId: "G-MW9YYKP1J8"
 };
@@ -19,7 +29,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-
+  const storage = getStorage(app);
 // Global variables
 let eventImageFile = null;
 let summerEventImageFile = null;
@@ -351,14 +361,24 @@ function displayImagePreview(file, preview) {
     reader.readAsDataURL(file);
 }
 
-// Nouvelle fonction pour convertir l'image en Base64
-function convertImageToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-        reader.readAsDataURL(file);
-    });
+// Nouvelle version de convertImageToBase64 qui upload en Storage et renvoie l'URL
+async function convertImageToBase64(file) {
+  try {
+    // Crée un chemin unique pour l'image (ici timestamp + nom d'origine)
+    const fileName = `${Date.now()}_${file.name}`;
+    const imgRef   = storageRef(storage, `partners/${fileName}`);
+
+    // Upload du fichier brut
+    await uploadBytes(imgRef, file);
+
+    // Récupère l'URL publique
+    const downloadURL = await getDownloadURL(imgRef);
+    return downloadURL;
+
+  } catch (err) {
+    console.error("Erreur d'upload vers Firebase Storage :", err);
+    throw err;
+  }
 }
 
 // Fonction pour redimensionner l'image afin de réduire sa taille
@@ -610,7 +630,7 @@ async function uploadEventImageBase64(file, eventType) {
         const base64Original = await convertImageToBase64(file);
         
         // Redimensionner l'image pour réduire sa taille
-        const base64Resized = await resizeImage(base64Original);
+        const base64Resized = base64Original;
         
         console.log(`Image processed successfully`);
         
