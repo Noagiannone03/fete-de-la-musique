@@ -589,27 +589,37 @@ function debugEventTimestamps() {
 
 // Correction de la fonction applyFilters pour gérer les genres comme tableau ou chaîne
 function applyFilters() {
+    console.log("Début de applyFilters");
+    
     // Create a copy of all events
     let filteredEvents = [...allEvents];
+    console.log(`Nombre total d'événements: ${filteredEvents.length}`);
     
     // If in sound point view, filter events by selected sound point
     if (viewMode === 'events' && selectedSoundPoint) {
         filteredEvents = filteredEvents.filter(event => 
             event.location && selectedSoundPoint && event.location.toLowerCase() === selectedSoundPoint.name.toLowerCase()
         );
+        console.log(`Après filtre du point sonore: ${filteredEvents.length} événements`);
     } 
     // Otherwise apply location tab filter
     else if (currentFilters.location !== 'all') {
         filteredEvents = filteredEvents.filter(event => 
             event.location && event.location.toLowerCase().includes(currentFilters.location.toLowerCase())
         );
+        console.log(`Après filtre de lieu: ${filteredEvents.length} événements`);
     }
     
     // Apply genre filter - modified to handle both array and string genres
     if (currentFilters.genres && currentFilters.genres.length > 0) {
+        console.log("Filtres de genre sélectionnés:", currentFilters.genres);
+        
         filteredEvents = filteredEvents.filter(event => {
             // Vérifier si event.genre existe
-            if (!event.genre) return false;
+            if (!event.genre) {
+                console.log(`Événement sans genre: ${event.title || 'sans titre'}`);
+                return false;
+            }
             
             // Convertir en tableau si c'est une chaîne de caractères
             let eventGenres;
@@ -627,13 +637,20 @@ function applyFilters() {
                 eventGenres = [String(event.genre).toLowerCase()];
             }
             
-            // Check if any of the selected filter genres match any of the event genres
-            return currentFilters.genres.some(filterGenre => 
+            console.log(`Événement "${event.title || 'sans titre'}" a les genres:`, eventGenres);
+            
+            // Vérifie qu'au moins un des genres sélectionnés correspond à un des genres de l'événement
+            const matchesFilter = currentFilters.genres.some(filterGenre => 
                 eventGenres.some(eventGenre => 
                     eventGenre.includes(filterGenre.toLowerCase())
                 )
             );
+            
+            console.log(`Événement "${event.title || 'sans titre'}" match les filtres de genre:`, matchesFilter);
+            return matchesFilter;
         });
+        
+        console.log(`Après filtre de genre: ${filteredEvents.length} événements`);
     }
     
     // Apply specific locations filter
@@ -643,49 +660,146 @@ function applyFilters() {
                 event.location.toLowerCase().includes(location.toLowerCase())
             );
         });
+        console.log(`Après filtre de lieux spécifiques: ${filteredEvents.length} événements`);
     }
     
-    // Apply time filter
+    // Apply time filter - improved to handle string date formats
     if (currentFilters.startTime) {
         const [startHours, startMinutes] = currentFilters.startTime.split(':').map(Number);
         const startTimeMinutes = startHours * 60 + startMinutes;
         
+        console.log(`Filtre heure de début: ${startHours}:${startMinutes} (${startTimeMinutes} minutes)`);
+        
         filteredEvents = filteredEvents.filter(event => {
-            if (!event.timestamp || !event.timestamp.start) return true; // Skip if no start time
+            if (!event.timestamp || !event.timestamp.start) {
+                console.log(`Événement sans heure de début: ${event.title || 'sans titre'}`);
+                return true; // Skip if no start time
+            }
             
+            // Gestion améliorée des formats de date
             let eventStartDate;
+            
             if (typeof event.timestamp.start === 'object' && event.timestamp.start.seconds) {
+                // Format Firebase Timestamp
                 eventStartDate = new Date(event.timestamp.start.seconds * 1000);
             } else if (typeof event.timestamp.start === 'number') {
+                // Format timestamp numérique
                 eventStartDate = new Date(event.timestamp.start * 1000);
+            } else if (typeof event.timestamp.start === 'string') {
+                // Format date en chaîne de caractères (comme "11 novembre 2222 à 21:22:00 UTC+1")
+                try {
+                    // Tentative de parsing du format français
+                    const dateMatch = event.timestamp.start.match(/(\d+)\s+(\w+)\s+(\d+)\s+à\s+(\d+):(\d+):(\d+)/);
+                    if (dateMatch) {
+                        const [_, day, month, year, hours, minutes, seconds] = dateMatch;
+                        const monthMap = {
+                            'janvier': 0, 'février': 1, 'mars': 2, 'avril': 3, 'mai': 4, 'juin': 5,
+                            'juillet': 6, 'août': 7, 'septembre': 8, 'octobre': 9, 'novembre': 10, 'décembre': 11
+                        };
+                        
+                        const monthIndex = monthMap[month.toLowerCase()];
+                        if (monthIndex !== undefined) {
+                            eventStartDate = new Date(year, monthIndex, day, hours, minutes, seconds);
+                        } else {
+                            // Parsing standard si le mois n'est pas reconnu
+                            eventStartDate = new Date(event.timestamp.start);
+                        }
+                    } else {
+                        // Tentative de parsing standard
+                        eventStartDate = new Date(event.timestamp.start);
+                    }
+                } catch (e) {
+                    console.error(`Erreur de parsing de date: ${event.timestamp.start}`, e);
+                    return true; // Skip if parsing fails
+                }
             } else {
+                console.log(`Format de date non reconnu: ${typeof event.timestamp.start}`);
                 return true; // Skip if invalid timestamp
             }
             
+            if (!(eventStartDate instanceof Date) || isNaN(eventStartDate)) {
+                console.log(`Date invalide: ${event.timestamp.start}`);
+                return true; // Skip if invalid date
+            }
+            
             const eventStartMinutes = eventStartDate.getHours() * 60 + eventStartDate.getMinutes();
-            return eventStartMinutes >= startTimeMinutes;
+            const passes = eventStartMinutes >= startTimeMinutes;
+            
+            console.log(`Événement "${event.title || 'sans titre'}" commence à ${eventStartDate.getHours()}:${eventStartDate.getMinutes()} (${eventStartMinutes} minutes) - passe le filtre d'heure de début: ${passes}`);
+            
+            return passes;
         });
+        
+        console.log(`Après filtre d'heure de début: ${filteredEvents.length} événements`);
     }
     
     if (currentFilters.endTime) {
         const [endHours, endMinutes] = currentFilters.endTime.split(':').map(Number);
         const endTimeMinutes = endHours * 60 + endMinutes;
         
+        console.log(`Filtre heure de fin: ${endHours}:${endMinutes} (${endTimeMinutes} minutes)`);
+        
         filteredEvents = filteredEvents.filter(event => {
-            if (!event.timestamp || !event.timestamp.end) return true; // Skip if no end time
+            if (!event.timestamp || !event.timestamp.end) {
+                console.log(`Événement sans heure de fin: ${event.title || 'sans titre'}`);
+                return true; // Skip if no end time
+            }
             
+            // Gestion améliorée des formats de date
             let eventEndDate;
+            
             if (typeof event.timestamp.end === 'object' && event.timestamp.end.seconds) {
+                // Format Firebase Timestamp
                 eventEndDate = new Date(event.timestamp.end.seconds * 1000);
             } else if (typeof event.timestamp.end === 'number') {
+                // Format timestamp numérique
                 eventEndDate = new Date(event.timestamp.end * 1000);
+            } else if (typeof event.timestamp.end === 'string') {
+                // Format date en chaîne de caractères (comme "5 mai 5555 à 03:05:00 UTC+2")
+                try {
+                    // Tentative de parsing du format français
+                    const dateMatch = event.timestamp.end.match(/(\d+)\s+(\w+)\s+(\d+)\s+à\s+(\d+):(\d+):(\d+)/);
+                    if (dateMatch) {
+                        const [_, day, month, year, hours, minutes, seconds] = dateMatch;
+                        const monthMap = {
+                            'janvier': 0, 'février': 1, 'mars': 2, 'avril': 3, 'mai': 4, 'juin': 5,
+                            'juillet': 6, 'août': 7, 'septembre': 8, 'octobre': 9, 'novembre': 10, 'décembre': 11
+                        };
+                        
+                        const monthIndex = monthMap[month.toLowerCase()];
+                        if (monthIndex !== undefined) {
+                            eventEndDate = new Date(year, monthIndex, day, hours, minutes, seconds);
+                        } else {
+                            // Parsing standard si le mois n'est pas reconnu
+                            eventEndDate = new Date(event.timestamp.end);
+                        }
+                    } else {
+                        // Tentative de parsing standard
+                        eventEndDate = new Date(event.timestamp.end);
+                    }
+                } catch (e) {
+                    console.error(`Erreur de parsing de date: ${event.timestamp.end}`, e);
+                    return true; // Skip if parsing fails
+                }
             } else {
+                console.log(`Format de date non reconnu: ${typeof event.timestamp.end}`);
                 return true; // Skip if invalid timestamp
             }
             
+            if (!(eventEndDate instanceof Date) || isNaN(eventEndDate)) {
+                console.log(`Date invalide: ${event.timestamp.end}`);
+                return true; // Skip if invalid date
+            }
+            
             const eventEndMinutes = eventEndDate.getHours() * 60 + eventEndDate.getMinutes();
-            return eventEndMinutes <= endTimeMinutes;
+            const passes = eventEndMinutes <= endTimeMinutes;
+            
+            console.log(`Événement "${event.title || 'sans titre'}" finit à ${eventEndDate.getHours()}:${eventEndDate.getMinutes()} (${eventEndMinutes} minutes) - passe le filtre d'heure de fin: ${passes}`);
+            
+            return passes;
         });
+        
+        console.log(`Après filtre d'heure de fin: ${filteredEvents.length} événements`);
     }
     
     // Sort events by start time
@@ -693,10 +807,25 @@ function applyFilters() {
         if (!a.timestamp || !a.timestamp.start) return 1; // Place events without start time at the end
         if (!b.timestamp || !b.timestamp.start) return -1;
         
-        const startA = typeof a.timestamp.start === 'object' && a.timestamp.start.seconds ? 
-            a.timestamp.start.seconds : a.timestamp.start;
-        const startB = typeof b.timestamp.start === 'object' && b.timestamp.start.seconds ? 
-            b.timestamp.start.seconds : b.timestamp.start;
+        let startA, startB;
+        
+        if (typeof a.timestamp.start === 'object' && a.timestamp.start.seconds) {
+            startA = a.timestamp.start.seconds;
+        } else if (typeof a.timestamp.start === 'number') {
+            startA = a.timestamp.start;
+        } else if (typeof a.timestamp.start === 'string') {
+            // Tentative de conversion en Date puis en timestamp
+            startA = new Date(a.timestamp.start).getTime() / 1000;
+        }
+        
+        if (typeof b.timestamp.start === 'object' && b.timestamp.start.seconds) {
+            startB = b.timestamp.start.seconds;
+        } else if (typeof b.timestamp.start === 'number') {
+            startB = b.timestamp.start;
+        } else if (typeof b.timestamp.start === 'string') {
+            // Tentative de conversion en Date puis en timestamp
+            startB = new Date(b.timestamp.start).getTime() / 1000;
+        }
         
         return startA - startB;
     });
@@ -1334,6 +1463,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+// Fonction pour attacher les gestionnaires d'événements sur les chips de filtres de genre
+function setupGenreFilterChips() {
+    const filterChips = document.querySelectorAll('.filter-chip[data-filter]');
+    
+    filterChips.forEach(chip => {
+        chip.addEventListener('click', function() {
+            const genre = this.getAttribute('data-filter');
+            
+            // Basculer la classe 'active' pour indiquer la sélection
+            this.classList.toggle('active');
+            
+            // Initialiser le tableau des genres si nécessaire
+            if (!currentFilters.genres) {
+                currentFilters.genres = [];
+            }
+            
+            // Ajouter ou supprimer le genre de la liste des filtres
+            const genreIndex = currentFilters.genres.indexOf(genre);
+            if (genreIndex === -1) {
+                // Genre pas encore sélectionné, l'ajouter
+                currentFilters.genres.push(genre);
+                console.log(`Ajout du genre ${genre} aux filtres`);
+            } else {
+                // Genre déjà sélectionné, le supprimer
+                currentFilters.genres.splice(genreIndex, 1);
+                console.log(`Suppression du genre ${genre} des filtres`);
+            }
+            
+            console.log('Genres sélectionnés:', currentFilters.genres);
+        });
+    });
+}
+
+
+
+// Fonction pour initialiser tous les gestionnaires d'événements
+function initializeFilterHandlers() {
+    // Configurer les chips de filtres de genre
+    setupGenreFilterChips();
+    
+    // Configurer les filtres d'heure
+   
+    
+
+    
+    console.log('Gestionnaires de filtres initialisés');
+}
 function setupFilterValidation() {
     const validateBtn = document.getElementById('validate-filters'); // ou quel que soit l'ID correct
     

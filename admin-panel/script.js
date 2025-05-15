@@ -2646,43 +2646,33 @@ class PartnerManager {
 
 
     
-    // Load partners from Firebase
-    async loadPartners() {
-        try {
-            console.log(`Tentative de chargement de la collection: ${this.collectionName}`);
-            const partnersRef = collection(db, this.collectionName);
-            
-            // Vérifier si la collection existe
-            console.log("Référence de collection créée:", partnersRef);
-            
-            const querySnapshot = await getDocs(partnersRef);
-            
-            console.log(`Résultat de la requête sur ${this.collectionName}:`, querySnapshot);
-            console.log(`Nombre de documents trouvés: ${querySnapshot.size}`);
-            
-            this.partners = [];
-            querySnapshot.forEach((doc) => {
-                console.log(`Document trouvé - ID: ${doc.id}`);
-                const partnerData = doc.data();
-                console.log("Données du document:", partnerData);
-                
-                this.partners.push({
-                    id: doc.id,
-                    ...partnerData
-                });
-            });
-            
-            console.log(`Total des partenaires chargés: ${this.partners.length}`);
-            this.renderPartners();
-        } catch (error) {
-            console.error("Erreur lors du chargement des partenaires:", error);
-            document.getElementById(this.containerId).innerHTML = `
-                <div class="error-message">
-                    Une erreur est survenue lors du chargement des partenaires: ${error.message}
-                </div>
-            `;
-        }
+async loadPartners() {
+    try {
+        console.log(`Tentative de chargement de la collection: ${this.collectionName}`);
+        const partnersRef = collection(db, this.collectionName);
+
+        // Construis une query qui ordonne par createdAt décroissant
+        const partnersQuery = query(partnersRef, orderBy("createdAt", "desc"));
+
+        console.log("Query construite :", partnersQuery);
+        const querySnapshot = await getDocs(partnersQuery);
+
+        console.log(`Nombre de documents trouvés: ${querySnapshot.size}`);
+        this.partners = [];
+        querySnapshot.forEach(doc => {
+            this.partners.push({ id: doc.id, ...doc.data() });
+        });
+
+        console.log(`Total des partenaires chargés: ${this.partners.length}`);
+        this.renderPartners();
+    } catch (error) {
+        console.error("Erreur lors du chargement des partenaires:", error);
+        document.getElementById(this.containerId).innerHTML = `
+            <div class="error-message">
+                Une erreur est survenue lors du chargement des partenaires: ${error.message}
+            </div>`;
     }
+}
 
 // Modification de la méthode renderPartners
 renderPartners() {
