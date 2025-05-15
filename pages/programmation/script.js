@@ -587,7 +587,7 @@ function debugEventTimestamps() {
 }
     
 
-// Modify applyFilters function to handle multiple genres
+// Correction de la fonction applyFilters pour gérer les genres comme tableau ou chaîne
 function applyFilters() {
     // Create a copy of all events
     let filteredEvents = [...allEvents];
@@ -595,21 +595,37 @@ function applyFilters() {
     // If in sound point view, filter events by selected sound point
     if (viewMode === 'events' && selectedSoundPoint) {
         filteredEvents = filteredEvents.filter(event => 
-            event.location.toLowerCase() === selectedSoundPoint.name.toLowerCase()
+            event.location && selectedSoundPoint && event.location.toLowerCase() === selectedSoundPoint.name.toLowerCase()
         );
     } 
     // Otherwise apply location tab filter
     else if (currentFilters.location !== 'all') {
         filteredEvents = filteredEvents.filter(event => 
-            event.location.toLowerCase().includes(currentFilters.location.toLowerCase())
+            event.location && event.location.toLowerCase().includes(currentFilters.location.toLowerCase())
         );
     }
     
-    // Apply genre filter - modified to handle comma-separated genres
-    if (currentFilters.genres.length > 0) {
+    // Apply genre filter - modified to handle both array and string genres
+    if (currentFilters.genres && currentFilters.genres.length > 0) {
         filteredEvents = filteredEvents.filter(event => {
-            // Split event genre by comma if it contains multiple genres
-            const eventGenres = event.genre.split(',').map(g => g.trim().toLowerCase());
+            // Vérifier si event.genre existe
+            if (!event.genre) return false;
+            
+            // Convertir en tableau si c'est une chaîne de caractères
+            let eventGenres;
+            
+            if (Array.isArray(event.genre)) {
+                // Si genre est déjà un tableau
+                eventGenres = event.genre.map(g => 
+                    typeof g === 'string' ? g.trim().toLowerCase() : String(g).toLowerCase()
+                );
+            } else if (typeof event.genre === 'string') {
+                // Si genre est une chaîne de caractères, la diviser par virgules
+                eventGenres = event.genre.split(',').map(g => g.trim().toLowerCase());
+            } else {
+                // Si genre est d'un autre type (comme un objet), le convertir en chaîne
+                eventGenres = [String(event.genre).toLowerCase()];
+            }
             
             // Check if any of the selected filter genres match any of the event genres
             return currentFilters.genres.some(filterGenre => 
@@ -621,9 +637,9 @@ function applyFilters() {
     }
     
     // Apply specific locations filter
-    if (currentFilters.locations.length > 0) {
+    if (currentFilters.locations && currentFilters.locations.length > 0) {
         filteredEvents = filteredEvents.filter(event => {
-            return currentFilters.locations.some(location => 
+            return event.location && currentFilters.locations.some(location => 
                 event.location.toLowerCase().includes(location.toLowerCase())
             );
         });
@@ -635,7 +651,7 @@ function applyFilters() {
         const startTimeMinutes = startHours * 60 + startMinutes;
         
         filteredEvents = filteredEvents.filter(event => {
-            if (!event.timestamp.start) return true; // Skip if no start time
+            if (!event.timestamp || !event.timestamp.start) return true; // Skip if no start time
             
             let eventStartDate;
             if (typeof event.timestamp.start === 'object' && event.timestamp.start.seconds) {
@@ -656,7 +672,7 @@ function applyFilters() {
         const endTimeMinutes = endHours * 60 + endMinutes;
         
         filteredEvents = filteredEvents.filter(event => {
-            if (!event.timestamp.end) return true; // Skip if no end time
+            if (!event.timestamp || !event.timestamp.end) return true; // Skip if no end time
             
             let eventEndDate;
             if (typeof event.timestamp.end === 'object' && event.timestamp.end.seconds) {
@@ -674,6 +690,9 @@ function applyFilters() {
     
     // Sort events by start time
     filteredEvents.sort((a, b) => {
+        if (!a.timestamp || !a.timestamp.start) return 1; // Place events without start time at the end
+        if (!b.timestamp || !b.timestamp.start) return -1;
+        
         const startA = typeof a.timestamp.start === 'object' && a.timestamp.start.seconds ? 
             a.timestamp.start.seconds : a.timestamp.start;
         const startB = typeof b.timestamp.start === 'object' && b.timestamp.start.seconds ? 
@@ -681,6 +700,10 @@ function applyFilters() {
         
         return startA - startB;
     });
+    
+    // Debug pour voir les événements filtrés
+    console.log('Filtres appliqués:', currentFilters);
+    console.log('Nombre d\'événements après filtrage:', filteredEvents.length);
     
     // Update the display
     updateEventList(filteredEvents);
@@ -889,9 +912,7 @@ function applyFilters() {
 
 
 
-
-    
-// Add this function to create a sound point card
+// Modify the createSoundPointCard function to match the new design
 function createSoundPointCard(soundPoint) {
     const card = document.createElement('div');
     card.className = 'sound-point-card';
@@ -905,32 +926,49 @@ function createSoundPointCard(soundPoint) {
     }
     
     card.innerHTML = `
-        <div class="card-image-container">
-            <img src="${soundPoint.imageUrl || '../../assets/default-location.jpg'}" alt="${soundPoint.name}" class="card-image">
-        </div>
-        <div class="card-info">
-            <h3 class="event-title">${soundPoint.name || 'Point de son'}</h3>
-            <p class="event-type">${soundPoint.type || ''}</p>
-            <div class="event-style">
-                <img src="../../assets/pictos/MusicNoteBeamed.png" alt="Music" class="info-icon">
-                <span>${genresHtml}</span>
+        <div class="sound-point-content">
+            <div class="sound-point-header">
+                <div class="sound-point-icon">
+                    <img src="../../../assets/pictos/pinnedsoundoint.png" alt="Icon" class="header-icon">
+                </div>
+                <div class="sound-point-title-container">
+                    <h3 class="sound-point-title">${soundPoint.name || 'Point de son'}</h3>
+                    <p class="sound-point-subtitle">${soundPoint.type || 'style de musique'}</p>
+                </div>
             </div>
-            <img src="../../assets/buttons/plus-info.png" alt="Plus d'infos" class="sound-point-btn">
+            <div class="sound-point-footer">
+                <div class="sound-point-genre">
+                    <img src="../../assets/pictos/MusicNoteBeamed.png" alt="Music" class="info-icon">
+                    <span>${genresHtml || 'Survolté'}</span>
+                </div>
+                <div class="sound-point-button">
+                    <img src="../../../assets/buttons/voir-plus.png" alt="Voir plus" class="voir-plus-icon">
+                </div>
+            </div>
         </div>
     `;
     
-    // Add event listener to select this sound point
+    // Add event listener to select this sound point with animation
     card.addEventListener('click', function() {
-        selectSoundPoint(soundPoint);
+        // Add animation class
+        card.classList.add('sound-point-selected');
+        
+        // Delay the navigation to allow animation to complete
+        setTimeout(() => {
+            selectSoundPoint(soundPoint);
+        }, 300); // 300ms for animation
     });
     
     return card;
 }
 
-// Add this function to switch to event view filtered by sound point
+// Modify selectSoundPoint to include smooth transition
 function selectSoundPoint(soundPoint) {
     selectedSoundPoint = soundPoint;
     viewMode = 'events';
+    
+    // Add transition class to event list
+    eventList.classList.add('transition-in');
     
     // Hide tab navigation and show back button
     const tabNavigation = document.querySelector('.tab-navigation');
@@ -944,7 +982,16 @@ function selectSoundPoint(soundPoint) {
         backButton = document.createElement('div');
         backButton.className = 'back-to-sound-points';
         backButton.innerHTML = '<span>← Revenir aux points de son</span>';
-        backButton.addEventListener('click', showSoundPointsView);
+        backButton.addEventListener('click', function() {
+            // Add exit animation
+            eventList.classList.add('transition-out');
+            
+            // Delay the navigation to allow animation to complete
+            setTimeout(() => {
+                showSoundPointsView();
+                eventList.classList.remove('transition-out');
+            }, 300); // 300ms for animation
+        });
         document.querySelector('.content').insertBefore(backButton, eventList);
     } else {
         backButton.style.display = 'block';
@@ -963,6 +1010,244 @@ function selectSoundPoint(soundPoint) {
     
     // Update the event list with filtered events
     updateEventList(filteredEvents);
+    
+    // Remove transition class after animation completes
+    setTimeout(() => {
+        eventList.classList.remove('transition-in');
+    }, 300);
+}
+
+// Add CSS styles for the new sound point card design
+document.addEventListener('DOMContentLoaded', () => {
+    // Add CSS for new sound point cards and animations
+    const style = document.createElement('style');
+    style.textContent = `
+
+    @font-face {
+            font-family: 'inter-bold';
+            src: url('../../../assets/fonts/inter/Inter-Bold.otf') format('truetype');
+        }
+
+        .sound-point-card {
+            background-color: white;
+            border-radius: 10px;
+            border: 2px solid #D9D9D9;
+            margin: 6px;
+            overflow: hidden;
+            width: calc(50% - 20px);
+            transition: transform 0.2s ease;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            .sound-point-card {
+                width: calc(100% - 20px);
+            }
+        }
+        
+        .sound-point-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(115, 68, 50, 0.15);
+        }
+        
+        .sound-point-content {
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            height: 100%;
+        }
+        
+        .sound-point-header {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .sound-point-icon {
+            width: 35px;
+            height: 35px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        
+        .sound-point-icon .header-icon {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .sound-point-title-container {
+            flex-grow: 1;
+            text-align: left;
+        }
+        
+        .sound-point-title {
+        font-family: 'inter-bold', sans-serif;
+            color: #F48FBB;
+            font-size: 1.3em;
+     
+            margin: 0 0 5px 0;
+        }
+        
+        .sound-point-subtitle {
+                font-family: 'inter-medium', sans-serif;
+
+            color: #000;
+            font-size: 0.9em;
+            margin: 0;
+        }
+        
+        .sound-point-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+        }
+        
+        .sound-point-genre {
+            display: flex;
+            align-items: center;
+            background-color: #EDEA87;
+            padding: 5px 10px;
+                            font-family: 'inter-medium', sans-serif;
+
+            border-radius: 10px;
+            color: #000;
+            font-size: 12px;
+        }
+        
+        .sound-point-genre .info-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 6px;
+        }
+        
+        .sound-point-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .sound-point-button .voir-plus-icon {
+            width: fit-content;
+            height: 32px;
+            transition: transform 0.2s ease;
+        }
+        
+        .sound-point-button:hover .voir-plus-icon {
+            transform: scale(1.1);
+        }
+        
+        /* Animation classes */
+        .sound-point-selected {
+            transform: scale(1.05);
+            opacity: 0.8;
+        }
+        
+        .transition-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .transition-out {
+            animation: fadeOut 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
+        
+        .back-to-sound-points {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            color: #734432;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        
+        .back-to-sound-points:hover {
+            color: #FF81A8;
+        }
+        
+        .back-to-sound-points span {
+            margin-left: 5px;
+        }
+        
+        /* Update layout for sound points view */
+        #eventList {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        
+        /* Restore original layout for events view */
+        .view-events #eventList {
+            display: block;
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Add a class to body when switching views
+    const originalShowSoundPointsView = showSoundPointsView;
+    showSoundPointsView = function() {
+        originalShowSoundPointsView();
+        document.body.classList.remove('view-events');
+        document.body.classList.add('view-sound-points');
+    };
+    
+    const originalSelectSoundPoint = selectSoundPoint;
+    window.selectSoundPoint = function(soundPoint) {
+        originalSelectSoundPoint(soundPoint);
+        document.body.classList.remove('view-sound-points');
+        document.body.classList.add('view-events');
+    };
+    
+    // Initialize view class on load
+    if (viewMode === 'sound_points') {
+        document.body.classList.add('view-sound-points');
+    } else {
+        document.body.classList.add('view-events');
+    }
+});
+
+
+
+
+// Modify updateSoundPointsList function to use grid layout
+function updateSoundPointsList(soundPoints) {
+    eventList.innerHTML = '';
+    
+    // Update class for proper layout
+    eventList.classList.add('sound-points-grid');
+    
+    if (soundPoints.length === 0) {
+        eventList.innerHTML = '<p style="color: #734432; text-align: center; padding: 20px; width: 100%;">Aucun point de son trouvé.</p>';
+        return;
+    }
+    
+    soundPoints.forEach(soundPoint => {
+        const card = createSoundPointCard(soundPoint);
+        eventList.appendChild(card);
+    });
 }
 
 // Add this function to switch back to sound points view
@@ -1011,60 +1296,13 @@ function filterSoundPointsByTab() {
     updateSoundPointsList(filteredSoundPoints);
 }
 
-// Add this function to update sound points list
-function updateSoundPointsList(soundPoints) {
-    eventList.innerHTML = '';
-    
-    if (soundPoints.length === 0) {
-        eventList.innerHTML = '<p style="color: #734432; text-align: center; padding: 20px;">Aucun point de son trouvé.</p>';
-        return;
-    }
-    
-    soundPoints.forEach(soundPoint => {
-        const card = createSoundPointCard(soundPoint);
-        eventList.appendChild(card);
-    });
-}
 
 
 
 // Add CSS styles for the new elements
 document.addEventListener('DOMContentLoaded', () => {
     // Add CSS for sound point cards and back button
-    const style = document.createElement('style');
-    style.textContent = `
-        .sound-point-card {
-            background-color: white;
-            border-radius: 15px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .back-to-sound-points {
-            display: flex;
-            align-items: center;
-            margin: 15px 0;
-            color: #734432;
-            font-weight: 500;
-            cursor: pointer;
-        }
-        
-        .back-to-sound-points span {
-            margin-left: 5px;
-        }
-        
-        .sound-point-btn {
-            position: absolute;
-            right: 15px;
-            bottom: 15px;
-            width: 40px;
-            cursor: pointer;
-        }
-    `;
-    document.head.appendChild(style);
+    
     
     // Modify tab navigation event listeners
     tabs.forEach(tab => {
@@ -1093,3 +1331,56 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 100);
 });
+
+
+
+function setupFilterValidation() {
+    const validateBtn = document.getElementById('validate-filters'); // ou quel que soit l'ID correct
+    
+    if (validateBtn) {
+        // Supprimer les anciens event listeners potentiels
+        validateBtn.replaceWith(validateBtn.cloneNode(true));
+        
+        // Récupérer la nouvelle référence après remplacement
+        const newValidateBtn = document.getElementById('validate-filters');
+        
+        // Ajouter le nouveau gestionnaire d'événements
+        newValidateBtn.addEventListener('click', function(e) {
+            console.log('Validate clicked (alt method)');
+            e.preventDefault();
+            
+            // Mise à jour des filtres
+            updateFiltersFromUI();
+            
+            // Appliquer les filtres
+            applyFilters();
+            
+            // Fermer l'overlay
+            const overlay = document.querySelector('.filter-overlay');
+            if (overlay) overlay.classList.remove('active');
+        });
+        
+        console.log('Alternative validation handler added');
+    }
+}
+
+
+
+function updateFiltersFromUI() {
+    // Genres
+    currentFilters.genres = Array.from(document.querySelectorAll('.filter-chip.active'))
+        .map(chip => chip.getAttribute('data-filter'));
+    
+    // Locations
+    currentFilters.locations = Array.from(document.querySelectorAll('.location-chip.active'))
+        .map(chip => chip.textContent.trim().split('(')[0].trim());
+    
+    // Temps
+    const timeInputs = document.querySelectorAll('.time-select');
+    if (timeInputs && timeInputs.length >= 2) {
+        currentFilters.startTime = timeInputs[0].value;
+        currentFilters.endTime = timeInputs[1].value;
+    }
+    
+    console.log('Filters updated from UI:', currentFilters);
+}
