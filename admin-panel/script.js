@@ -2986,13 +2986,7 @@ async editPartner(partnerId) {
         </div>
         <div class="form-group">
             <label for="edit-type">Type d'établissement</label>
-            <select id="edit-type" class="swal2-select">
-                <option value="restaurant" ${partnerData.type === 'restaurant' ? 'selected' : ''}>Restaurant</option>
-                <option value="brasserie" ${partnerData.type === 'brasserie' ? 'selected' : ''}>Brasserie</option>
-                <option value="bar" ${partnerData.type === 'bar' ? 'selected' : ''}>Bar</option>
-                <option value="cafe" ${partnerData.type === 'cafe' ? 'selected' : ''}>Café</option>
-                <option value="autre" ${partnerData.type === 'autre' ? 'selected' : ''}>Autre établissement</option>
-            </select>
+            <input type="text" id="edit-type" class="swal2-input" value="${partnerData.type || ''}" placeholder="Restaurant, Bar, Café...">
         </div>
         <div class="form-group">
             <label for="edit-info">Informations</label>

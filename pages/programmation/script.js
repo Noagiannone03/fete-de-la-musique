@@ -411,7 +411,7 @@ async function fetchPartnersForEvent(locationName, detailsOverlay) {
    
 
 
-// Function to update partners grid in the details overlay
+// Updated function to update partners grid in the details overlay
 function updatePartnersGrid(detailsOverlay, partners) {
     const partnersGrid = detailsOverlay.querySelector('#partners-grid');
     
@@ -431,13 +431,12 @@ function updatePartnersGrid(detailsOverlay, partners) {
     
     partnersGrid.innerHTML = partnersHtml;
     
-    // Add event listeners to partner logos if needed
+    // Add event listeners to partner logos
     const partnerLogos = partnersGrid.querySelectorAll('.partner-logo-container');
     partnerLogos.forEach(logo => {
+        const partnerId = logo.getAttribute('data-partner-id');
         logo.addEventListener('click', () => {
-            const partnerId = logo.getAttribute('data-partner-id');
-            // You can add functionality here to show more partner details if needed
-            console.log('Partner clicked:', partnerId);
+            showPartnerDetails(partnerId, detailsOverlay);
         });
     });
 }
@@ -1559,4 +1558,208 @@ function updateFiltersFromUI() {
     }
     
     console.log('Filters updated from UI:', currentFilters);
+}
+
+
+
+
+
+//PARTIE PUOR AFFICHER LES DETAILS D UN PARTENAIRE
+// Function to show partner details when clicking on a partner logo
+async function showPartnerDetails(partnerId, detailsOverlay) {
+    try {
+        // Save current content to restore later
+        const currentContent = detailsOverlay.querySelector('.event-details-container').innerHTML;
+        
+        // Add animation for transition
+        const container = detailsOverlay.querySelector('.event-details-container');
+        container.style.opacity = '0';
+        
+        // Show skeleton loading state
+        setTimeout(() => {
+            container.innerHTML = `
+                <div class="details-header">
+                    <div class="details-image-container">
+                        <div class="skeleton-image" style="height: 200px; background-color: #eee;"></div>
+                        <button class="close-details">×</button>
+                    </div>
+                    
+                    <div class="details-title-section">
+                        <div class="details-title-left">
+                            <div class="skeleton-title" style="height: 28px; width: 70%; background-color: #eee; margin-bottom: 10px;"></div>
+                            <div class="skeleton-subtitle" style="height: 20px; width: 50%; background-color: #eee;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="details-description">
+                        <div class="skeleton-description" style="height: 100px; background-color: #eee;"></div>
+                    </div>
+                    
+                    <div class="details-info-section">
+                        <div class="skeleton-info" style="height: 20px; width: 80%; background-color: #eee; margin-bottom: 10px;"></div>
+                        <div class="skeleton-info" style="height: 20px; width: 60%; background-color: #eee;"></div>
+                    </div>
+                </div>
+            `;
+            
+            container.style.opacity = '1';
+            
+            // Add event listener to close button
+            container.querySelector('.close-details').addEventListener('click', () => {
+                // Fade out
+                container.style.opacity = '0';
+                
+                // Restore event details
+                setTimeout(() => {
+                    container.innerHTML = currentContent;
+                    container.style.opacity = '1';
+                    
+                    // Re-add event listeners to restored content
+                    addEventListenersToRestoredContent(detailsOverlay);
+                }, 300);
+            });
+        }, 300);
+        
+        // Fetch partner data
+        const partnerDoc = await getDoc(doc(db, "partners", partnerId));
+        
+        if (!partnerDoc.exists()) {
+            throw new Error("Partner not found");
+        }
+        
+        const partner = {
+            id: partnerId,
+            ...partnerDoc.data()
+        };
+        
+        // After a short delay to ensure skeleton is shown
+        setTimeout(() => {
+            // Update container with partner details
+            container.innerHTML = `
+                <div class="details-header">
+                    <div class="details-image-container">
+                        <img src="${partner.imageUrl}" alt="${partner.name || 'Partenaire'}" class="details-image">
+                        <button class="close-details">×</button>
+                    </div>
+                    
+                    <div class="details-title-section">
+                        <div class="details-title-left">
+                            <h2 class="details-title">${partner.name || 'Partenaire'}</h2>
+                            <p class="details-subtitle" style="            text-transform: uppercase;
+">${partner.type || ''}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="details-description">
+                        <p>${partner.info || 'Aucune information disponible sur ce partenaire.'}</p>
+                    </div>
+                     ${partner.address || partner.phone ? `
+                    <div class="details-contact-info" style="padding-left: 20px;">
+                        ${partner.address ? `
+                        <div class="contact-item">
+                            <img src="../../assets/pictos/PinMapmarron.png" alt="Adresse" class="info-icon">
+                            <span>${partner.address}</span>
+                        </div>` : ''}
+                        
+                        ${partner.phone ? `
+                        <div class="contact-item">
+                            <img src="../../assets/pictos/Telephone.png" alt="Téléphone" class="info-icon">
+                            <span>${partner.phone}</span>
+                        </div>` : ''}
+                    </div>` : ''}
+                    ${partner.website ? `
+                    <div class="details-more-button">
+                        <a href="${partner.website}" target="_blank">
+                            <img src="../../assets/buttons/savoirplusmarron.png" alt="Site web">
+                        </a>
+                    </div>` : ''}
+                    
+                   
+                </div>
+            `;
+            
+            // Add event listener to close button
+            container.querySelector('.close-details').addEventListener('click', () => {
+                // Fade out
+                container.style.opacity = '0';
+                
+                // Restore event details
+                setTimeout(() => {
+                    container.innerHTML = currentContent;
+                    container.style.opacity = '1';
+                    
+                    // Re-add event listeners to restored content
+                    addEventListenersToRestoredContent(detailsOverlay);
+                }, 300);
+            });
+            
+            // Fade in
+            container.style.opacity = '1';
+        }, 800); // Delay to show skeleton
+        
+    } catch (error) {
+        console.error("Error fetching partner details:", error);
+        alert("Une erreur est survenue lors du chargement des détails du partenaire");
+    }
+}
+
+// Function to re-add event listeners to restored content
+function addEventListenersToRestoredContent(detailsOverlay) {
+    // Add event listener for close button
+    const closeButton = detailsOverlay.querySelector('.close-details');
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            detailsOverlay.classList.remove('active');
+            setTimeout(() => {
+                detailsOverlay.remove();
+                // Remove history state to avoid double-back
+                history.back();
+            }, 300);
+        });
+    }
+    
+    // Add event listener for favorite icon
+    const favIcon = detailsOverlay.querySelector('.details-favorite-icon');
+    if (favIcon) {
+        const eventId = favIcon.getAttribute('data-id');
+        favIcon.addEventListener('click', () => {
+            const isFav = isEventFavorite(eventId);
+            const favIcons = document.querySelectorAll(`.favorite-icon[data-id="${eventId}"]`);
+            
+            // Toggle the cookie
+            toggleFavorite(eventId, favIcon);
+            
+            // Update other instances of the same favorite icon
+            favIcons.forEach(icon => {
+                icon.src = isFav ? '../../assets/pictos/star-card.png' : '../../assets/pictos/filled-star.png';
+            });
+        });
+    }
+    
+    // Re-add event listeners to partner logos
+    const partnerLogos = detailsOverlay.querySelectorAll('.partner-logo-container');
+    partnerLogos.forEach(logo => {
+        const partnerId = logo.getAttribute('data-partner-id');
+        logo.addEventListener('click', () => {
+            showPartnerDetails(partnerId, detailsOverlay);
+        });
+    });
+}
+
+
+// Helper function for smoother transitions
+function animateTransition(element, content, callback) {
+    element.style.opacity = '0';
+    
+    setTimeout(() => {
+        if (content) {
+            element.innerHTML = content;
+        }
+        
+        if (callback && typeof callback === 'function') {
+            callback();
+        }
+        
+        element.style.opacity = '1';
+    }, 300);
 }

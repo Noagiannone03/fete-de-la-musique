@@ -815,3 +815,52 @@
 .partner-logo:hover {
     transform: scale(1.05);
 }
+
+
+/* CSS POUR LA VUE DETAIL DES PARTENAIRES */
+/* Add these styles to your CSS */
+.event-details-container {
+    transition: opacity 0.3s ease;
+}
+
+.partner-logo-container {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    
+}
+
+.partner-logo-container:hover {
+    transform: scale(1.05);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes skeleton-pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+.skeleton-image, .skeleton-title, .skeleton-subtitle, .skeleton-description, .skeleton-info {
+    animation: skeleton-pulse 1.5s infinite ease-in-out;
+    border-radius: 4px;
+}
+
+.details-contact-info {
+    margin-top: 15px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.contact-item .info-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+}
