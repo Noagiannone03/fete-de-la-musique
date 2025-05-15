@@ -702,7 +702,7 @@ function extractValue(item) {
         date:        Timestamp.fromDate(new Date(event.date)),
         endDate:     event.endDate ? Timestamp.fromDate(new Date(event.endDate)) : null,
         locationUrl: event.locationUrl || null,
-        plusUrl:     event.plusUrl     || null,
+        moreUrl:     event.moreUrl     || null,
         description: event.description || "",
         partners:    partnersArray,
         imageUrl:    event.imageUrl || null,
@@ -798,19 +798,18 @@ if (eventForm) {
                 return;
             }
             
-            // Create event object
-            const event = {
-                title,
-                subtitle,
-                location,
-                locationName,
-                genres,
-                startDate,
-                endDate,
-        
-                moreUrl,
-                description,
-            };
+            // Correction 2: Lors de la création de l'objet event, renommer moreUrl en plusUrl
+const event = {
+    title,
+    subtitle,
+    location,
+    locationName,
+    genres,
+    startDate,
+    endDate,
+    plusUrl: moreUrlInput ? moreUrlInput.value : '', // Utiliser plusUrl pour correspondre à la fonction addRegularEvent
+    description,
+};
             
             // Convertir l'image en Base64 si présente
             if (eventImageFile) {
