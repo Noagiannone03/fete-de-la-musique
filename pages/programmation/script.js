@@ -239,7 +239,7 @@ function createEventCard(event) {
     return card;
 }
 
-// Updated showEventDetails function with plusUrl and partners from sound_points
+// Updated showEventDetails function with skeleton loader
 async function showEventDetails(event) {
     console.log('Données de l\'événement reçu :', event);
     
@@ -257,8 +257,56 @@ async function showEventDetails(event) {
     const endTime = formatTime(event.timestamp.end);
     const timeTag = `${startTime}-${endTime}`;
     
-    // Placeholder for partners that will be fetched
-    let partnersHtml = '<p>Chargement des partenaires...</p>';
+    // Add skeleton animation styles dynamically
+    const skeletonStyle = document.createElement('style');
+    skeletonStyle.id = 'details-skeleton-animation';
+    skeletonStyle.textContent = `
+        @keyframes skeleton-loading {
+            0% { background-position: -200px 0; }
+            100% { background-position: calc(200px + 100%) 0; }
+        }
+
+                 /* Conteneur carré : garde toujours un ratio 1/1 */
+    .details-image-container {
+      width: 100%;            /* ou une valeur fixe, ex. 300px */
+      aspect-ratio: 1 / 1;    /* force le carré */
+      overflow: hidden;       /* découpe ce qui dépasse */
+    }
+
+    /* L’image remplit le conteneur en conservant son ratio */
+    .details-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;      /* cover pour remplir tout en recadrant */
+      object-position: center;/* centre l’image */
+      display: block;
+    }
+ 
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200px 100%;
+            animation: skeleton-loading 1.5s infinite linear;
+            border-radius: 4px;
+            height: 20px;
+            margin-bottom: 10px;
+        }
+        .skeleton-partner {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            margin: 10px;
+        }
+        .skeleton-text-short {
+            width: 40%;
+        }
+        .skeleton-text-medium {
+            width: 60%;
+        }
+        .skeleton-text-long {
+            width: 90%;
+        }
+    `;
+    document.head.appendChild(skeletonStyle);
     
     detailsOverlay.innerHTML = `
         <div class="event-details-container">
@@ -308,7 +356,10 @@ async function showEventDetails(event) {
                 <div class="details-partners">
                     <h3>PARTENAIRES</h3>
                     <div class="partners-grid" id="partners-grid">
-                        ${partnersHtml}
+                        <!-- Skeleton loaders for partners -->
+                        <div class="skeleton skeleton-partner"></div>
+                        <div class="skeleton skeleton-partner"></div>
+                        
                     </div>
                 </div>
             </div>
@@ -330,6 +381,9 @@ async function showEventDetails(event) {
         detailsOverlay.classList.remove('active');
         setTimeout(() => {
             detailsOverlay.remove();
+            // Remove skeleton styles
+            const skeletonStyle = document.getElementById('details-skeleton-animation');
+            if (skeletonStyle) skeletonStyle.remove();
             // Remove history state to avoid double-back
             history.back();
         }, 300);
@@ -1603,6 +1657,9 @@ async function showPartnerDetails(partnerId, detailsOverlay) {
             `;
             
             container.style.opacity = '1';
+
+
+            
             
             // Add event listener to close button
             container.querySelector('.close-details').addEventListener('click', () => {

@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La fête c'est nous | Points de son</title>
+
+
+    <style>
+
+
+
+@font-face {
+            font-family: 'inter-bold';
+            src: url('../../assets/fonts/inter/Inter-Bold.otf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'inter-semi-bold';
+            src: url('../../assets/fonts/inter/Inter-SemiBold.otf') format('truetype');
+        }
+
+         @font-face {
+            font-family: 'inter-medium';
+            src: url('../../assets/fonts/inter/Inter-Medium.otf') format('truetype');
+        }
+
+          @font-face {
+            font-family: 'inter-regular';
+            src: url('../../assets/fonts/inter/Inter-Regular.otf') format('truetype');
+        }
+        @font-face {
+            font-family: 'ubuntu-medium';
+            src: url('../../assets/fonts/ubuntu/Ubuntu-M.ttf') format('truetype');
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+                        font-family: 'inter-regular', sans-serif;
+
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            background-color: #ffffff;
+            overflow-x: hidden;
+            min-height: 100vh;
+            width: 100%;
+        }
+        
+        /* Responsive font sizes */
+        @media (max-width: 375px) {
+            html {
+                font-size: 14px;
+            }
+        }
+        
+        @media (min-width: 500px) {
+            html {
+                font-size: 17px;
+            }
+        }
+        
+        @media (min-width: 768px) {
+            html {
+                font-size: 18px;
+            }
+        }
+
+       
+
+        .loading-screen.hide {
+            opacity: 0;
+            transform: translateY(-100%);
+            pointer-events: none;
+        }
+
+        .logo-container {
+            width: 260px;
+            height: 260px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .logo {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .logo img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* Navbar */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4.5rem;
+            background-color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 0.9375rem;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-logo {
+            height: 3.75rem;
+            max-height: 85%;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .favorites-btn {
+            background-color: #734432;
+            color: white;
+            font-family: 'inter-bold', sans-serif;
+            border: none;
+            border-radius: 1.25rem;
+            padding: 0.6rem 1.3rem;
+            font-size: 0.875rem;
+            margin-right: 0.9375rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .favorites-btn:active {
+            transform: scale(0.95);
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 360px) {
+            .navbar {
+                padding: 0 0.625rem;
+            }
+            
+            .navbar-logo {
+                height: 3.25rem;
+            }
+            
+            .favorites-btn {
+                padding: 0.4375rem 0.75rem;
+                font-size: 0.75rem;
+                margin-right: 0.625rem;
+            }
+        }
+
+        .menu-icon {
+            width: 30px;
+            height: 20px;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .menu-icon span {
+            display: block;
+            height: 3px;
+            width: 100%;
+            background-color: #734432;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-icon.active span:nth-child(1) {
+            transform: translateY(8.5px) rotate(45deg);
+        }
+
+        .menu-icon.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-icon.active span:nth-child(3) {
+            transform: translateY(-8.5px) rotate(-45deg);
+        }
+
+        /* Menu overlay */
+        .menu-overlay {
+            position: fixed;
+            top: 4.375rem;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 4.375rem);
+            background-color: white;
+            z-index: 99;
+            padding: 1.25rem;
+            transform: translateY(-100%);
+            opacity: 0;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .menu-overlay.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Favoris overlay */
+        .favorites-overlay {
+            position: fixed;
+            top: 4.375rem;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 4.375rem);
+            background-color: white;
+            z-index: 99;
+            padding: 1.25rem;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            text-align: center;
+        }
+
+        .favorites-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .favorites-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 2.5rem;
+        }
+
+        .favorites-empty img#favorites-icon {
+            width: 90%;
+            max-width: 900px;
+            margin-bottom: 1.7rem;
+        }
+        
+        .favorites-empty img#program-icon {
+            width: 25%;
+            max-width: 150px;
+            margin-bottom: 1.5rem;
+        }
+
+        .favorites-empty img#program-btn {
+            width: 50%;
+            max-width: 300px;
+            margin-bottom: 1.5rem;
+        }
+
+        .favorites-empty h3 {
+            font-family: 'inter-semi-bold', sans-serif;
+            color: #232222;
+            font-weight: normal;
+            margin-bottom: 1.7rem;
+            font-size: 1.6rem;
+            line-height: 1.4;
+            text-align: center;
+            width: 70%;
+            max-width: 350px;
+        }
+
+        .favorites-empty .action-img {
+            width: 50%;
+            max-width: 230px;
+            margin: 1rem 0;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .favorites-empty .action-img:hover {
+            transform: scale(1.05);
+        }
+
+        .menu-item {
+            padding: 1.125rem 0;
+            font-size: 1.5rem;
+            color: #734432;
+            font-family: 'inter-bold', sans-serif;
+            text-transform: uppercase;
+            text-decoration: none;
+            display: block;
+            transition: color 0.3s ease;
+        }
+        
+        .menu-item:active {
+            opacity: 0.7;
+        }
+
+        .menu-divider {
+            width: 100%;
+            height: 1px;
+            background-color: #734432;
+            margin: 5px 0;
+        }
+
+        /* Contenu principal */
+        .main-content {
+            margin-top: 4.375rem;
+            min-height: calc(100vh - 4.375rem);
+            padding-bottom: 1.25rem;
+            position: relative;
+        }
+
+   
+        /* Styles spécifiques pour la page points de son */
+        .main-image-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 1.5rem 0;
+        }
+        
+        .main-image {
+            width: 70%;
+            max-width: 500px;
+            height: auto;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+        
+        .tab-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 1rem 0;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            margin: 0 0.5rem;
+            background-color: #ffffff;
+            border: 1px solid #cccccc;
+            border-radius: 25px;
+            font-family: 'inter-semi-bold', sans-serif;
+            color: #333333;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .tab.active {
+            background-color: #D892B4;
+            color: white;
+            border: none;
+        }
+        
+        .sound-point-section {
+            margin: 2rem 1rem;
+        }
+        
+        .sound-point-title {
+            text-align: center;
+            color: #333333;
+            font-family: 'inter-bold', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .partners-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            padding: 0 0.5rem;
+        }
+        
+        @media (min-width: 500px) {
+            .partners-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .partners-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        .partner-card {
+            aspect-ratio: 1/1;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .partner-card:nth-child(odd) {
+            background-color: #0032db; /* Bleu */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+        }
+        
+        .partner-card:nth-child(even) {
+            background-color: #000000; /* Noir */
+        }
+        
+        .partner-card:hover {
+            transform: scale(0.98);
+        }
+        
+        .partner-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .partner-text {
+            font-family: 'inter-bold', sans-serif;
+            font-size: 1rem;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+        
+        
+        /* Overlay pour afficher les détails des partenaires */
+        .details-overlay {
+            position: fixed;
+            top: 4.5rem;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 4.5rem);
+            background-color: white;
+            z-index: 101;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            overflow-y: auto;
+        }
+        
+        .details-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+        
+
+        
+.event-details-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* This helps push partners to bottom */
+}
+
+.details-header {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+  /* Conteneur carré : garde toujours un ratio 1/1 */
+    .details-image-container {
+      width: 100%;            /* ou une valeur fixe, ex. 300px */
+      aspect-ratio: 1 / 1;    /* force le carré */
+      overflow: hidden;       /* découpe ce qui dépasse */
+    }
+
+    /* L’image remplit le conteneur en conservant son ratio */
+    .details-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;      /* cover pour remplir tout en recadrant */
+      object-position: center;/* centre l’image */
+      display: block;
+    }
+.close-details {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    width: 45px; /* Larger button */
+    height: 45px; /* Larger button */
+    background-color: #734432;
+    border-radius: 50%;
+    border: none;
+    font-size: 26px;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.details-title-section {
+    padding: 20px; /* Increased padding */
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    background-color: #fff;
+}
+
+.details-title-left {
+    flex: 1;
+}
+
+.details-title {
+    color: #D2775B;
+    font-family: 'inter-bold', sans-serif;
+    font-size: 24px; /* Larger font */
+    margin-bottom: 8px;
+}
+
+.details-subtitle {
+    color: #403B23;
+    font-size: 18px; /* Larger font */
+    font-family: 'inter-medium', sans-serif;
+}
+
+.details-title-right {
+    padding-left: 15px;
+    padding-top: 5px;
+}
+
+.details-favorite-icon {
+    width: 38px; /* Larger icon */
+    height: 38px; /* Larger icon */
+    cursor: pointer;
+}
+
+.details-description {
+    padding: 0 20px 20px; /* Increased padding */
+    color: #403B23;
+    height: fit-content;
+    font-size: 16px; /* Larger font */
+    font-family: 'inter-regular', sans-serif;
+    
+}
+
+.details-more-button {
+        padding: 0 20px 20px; /* Increased padding */
+
+    display: flex;
+    justify-content:start;
+    margin: 10px 0 25px; /* Increased margin */
+}
+
+.details-more-button img {
+    height: 35px; /* Larger button */
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.details-more-button img:hover {
+    transform: scale(1.05);
+}
+
+.details-info-section {
+    padding: 0 20px 25px; /* Increased padding */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.details-info-item {
+    margin-top: auto; /* Pushes this section to the bottom */
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px; /* Increased margin */
+    color: #403B23;
+    font-family: 'inter-semi-bold', sans-serif;
+    font-size: 16px; /* Larger font */
+}
+
+.info-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 6px;
+}
+
+.details-separator {
+    margin: 0 15px; /* Increased margin */
+    color: #403B23;
+    font-weight: bold;
+}
+
+.details-map-button {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.details-map-button img {
+    height: 43px; /* Larger button */
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.details-map-button img:hover {
+    transform: scale(1.05);
+}
+
+.details-partners {
+    background-color: #734432;
+    color: white;
+    padding: 25px 20px; /* Increased padding */
+    margin-top: auto; /* Pushes this section to the bottom */
+}
+
+.details-partners h3 {
+    text-align: center;
+    font-size: 20px; /* Larger font */
+    margin-bottom: 20px; /* Increased margin */
+    letter-spacing: 1px;
+}
+
+
+.partner-logo {
+    width: 90px; /* Larger logo */
+    height: 90px; /* Larger logo */
+    object-fit: cover;
+    background-color: white;
+    padding: 2px;
+    border-radius: 8px; /* Increased radius */
+     /* Increased padding */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+}
+
+.partner-logo:hover {
+    transform: scale(1.05);
+}
+
+
+/* CSS POUR LA VUE DETAIL DES PARTENAIRES */
+/* Add these styles to your CSS */
+.event-details-container {
+    transition: opacity 0.3s ease;
+}
+
+.partner-logo-container {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    
+}
+
+.partner-logo-container:hover {
+    transform: scale(1.05);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes skeleton-pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+.skeleton-image, .skeleton-title, .skeleton-subtitle, .skeleton-description, .skeleton-info {
+    animation: skeleton-pulse 1.5s infinite ease-in-out;
+    border-radius: 4px;
+}
+
+.details-contact-info {
+    margin-top: 15px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.contact-item .info-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+}
+       
+        
+        /* Styles pour loading skeleton */
+        .skeleton-image, .skeleton-title, .skeleton-subtitle, .skeleton-description, .skeleton-info {
+            animation: skeleton-loading 1.5s infinite alternate;
+            border-radius: 4px;
+        }
+        
+        @keyframes skeleton-loading {
+            0% {
+                background-color: #eeeeee;
+            }
+            100% {
+                background-color: #dddddd;
+            }
+        }
+    </style>
+</head>
+<body>
+  
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="../../index.html"><img src="../../assets/logo/logo-navbar-fdlm.png" alt="Logo" class="navbar-logo"></a>
+        <div class="navbar-right">
+            <button class="favorites-btn">Mes favoris</button>
+            <div class="menu-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Menu overlay -->
+    <div class="menu-overlay">
+        <a href="../../index.html" class="menu-item" style="margin-bottom: 2vh;">Accueil</a>
+        
+        <a href="../programmation/programmation.html" class="menu-item">Programmation</a>
+        <div class="menu-divider"></div>
+        <a href="#" class="menu-item">Mes favoris</a>
+        <div class="menu-divider"></div>
+        <a href="#" class="menu-item">Autour de moi</a>
+        <div class="menu-divider"></div>
+        <a href="#" class="menu-item" style="margin-bottom: 3vh;">Nos partenaires</a>
+      
+        <a href="../apropos/apropos.html" class="menu-item">Qui sommes-nous ?</a>
+        <div class="menu-divider"></div>
+        <a href="../summer/summer.html" class="menu-item">Pour l'été</a>
+    </div>
+
+    <!-- Favoris overlay -->
+    <div class="favorites-overlay">
+        <div class="favorites-empty">
+            <img src="../../assets/headline/programmation-outline.png" alt="Icône favoris" id="favorites-icon">
+            <h3>Vous n'avez pas encore sélectionné de programme favoris</h3>
+            <img src="../../assets/pictos/material-symbols_stars-outline.png" alt="Icône programme" id="program-icon">
+            <h3>Rendez-vous sur la programmation pour faire votre choix</h3>
+            <img src="../../assets/buttons/programmation-button.png" alt="Aller à la programmation" class="action-img" id="go-to-program">
+        </div>
+    </div>
+
+    <!-- Overlay pour afficher les détails des partenaires -->
+    <div class="details-overlay">
+        <div class="event-details-container">
+            <!-- Le contenu des détails sera injecté ici par JavaScript -->
+        </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <main class="main-content">
+        <div class="main-image-container">
+            <img src="../../assets/headline/partenaires.png" alt="Points de son" class="main-image">
+        </div>
+        
+        <div class="tab-bar">
+            <button class="tab active" data-category="all">Tous</button>
+            <!-- D'autres onglets seront ajoutés dynamiquement si nécessaire -->
+        </div>
+        
+        <div id="sound-points-container">
+            <!-- Les sections de points de son seront injectées ici par JavaScript -->
+        </div>
+    </main>
+
+    <script type="module">
+        // Import Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+        
+        // Configuration Firebase (à remplacer par votre configuration)
+        const firebaseConfig = {
+        apiKey: "AIzaSyCwtimDB_Mai-QPyB6d0yqjJX_d5mQjGY8",
+        authDomain: "fete-de-la-musique-64a6b.firebaseapp.com",
+        projectId: "fete-de-la-musique-64a6b",
+        storageBucket: "fete-de-la-musique-64a6b.firebasestorage.app",
+        messagingSenderId: "1087878331068",
+        appId: "1:1087878331068:web:28719d3278a619cb816eb9",
+        measurementId: "G-MW9YYKP1J8"
+    };
+        
+        // Initialiser Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Gestion de l'écran de chargement
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.querySelector('.loading-screen').classList.add('hide');
+            }, 1500);
+        });
+        
+        // Gestion du menu hamburger
+        const menuIcon = document.querySelector('.menu-icon');
+        const menuOverlay = document.querySelector('.menu-overlay');
+        const favoritesBtn = document.querySelector('.favorites-btn');
+        const favoritesOverlay = document.querySelector('.favorites-overlay');
+        const goToProgramBtn = document.getElementById('go-to-program');
+        const detailsOverlay = document.querySelector('.details-overlay');
+        
+        menuIcon.addEventListener('click', function() {
+            this.classList.toggle('active');
+            menuOverlay.classList.toggle('active');
+            
+            // Fermer les autres overlays
+            favoritesOverlay.classList.remove('active');
+            detailsOverlay.classList.remove('active');
+        });
+        
+        // Gestion du bouton favoris
+        favoritesBtn.addEventListener('click', function() {
+            // Vérifier s'il y a des cookies de favoris
+            const hasFavorites = checkFavoritesCookies();
+            
+            // Fermer les autres overlays
+            menuIcon.classList.remove('active');
+            menuOverlay.classList.remove('active');
+            detailsOverlay.classList.remove('active');
+            
+            // Afficher l'overlay des favoris
+            favoritesOverlay.classList.toggle('active');
+        });
+        
+        // Bouton pour aller à la programmation
+        goToProgramBtn.addEventListener('click', function() {
+            // Fermer l'overlay des favoris
+            favoritesOverlay.classList.remove('active');
+            
+            // Action pour naviguer vers la programmation
+            window.location.href = "../programmation/programmation.html";
+        });
+        
+        // Fermer le menu quand on clique sur un lien
+        const menuItems = document.querySelectorAll('.menu-item');
+        menuItems.forEach(item => {
+            item.addEventListener('click', function() {
+                menuIcon.classList.remove('active');
+                menuOverlay.classList.remove('active');
+            });
+        });
+        
+        // Fonction pour vérifier les cookies liés aux favoris
+        function checkFavoritesCookies() {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.indexOf('favorite_event_') === 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        // Fonction pour ajouter des écouteurs d'événements au contenu restauré
+        function addEventListenersToRestoredContent(overlay) {
+            const closeButton = overlay.querySelector('.close-details');
+            if (closeButton) {
+                closeButton.addEventListener('click', () => {
+                    overlay.classList.remove('active');
+                });
+            }
+        }
+        
+        // Fonction pour afficher les détails d'un partenaire
+        async function showPartnerDetails(partnerId) {
+            try {
+                // Save current content to restore later
+                const currentContent = detailsOverlay.querySelector('.event-details-container').innerHTML;
+                
+                // Add animation for transition
+                const container = detailsOverlay.querySelector('.event-details-container');
+                container.style.opacity = '0';
+                
+                // Show overlay
+                detailsOverlay.classList.add('active');
+                
+                // Show skeleton loading state
+                setTimeout(() => {
+                    container.innerHTML = `
+                        <div class="details-header">
+                            <div class="details-image-container">
+                                <div class="skeleton-image" style="height: 200px; background-color: #eee;"></div>
+                                <button class="close-details">×</button>
+                            </div>
+                            
+                            <div class="details-title-section">
+                                <div class="details-title-left">
+                                    <div class="skeleton-title" style="height: 28px; width: 70%; background-color: #eee; margin-bottom: 10px;"></div>
+                                    <div class="skeleton-subtitle" style="height: 20px; width: 50%; background-color: #eee;"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="details-description">
+                                <div class="skeleton-description" style="height: 100px; background-color: #eee;"></div>
+                            </div>
+                            
+                            <div class="details-info-section">
+                                <div class="skeleton-info" style="height: 20px; width: 80%; background-color: #eee; margin-bottom: 10px;"></div>
+                                <div class="skeleton-info" style="height: 20px; width: 60%; background-color: #eee;"></div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.style.opacity = '1';
+                    
+                    // Add event listener to close button
+                    container.querySelector('.close-details').addEventListener('click', () => {
+                        detailsOverlay.classList.remove('active');
+                    });
+                }, 300);
+                
+                // Fetch partner data
+                const partnerDoc = await getDoc(doc(db, "partners", partnerId));
+                
+                if (!partnerDoc.exists()) {
+                    throw new Error("Partner not found");
+                }
+                
+                const partner = {
+                    id: partnerId,
+                    ...partnerDoc.data()
+                };
+                
+                // After a short delay to ensure skeleton is shown
+                setTimeout(() => {
+                    // Update container with partner details
+                    container.innerHTML = `
+                        <div class="details-header">
+                            <div class="details-image-container">
+                                <img src="${partner.imageUrl}" alt="${partner.name || 'Partenaire'}" class="details-image">
+                                <button class="close-details">×</button>
+                            </div>
+                            
+                            <div class="details-title-section">
+                                <div class="details-title-left">
+                                    <h2 class="details-title">${partner.name || 'Partenaire'}</h2>
+                                    <p class="details-subtitle" style="text-transform: uppercase;">${partner.type || ''}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="details-description">
+                                <p>${partner.info || 'Aucune information disponible sur ce partenaire.'}</p>
+                            </div>
+                            ${partner.address || partner.phone ? `
+                            <div class="details-contact-info" style="padding-left: 20px;">
+                                ${partner.address ? `
+                                <div class="contact-item">
+                                    <img src="../../assets/pictos/PinMapmarron.png" alt="Adresse" class="info-icon">
+                                    <span>${partner.address}</span>
+                                </div>` : ''}
+                                
+                                ${partner.phone ? `
+                                <div class="contact-item">
+                                    <img src="../../assets/pictos/Telephone.png" alt="Téléphone" class="info-icon">
+                                    <span>${partner.phone}</span>
+                                </div>` : ''}
+                            </div>` : ''}
+                            ${partner.website ? `
+                            <div class="details-more-button">
+                                <a href="${partner.website}" target="_blank">
+                                    <img src="../../assets/buttons/savoirplusmarron.png" alt="Site web">
+                                </a>
+                            </div>` : ''}
+                        </div>
+                    `;
+                    
+                    // Add event listener to close button
+                    container.querySelector('.close-details').addEventListener('click', () => {
+                        detailsOverlay.classList.remove('active');
+                    });
+                    
+                    // Fade in
+                    container.style.opacity = '1';
+                }, 800);
+                
+            } catch (error) {
+                console.error("Error fetching partner details:", error);
+                alert("Une erreur est survenue lors du chargement des détails du partenaire");
+                detailsOverlay.classList.remove('active');
+            }
+        }
+        
+        // Fonction pour charger et afficher les points de son
+        async function loadSoundPoints() {
+            try {
+                const soundPointsContainer = document.getElementById('sound-points-container');
+                soundPointsContainer.innerHTML = ''; // Vider le contenu existant
+                
+                // Récupérer tous les documents de la collection sound_points
+                const soundPointsSnapshot = await getDocs(collection(db, "sound_points"));
+                const partnersCache = {}; // Cache pour stocker les données des partenaires
+                
+                // Parcourir chaque point de son
+                for (const soundPointDoc of soundPointsSnapshot.docs) {
+                    const soundPoint = {
+                        id: soundPointDoc.id,
+                        ...soundPointDoc.data()
+                    };
+                    
+                    // Créer une section pour ce point de son
+                    const section = document.createElement('div');
+                    section.className = 'sound-point-section';
+                    section.dataset.id = soundPoint.id;
+                    
+                    // Ajouter le titre
+                    const title = document.createElement('h2');
+                    title.className = 'sound-point-title';
+                    title.textContent = soundPoint.name || 'Point de son';
+                    section.appendChild(title);
+                    
+                    // Créer la grille pour les partenaires
+                    const grid = document.createElement('div');
+                    grid.className = 'partners-grid';
+                    
+                    // Récupérer et afficher les partenaires associés
+                    if (Array.isArray(soundPoint.partners) && soundPoint.partners.length > 0) {
+                        for (const partnerId of soundPoint.partners) {
+                            let partner;
+                            
+                            // Vérifier si le partenaire est déjà dans le cache
+                            if (partnersCache[partnerId]) {
+                                partner = partnersCache[partnerId];
+                            } else {
+                                // Récupérer les données du partenaire depuis Firestore
+                                const partnerDoc = await getDoc(doc(db, "partners", partnerId));
+                                if (partnerDoc.exists()) {
+                                    partner = {
+                                        id: partnerId,
+                                        ...partnerDoc.data()
+                                    };
+                                    // Stocker dans le cache pour une utilisation future
+                                    partnersCache[partnerId] = partner;
+                                } else {
+                                    console.warn(`Partenaire non trouvé: ${partnerId}`);
+                                    continue;
+                                }
+                            }
+                            
+                            // Créer la carte du partenaire
+                            const card = document.createElement('div');
+                            card.className = 'partner-card';
+                            card.dataset.id = partnerId;
+                            
+                            // Ajouter l'image du partenaire
+                            const img = document.createElement('img');
+                            img.className = 'partner-image';
+                            img.src = partner.imageUrl || '../../assets/images/placeholder.png';
+                            img.alt = partner.name || 'Partenaire';
+                            card.appendChild(img);
+                            
+                            // Ajouter l'événement au clic
+                            card.addEventListener('click', () => {
+                                showPartnerDetails(partnerId);
+                            });
+                            
+                            // Ajouter la carte à la grille
+                            grid.appendChild(card);
+                        }
+                    } else {
+                        const noPartners = document.createElement('p');
+                        noPartners.textContent = 'Aucun partenaire associé à ce point de son.';
+                        noPartners.style.textAlign = 'center';
+                        noPartners.style.gridColumn = '1 / -1';
+                        noPartners.style.padding = '2rem 0';
+                        grid.appendChild(noPartners);
+                    }
+                    
+                    // Ajouter la grille à la section
+                    section.appendChild(grid);
+                    
+                    // Ajouter la section au conteneur principal
+                    soundPointsContainer.appendChild(section);
+                }
+                
+                // Si aucun point de son n'a été trouvé
+                if (soundPointsSnapshot.empty) {
+                    soundPointsContainer.innerHTML = `
+                        <div style="text-align: center; padding: 3rem 0;">
+                            <p>Aucun point de son disponible pour le moment.</p>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error("Erreur lors du chargement des points de son:", error);
+                document.getElementById('sound-points-container').innerHTML = `
+                    <div style="text-align: center; padding: 3rem 0;">
+                        <p>Une erreur est survenue lors du chargement des points de son.</p>
+                        <button onclick="loadSoundPoints()" style="margin-top: 1rem; padding: 0.5rem 1rem; background-color: #734432; color: white; border: none; border-radius: 5px;">Réessayer</button>
+                    </div>
+                `;
+            }
+        }
+        
+        // Charger les points de son au chargement de la page
+        document.addEventListener('DOMContentLoaded', loadSoundPoints);
+        
+        // Exposer la fonction showPartnerDetails globalement
+        window.showPartnerDetails = showPartnerDetails;
+    </script>
+</body>
+</html>

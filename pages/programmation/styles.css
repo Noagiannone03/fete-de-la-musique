@@ -636,18 +636,21 @@
     flex-direction: column;
 }
 
-.details-image-container {
-    position: relative;
-    width: 100%;
-    height: 260px; /* Increased height */
-    overflow: hidden;
-}
+              /* Conteneur carré : garde toujours un ratio 1/1 */
+    .details-image-container {
+      width: 100%;            /* ou une valeur fixe, ex. 300px */
+      aspect-ratio: 1 / 1;    /* force le carré */
+      overflow: hidden;       /* découpe ce qui dépasse */
+    }
 
-.details-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
+    /* L’image remplit le conteneur en conservant son ratio */
+    .details-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;      /* cover pour remplir tout en recadrant */
+      object-position: center;/* centre l’image */
+      display: block;
+    }
 
 .close-details {
     position: absolute;

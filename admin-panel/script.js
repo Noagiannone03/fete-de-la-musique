@@ -3990,10 +3990,10 @@ function extractValued(obj) {
     return obj.value || obj;
 }
 
-// Ajouter un point de son à Firestore
+// Modification de la fonction addSoundPoint pour inclure section_toulon
 async function addSoundPoint(soundPoint) {
     try {
-        if (!soundPoint.name || !soundPoint.gpsCoordinates) {
+        if (!soundPoint.name || !soundPoint.gpsCoordinates || !soundPoint.section_toulon) {
             throw new Error("Données du point de son manquantes");
         }
         
@@ -4005,6 +4005,7 @@ async function addSoundPoint(soundPoint) {
             type: soundPoint.type || "autre",
             genres: genresArray,
             gpsCoordinates: soundPoint.gpsCoordinates,
+            section_toulon: soundPoint.section_toulon, // Nouveau champ
             partners: partnersArray,
             createdAt: Timestamp.now(),
             updatedAt: Timestamp.now()
@@ -4166,7 +4167,6 @@ function attachActionListeners() {
         });
     });
 }
-
 // Initialisation du formulaire de point de son
 function initSoundPointForm() {
     const soundPointForm = document.getElementById('sound-point-form');
@@ -4203,26 +4203,26 @@ function initSoundPointForm() {
                 // Récupérer les valeurs du formulaire
                 const nameInput = document.getElementById('sound-point-name');
                 const typeSelect = document.getElementById('sound-point-type');
+                const sectionSelect = document.getElementById('sound-point-section'); // Nouveau
                 const genresInput = document.getElementById('sound-point-genres');
                 const gpsInput = document.getElementById('sound-point-gps');
-               
                 const partnersInput = document.getElementById('sound-point-partners');
                 
-                if (!nameInput || !typeSelect || !genresInput || !gpsInput) {
+                if (!nameInput || !typeSelect || !genresInput || !gpsInput || !sectionSelect) { // Modifié
                     throw new Error("Éléments de formulaire requis introuvables");
                 }
                 
                 const name = nameInput.value;
                 const type = typeSelect.value;
+                const section_toulon = sectionSelect.value; // Nouveau
                 const genresValue = genresInput.value;
                 const genres = genresValue ? JSON.parse(genresValue) : [];
                 const gpsCoordinates = gpsInput.value;
-        
                 const partnersValue = partnersInput ? partnersInput.value : '[]';
                 const partners = partnersValue ? JSON.parse(partnersValue) : [];
                 
                 // Valider les données
-                if (!name || !type || genres.length === 0 || !gpsCoordinates ) {
+                if (!name || !type || genres.length === 0 || !gpsCoordinates || !section_toulon) { // Modifié
                     showToast("Veuillez remplir tous les champs obligatoires", "error");
                     submitButton.disabled = false;
                     submitText.style.display = 'inline-block';
@@ -4234,6 +4234,7 @@ function initSoundPointForm() {
                 const soundPoint = {
                     name,
                     type,
+                    section_toulon, // Nouveau
                     genres,
                     gpsCoordinates,
                     partners
@@ -4289,7 +4290,6 @@ function initSoundPointForm() {
         });
     }
 }
-
 // Initialiser un sélecteur multiple
 function initMultiSelect(id, getOptionsFunc) {
     const input = document.getElementById(`${id}-input`);
