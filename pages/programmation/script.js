@@ -1111,7 +1111,7 @@ function createSoundPointCard(soundPoint) {
         <div class="sound-point-content">
             <div class="sound-point-header">
                 <div class="sound-point-icon">
-                    <img src="../../../assets/pictos/pinnedsoundoint.png" alt="Icon" class="header-icon">
+                    <img src="../../../assets/pictos/pinnedsoundpoint.png" alt="Icon" class="header-icon">
                 </div>
                 <div class="sound-point-title-container">
                     <h3 class="sound-point-title">${soundPoint.name || 'Point de son'}</h3>

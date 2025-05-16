@@ -4431,10 +4431,10 @@ function initMultiSelect(id, getOptionsFunc) {
 function getAllGenres() {
     // Genres par défaut (même si Firestore est vide)
     const defaultGenres = [
-        { value: "good-vibes", label: "Good vibes" },
-        { value: "chill", label: "Chill" },
-        { value: "punchy", label: "Punchy" },
-        { value: "survolte", label: "Survolté" }
+        { value: "Good-Vibes", label: "Good vibes" },
+        { value: "Chill", label: "Chill" },
+        { value: "Punchy", label: "Punchy" },
+        { value: "Survolte", label: "Survolté" }
     ];
     
     try {

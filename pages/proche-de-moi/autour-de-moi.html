@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La fête c'est nous | Carte sonore</title>
+     <link rel="stylesheet" href="../programmation/styles.css">
+    <!-- Importer les fonts et styles existants -->
+    <style>
+        @font-face {
+            font-family: 'inter-bold';
+            src: url('../../assets/fonts/inter/Inter-Bold.otf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'inter-semi-bold';
+            src: url('../../assets/fonts/inter/Inter-SemiBold.otf') format('truetype');
+        }
+        @font-face {
+            font-family: 'ubuntu-medium';
+            src: url('../../assets/fonts/ubuntu/Ubuntu-M.ttf') format('truetype');
+        }
+        
+        /* Styles spécifiques pour la carte */
+        #map-container {
+            width: 100%;
+            height: calc(100vh - 4.375rem - 200px);
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .main-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        /* Style pour la carte d'événement en bas */
+        .preview-card {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+            transform: translateX(-50%) translateY(100px);
+        }
+        
+        .preview-card.active {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .preview-card-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .preview-card-time {
+            background-color: #734432;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-family: 'inter-bold', sans-serif;
+            font-size: 0.8rem;
+        }
+        
+        .preview-card-favorite {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        
+        .preview-card-title {
+            font-family: 'inter-bold', sans-serif;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            color: #232222;
+        }
+        
+        .preview-card-subtitle {
+            font-family: 'inter-semi-bold', sans-serif;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            color: #555;
+        }
+        
+        .preview-card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .preview-card-tag {
+            background-color: #e8e8e8;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: #555;
+        }
+        
+        /* Style pour l'overlay des détails d'événement */
+        .event-details-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            z-index: 200;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+        }
+        
+        .event-details-overlay.active {
+            transform: translateY(0);
+        }
+        
+        .custom-marker {
+            background-size: cover;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #734432;
+        }
+        
+        /* Styles pour le skeleton loading */
+        @keyframes skeleton-loading {
+            0% { background-position: -200px 0; }
+            100% { background-position: calc(200px + 100%) 0; }
+        }
+        
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200px 100%;
+            animation: skeleton-loading 1.5s infinite linear;
+            border-radius: 4px;
+            height: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .skeleton-partner {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            margin: 10px;
+        }
+        
+        .skeleton-text-short {
+            width: 40%;
+        }
+        
+        .skeleton-text-medium {
+            width: 60%;
+        }
+        
+        .skeleton-text-long {
+            width: 90%;
+        }
+        
+        /* Style pour les détails d'image */
+        .details-image-container {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+        }
+        
+        .details-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            display: block;
+        }
+        
+        /* Styles pour les contacts */
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .contact-item .info-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+    </style>
+    <!-- Importer l'API Google Maps avec la clé -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBjA9ZA490VxOTYxl28k2e25S3sOrS_CQw&callback=initMap" defer></script>
+</head>
+<body>
+  
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="index.html"><img src="../../assets/logo/logo-navbar-fdlm.png" alt="Logo" class="navbar-logo"></a>
+        <div class="navbar-right">
+            <button class="favorites-btn">Mes favoris</button>
+            <div class="menu-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Menu overlay -->
+    <div class="menu-overlay">
+        <a href="index.html" class="menu-item" style="margin-bottom: 2vh;">Accueil</a>
+        
+        <a href="pages/programmation/programmation.html" class="menu-item">Programmation</a>
+        <div class="menu-divider"></div>
+        <a href="#" class="menu-item">Mes favoris</a>
+        <div class="menu-divider"></div>
+        <a href="#" class="menu-item">Autour de moi</a>
+        <div class="menu-divider"></div>
+        <a href="#" class="menu-item" style="margin-bottom: 3vh;">Nos partenaires</a>
+      
+        <a href="pages/apropos/apropos.html" class="menu-item">Qui sommes-nous ?</a>
+        <div class="menu-divider"></div>
+        <a href="pages/summer/summer.html" class="menu-item">Pour l'été</a>
+    </div>
+
+    <!-- Favoris overlay -->
+    <div class="favorites-overlay">
+        <div class="favorites-empty">
+            <img src="../../assets/headline/programmation-outline.png" alt="Icône favoris" id="favorites-icon">
+            <h3>Vous n'avez pas encore sélectionné de programme favoris</h3>
+            <img src="../../assets/pictos/material-symbols_stars-outline.png" alt="Icône programme" id="program-icon">
+            <h3>Rendez-vous sur la programmation pour faire votre choix</h3>
+            <img src="../../assets/buttons/programmation-button.png" alt="Aller à la programmation" class="action-img" id="go-to-program">
+        </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <main class="main-content">
+        <img src="../../assets/headline/autourdemoi.png" alt="Carte sonore" class="main-image">
+        
+        <!-- Conteneur pour la carte Google Maps -->
+        <div id="map-container">
+            <div id="map"></div>
+        </div>
+        
+        <!-- Carte de prévisualisation des événements -->
+        <div class="preview-card">
+            <div class="preview-card-header">
+                <div class="preview-card-time">00:00-00:00</div>
+                <img src="../../assets/pictos/star-card.png" alt="Favoris" class="preview-card-favorite">
+            </div>
+            <div class="preview-card-title">Titre de l'événement</div>
+            <div class="preview-card-subtitle">Sous-titre</div>
+            <div class="preview-card-tags">
+                <div class="preview-card-tag">Tag 1</div>
+                <div class="preview-card-tag">Tag 2</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Script Firebase -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+
+       // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyCwtimDB_Mai-QPyB6d0yqjJX_d5mQjGY8",
+        authDomain: "fete-de-la-musique-64a6b.firebaseapp.com",
+        projectId: "fete-de-la-musique-64a6b",
+        storageBucket: "fete-de-la-musique-64a6b.firebasestorage.app",
+        messagingSenderId: "1087878331068",
+        appId: "1:1087878331068:web:28719d3278a619cb816eb9",
+        measurementId: "G-MW9YYKP1J8"
+    };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Rendre les variables accessibles globalement
+        window.db = db;
+        window.getDoc = getDoc;
+        window.collection = collection;
+        window.getDocs = getDocs;
+        window.doc = doc;
+ 
+        
+</script>
+<script>// Variables globales pour la carte
+let map;
+let markers = [];
+let soundPoints = [];
+
+// Fonction d'initialisation de la carte
+window.initMap = function() {
+    console.log("Initialisation de la carte...");
+    
+    // Centrer la carte sur Marseille par défaut
+    const defaultCenter = { lat: 43.296482, lng: 5.36978 };
+    
+    // Créer la carte Google Maps
+    map = new google.maps.Map(document.getElementById("map"), {
+        center: defaultCenter,
+        zoom: 13,
+        styles: [
+            {
+                "featureType": "poi",
+                "elementType": "labels",
+                "stylers": [{ "visibility": "off" }]
+            }
+        ],
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false
+    });
+    
+    console.log("Carte créée, chargement des points sonores...");
+    
+    // Une fois Firebase initialisé, cette fonction sera appelée
+    // On utilise setTimeout pour s'assurer que Firebase est bien chargé
+    setTimeout(loadSoundPoints, 1000);
+};
+
+// Fonction pour charger les points sonores depuis Firebase
+async function loadSoundPoints() {
+    console.log("Tentative de chargement des points sonores...");
+    
+    try {
+        // Vérifier que Firebase est bien initialisé
+        if (!window.db || !window.collection || !window.getDocs) {
+            console.error("Firebase n'est pas initialisé correctement");
+            return;
+        }
+        
+        const soundPointsCollection = collection(window.db, "sound_points");
+        const soundPointsSnapshot = await window.getDocs(soundPointsCollection);
+        
+        console.log(`Nombre de points sonores récupérés: ${soundPointsSnapshot.size}`);
+        
+        // Si aucun point n'est trouvé, ajoutons un marqueur de test pour vérifier que la carte fonctionne
+        if (soundPointsSnapshot.empty) {
+            console.log("Aucun point sonore trouvé, ajout d'un marqueur de test");
+            addTestMarker();
+            return;
+        }
+        
+        // Parcourir chaque document
+        soundPointsSnapshot.forEach(doc => {
+            const data = doc.data();
+            console.log("Point sonore trouvé:", data);
+            
+            // Ajouter l'ID du document aux données
+            const pointData = {
+                id: doc.id,
+                ...data
+            };
+            
+            soundPoints.push(pointData);
+            
+            // Vérifier si les coordonnées GPS existent
+            if (!data.gpsCoordinates) {
+                console.error("Coordonnées GPS manquantes pour le point:", doc.id);
+                return;
+            }
+            
+            // Convertir les coordonnées GPS en latitude et longitude
+            const latLng = convertGPSCoordinatesToLatLng(data.gpsCoordinates);
+            
+            if (latLng) {
+                console.log("Ajout d'un marqueur à:", latLng);
+                // Ajouter un marqueur sur la carte
+                addMarker(latLng, pointData);
+            } else {
+                console.error("Impossible de convertir les coordonnées:", data.gpsCoordinates);
+            }
+        });
+        
+        // Centrer la carte sur le premier point ou laisser le centre par défaut
+        if (soundPoints.length > 0 && markers.length > 0) {
+            map.setCenter(markers[0].getPosition());
+        }
+        
+    } catch (error) {
+        console.error("Erreur lors du chargement des points sonores:", error);
+        // En cas d'erreur, ajouter un marqueur de test
+        addTestMarker();
+    }
+}
+
+// Fonction pour ajouter un marqueur de test (utile pour déboguer)
+function addTestMarker() {
+    // Coordonnées du centre de Marseille
+    const testPosition = { lat: 43.296482, lng: 5.36978 };
+    const testMarker = new google.maps.Marker({
+        position: testPosition,
+        map: map,
+        icon: {
+            url: '../../assets/pictos/pinnedsoundpoint.png',
+            scaledSize: new google.maps.Size(40, 40)
+        },
+        title: 'Marqueur de test'
+    });
+    
+    markers.push(testMarker);
+    console.log("Marqueur de test ajouté");
+}
+
+// Fonction pour convertir les coordonnées GPS au format texte en objet LatLng
+function convertGPSCoordinatesToLatLng(gpsCoordinates) {
+    try {
+        // Vérifier d'abord si c'est une chaîne de caractères
+        if (typeof gpsCoordinates !== 'string') {
+            console.error("Format de coordonnées GPS invalide (pas une chaîne):", gpsCoordinates);
+            return null;
+        }
+        
+        console.log("Conversion des coordonnées:", gpsCoordinates);
+        
+        // Exemple de format: "43°07'43.6"N 5°55'34.2"E"
+        const regex = /(\d+)°(\d+)'(\d+(?:\.\d+)?)"([NS])\s+(\d+)°(\d+)'(\d+(?:\.\d+)?)"([EW])/;
+        const match = gpsCoordinates.match(regex);
+        
+        if (match) {
+            const latDeg = parseFloat(match[1]);
+            const latMin = parseFloat(match[2]);
+            const latSec = parseFloat(match[3]);
+            const latDir = match[4];
+            
+            const lngDeg = parseFloat(match[5]);
+            const lngMin = parseFloat(match[6]);
+            const lngSec = parseFloat(match[7]);
+            const lngDir = match[8];
+            
+            // Convertir en décimal
+            let lat = latDeg + (latMin / 60) + (latSec / 3600);
+            let lng = lngDeg + (lngMin / 60) + (lngSec / 3600);
+            
+            // Ajuster le signe selon la direction
+            if (latDir === 'S') lat = -lat;
+            if (lngDir === 'W') lng = -lng;
+            
+            console.log("Coordonnées converties:", { lat, lng });
+            return { lat, lng };
+        }
+        
+        // Essayer un autre format: coordonnées décimales directes (latitude, longitude)
+        const decimalFormat = /(-?\d+\.\d+),\s*(-?\d+\.\d+)/;
+        const decimalMatch = gpsCoordinates.match(decimalFormat);
+        
+        if (decimalMatch) {
+            const lat = parseFloat(decimalMatch[1]);
+            const lng = parseFloat(decimalMatch[2]);
+            console.log("Coordonnées décimales détectées:", { lat, lng });
+            return { lat, lng };
+        }
+        
+        console.error("Format de coordonnées GPS non reconnu:", gpsCoordinates);
+        return null;
+    } catch (error) {
+        console.error("Erreur lors de la conversion des coordonnées GPS:", error);
+        return null;
+    }
+}
+
+// Fonction pour ajouter un marqueur sur la carte
+function addMarker(position, pointData) {
+    // Créer le marqueur avec l'API Google Maps
+    const marker = new google.maps.Marker({
+        position: position,
+        map: map,
+        icon: {
+            url: '../../assets/pictos/pinnedsoundpoint.png',
+            scaledSize: new google.maps.Size(40, 55)
+        },
+        title: pointData.name || 'Point sonore'
+    });
+    
+    console.log("Marqueur ajouté:", position);
+    
+    // Ajouter un écouteur d'événement pour le clic sur le marqueur
+    marker.addListener('click', () => {
+        // Stocker le point sélectionné
+        selectedPoint = pointData;
+        
+        // Trouver l'événement le plus proche pour ce point
+        findNearestEvent(pointData);
+    });
+    
+    // Ajouter le marqueur à la liste des marqueurs
+    markers.push(marker);
+}
+
+// Fonction pour trouver l'événement le plus proche pour un point donné
+async function findNearestEvent(pointData) {
+    try {
+        // Récupérer tous les événements associés à ce lieu
+        const eventsCollection = collection(window.db, "events");
+        const eventsSnapshot = await window.getDocs(eventsCollection);
+        
+        // Filtrer les événements qui correspondent à l'emplacement
+        const matchingEvents = [];
+        
+        eventsSnapshot.forEach(eventDoc => {
+            const eventData = eventDoc.data();
+            
+            // Vérifier si l'emplacement correspond au nom du point
+            if (eventData.location === pointData.name) {
+                matchingEvents.push({
+                    id: eventDoc.id,
+                    ...eventData
+                });
+            }
+        });
+        
+        if (matchingEvents.length > 0) {
+            // Obtenir l'heure actuelle
+            const now = new Date();
+            
+            // Trouver l'événement le plus proche dans le temps
+            let nearestEvent = null;
+            let smallestTimeDiff = Infinity;
+            
+            matchingEvents.forEach(event => {
+                // Convertir la date de début en objet Date
+                const startDate = event.startDate?.toDate ? event.startDate.toDate() : new Date(event.startDate);
+                
+                // Calculer la différence de temps avec l'heure actuelle
+                const timeDiff = Math.abs(startDate - now);
+                
+                // Si c'est l'événement le plus proche, le stocker
+                if (timeDiff < smallestTimeDiff) {
+                    smallestTimeDiff = timeDiff;
+                    nearestEvent = event;
+                }
+            });
+            
+            if (nearestEvent) {
+                // Afficher la carte de prévisualisation avec les informations de l'événement
+                showPreviewCard(nearestEvent);
+            }
+        }
+    } catch (error) {
+        console.error("Erreur lors de la recherche des événements:", error);
+    }
+}
+
+// Fonction pour afficher la carte de prévisualisation d'un événement
+function showPreviewCard(event) {
+    const previewCard = document.querySelector('.preview-card');
+    
+    // Formater l'heure de début et de fin
+    const startTime = formatTime(event.startDate);
+    const endTime = formatTime(event.endDate);
+    const timeTag = `${startTime}-${endTime}`;
+    
+    // Mettre à jour le contenu de la carte
+    previewCard.querySelector('.preview-card-time').textContent = timeTag;
+    previewCard.querySelector('.preview-card-title').textContent = event.title || 'Événement';
+    previewCard.querySelector('.preview-card-subtitle').textContent = event.subtitle || '';
+    
+    // Mettre à jour les tags
+    const tagsContainer = previewCard.querySelector('.preview-card-tags');
+    tagsContainer.innerHTML = '';
+    
+    if (event.genre && Array.isArray(event.genre)) {
+        event.genre.forEach(tag => {
+            const tagElement = document.createElement('div');
+            tagElement.className = 'preview-card-tag';
+            tagElement.textContent = tag;
+            tagsContainer.appendChild(tagElement);
+        });
+    }
+    
+    // Vérifier si l'événement est en favori
+    const isFavorite = isEventFavorite(event.id);
+    previewCard.querySelector('.preview-card-favorite').src = isFavorite ? 
+        '../../assets/pictos/filled-star.png' : 
+        '../../assets/pictos/star-card.png';
+    
+    // Ajouter un écouteur d'événement pour le clic sur l'icône de favori
+    previewCard.querySelector('.preview-card-favorite').onclick = (e) => {
+        e.stopPropagation(); // Empêcher le clic de se propager
+        toggleFavorite(event.id, e.target);
+    };
+    
+    // Ajouter un écouteur d'événement pour le clic sur la carte
+    previewCard.onclick = () => {
+        showEventDetails(event);
+    };
+    
+    // Afficher la carte
+    previewCard.classList.add('active');
+}
+
+// Fonction pour formater l'heure à partir d'un timestamp
+function formatTime(timestamp) {
+    try {
+        // Convertir le timestamp en objet Date
+        const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
+        
+        // Formater l'heure au format HH:MM
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        
+        return `${hours}h${minutes}`;
+    } catch (error) {
+        console.error("Erreur lors du formatage de l'heure:", error);
+        return "00h00";
+    }
+}
+
+// Fonction pour vérifier si un événement est en favori
+function isEventFavorite(eventId) {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie === `favorite_event_${eventId}=true`) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Fonction pour ajouter ou supprimer un événement des favoris
+function toggleFavorite(eventId, iconElement) {
+    const isFavorite = isEventFavorite(eventId);
+    
+    if (isFavorite) {
+        // Supprimer des favoris
+        document.cookie = `favorite_event_${eventId}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        iconElement.src = '../../assets/pictos/star-card.png';
+    } else {
+        // Ajouter aux favoris
+        const expiryDate = new Date();
+        expiryDate.setMonth(expiryDate.getMonth() + 6); // Cookie valide pour 6 mois
+        document.cookie = `favorite_event_${eventId}=true; expires=${expiryDate.toUTCString()}; path=/`;
+        iconElement.src = '../../assets/pictos/filled-star.png';
+    }
+}
+
+// Fonction pour afficher les détails d'un événement
+async function showEventDetails(event) {
+    console.log('Données de l\'événement reçu :', event);
+    
+    // Créer un modal ou overlay pour les détails de l'événement
+    const detailsOverlay = document.createElement('div');
+    detailsOverlay.className = 'event-details-overlay';
+    
+    // Définir l'icône de favori en fonction du cookie
+    const favoriteIconSrc = isEventFavorite(event.id) ?
+        '../../assets/pictos/filled-star.png' :
+        '../../assets/pictos/star-card.png';
+    
+    // Formater l'heure de début et de fin à partir du timestamp
+    const startTime = formatTime(event.startDate);
+    const endTime = formatTime(event.endDate);
+    const timeTag = `${startTime}-${endTime}`;
+    
+    // Ajouter les styles d'animation du squelette dynamiquement
+    const skeletonStyle = document.createElement('style');
+    skeletonStyle.id = 'details-skeleton-animation';
+    skeletonStyle.textContent = `
+        @keyframes skeleton-loading {
+            0% { background-position: -200px 0; }
+            100% { background-position: calc(200px + 100%) 0; }
+        }
+        
+        /* Conteneur carré : garde toujours un ratio 1/1 */
+        .details-image-container {
+          width: 100%;
+          aspect-ratio: 1 / 1;
+          overflow: hidden;
+        }
+        /* L'image remplit le conteneur en conservant son ratio */
+        .details-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center;
+          display: block;
+        }
+        
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200px 100%;
+            animation: skeleton-loading 1.5s infinite linear;
+            border-radius: 4px;
+            height: 20px;
+            margin-bottom: 10px;
+        }
+        .skeleton-partner {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            margin: 10px;
+        }
+        .skeleton-text-short {
+            width: 40%;
+        }
+        .skeleton-text-medium {
+            width: 60%;
+        }
+        .skeleton-text-long {
+            width: 90%;
+        }
+    `;
+    document.head.appendChild(skeletonStyle);
+    
+    detailsOverlay.innerHTML = `
+        <div class="event-details-container">
+            <div class="details-header">
+                <div class="details-image-container">
+                    <img src="${event.imageUrl || '../../assets/images/default-event.jpg'}" alt="${event.title}" class="details-image">
+                    <button class="close-details">×</button>
+                </div>
+                
+                <div class="details-title-section">
+                    <div class="details-title-left">
+                        <h2 class="details-title">${event.title}</h2>
+                        <p class="details-subtitle">${event.subtitle || ''}</p>
+                    </div>
+                    <div class="details-favorite">
+                        <img src="${favoriteIconSrc}" alt="Ajouter aux favoris" class="details-favorite-icon" data-id="${event.id}">
+                    </div>
+                </div>
+                
+                <div class="details-description">
+                    <p>${event.description || 'Aucune description disponible.'}</p>
+                </div>
+                
+                ${event.plusUrl ? `
+                <div class="details-more-button">
+                    <a href="${event.plusUrl}" target="_blank">
+                        <img src="../../assets/buttons/en-savoir-plus.png" alt="En savoir plus">
+                    </a>
+                </div>` : ''}
+                
+                <div class="details-info-section">
+                    <div class="details-time-location">
+                        <span class="details-time">${timeTag}</span>
+                        <span class="details-separator">/</span>
+                        <span class="details-location">${event.location || ''}</span>
+                    </div>
+                </div>
+                
+                <div class="details-partners-section">
+                    <h3 class="details-partners-title">PARTENAIRES</h3>
+                    <div class="details-partners-list">
+                        <!-- Les partenaires seront ajoutés ici -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(detailsOverlay);
+    
+    // Ajouter un état d'historique pour gérer le bouton retour
+    history.pushState({overlay: 'event-details'}, '');
+    
+    // Animer l'overlay
+    setTimeout(() => {
+        detailsOverlay.classList.add('active');
+    }, 10);
+    
+    // Ajouter des écouteurs d'événements
+    detailsOverlay.querySelector('.close-details').addEventListener('click', () => {
+        detailsOverlay.classList.remove('active');
+        setTimeout(() => {
+            detailsOverlay.remove();
+            // Supprimer les styles du squelette
+            const skeletonStyle = document.getElementById('details-skeleton-animation');
+            if (skeletonStyle) skeletonStyle.remove();
+            // Supprimer l'état d'historique pour éviter un double retour
+            history.back();
+        }, 300);
+    });
+    
+    // Bouton pour ajouter aux favoris
+    const favIcon = detailsOverlay.querySelector('.details-favorite-icon');
+    favIcon.addEventListener('click', () => {
+        const isFav = isEventFavorite(event.id);
+        const favIcons = document.querySelectorAll(`.favorite-icon[data-id="${event.id}"]`);
+        
+        // Basculer le cookie
+        toggleFavorite(event.id, favIcon);
+        
+        // Mettre à jour les autres instances de la même icône de favori
+        favIcons.forEach(icon => {
+            icon.src = isFav ? '../../assets/pictos/star-card.png' : '../../assets/pictos/filled-star.png';
+        });
+    });
+    
+    // Récupérer les partenaires basés sur l'emplacement
+    fetchPartnersForEvent(event.location, detailsOverlay);
+}
+
+// Fonction pour récupérer les partenaires pour un événement
+async function fetchPartnersForEvent(location, detailsOverlay) {
+    try {
+        // Récupérer le point sonore correspondant à l'emplacement
+        const soundPoint = soundPoints.find(point => point.name === location);
+        
+        if (soundPoint && soundPoint.partners && Array.isArray(soundPoint.partners)) {
+            const partnersList = detailsOverlay.querySelector('.details-partners-list');
+            partnersList.innerHTML = '';
+            
+            // Afficher chaque partenaire
+            soundPoint.partners.forEach(partnerId => {
+                // Créer un élément pour le partenaire
+                const partnerDiv = document.createElement('div');
+                partnerDiv.className = 'details-partner';
+                
+                // Ajouter une image d'espace réservé
+                partnerDiv.innerHTML = `
+                    <div class="skeleton skeleton-partner"></div>
+                    <div class="skeleton skeleton-text-short"></div>
+                `;
+                
+                partnersList.appendChild(partnerDiv);
+                
+                // Récupérer les détails du partenaire
+                getPartnerDetails(partnerId, partnerDiv);
+            });
+        } else {
+            // Aucun partenaire trouvé
+            const partnersList = detailsOverlay.querySelector('.details-partners-list');
+            partnersList.innerHTML = '<p>Aucun partenaire pour cet événement.</p>';
+        }
+    } catch (error) {
+        console.error("Erreur lors de la récupération des partenaires:", error);
+    }
+}
+
+// Fonction pour récupérer les détails d'un partenaire
+async function getPartnerDetails(partnerId, partnerElement) {
+    try {
+        const partnerDoc = await window.getDoc(window.doc(window.db, "partners", partnerId));
+        
+        if (partnerDoc.exists()) {
+            const partnerData = partnerDoc.data();
+            
+            // Mettre à jour l'élément avec les détails du partenaire
+            partnerElement.innerHTML = `
+                <img src="${partnerData.logoUrl || '../../assets/images/default-partner.jpg'}" alt="${partnerData.name}" class="partner-logo">
+                <span class="partner-name">${partnerData.name}</span>
+            `;
+        } else {
+            // Partenaire non trouvé
+            partnerElement.innerHTML = '<p>Partenaire indisponible</p>';
+        }
+    } catch (error) {
+        console.error("Erreur lors de la récupération des détails du partenaire:", error);
+        partnerElement.innerHTML = '<p>Erreur lors du chargement</p>';
+    }
+}
+
+// Écouter le chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM chargé, attente d'initialisation de la carte...");
+    
+    // Gérer le bouton retour pour les modals
+    window.addEventListener('popstate', function(event) {
+        const detailsOverlay = document.querySelector('.event-details-overlay');
+        if (detailsOverlay) {
+            detailsOverlay.classList.remove('active');
+            setTimeout(() => {
+                detailsOverlay.remove();
+            }, 300);
+        }
+    });
+});
+
+// Variable pour le point actuellement sélectionné
+let selectedPoint = null;</script>
