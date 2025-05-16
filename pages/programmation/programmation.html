@@ -16,7 +16,32 @@
     <link rel="preload" as="image" href="../../assets/headline/favoris.png">
   <link rel="stylesheet" href="styles.css">
 
-    
+    <script>
+(function() {
+  // 1) Détection “moderne” (Chrome, Edge, Opera) via userAgentData
+  const uaData = navigator.userAgentData;
+  let isMobile = false;
+
+  if (uaData && Array.isArray(uaData.mobile)) {
+    // userAgentData.mobile est true sur mobile Chrome récent
+    isMobile = uaData.mobile === true;
+  } else {
+    // 2) Fallback classique sur userAgent
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    isMobile = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+  }
+
+  // Si CE N’EST PAS un mobile, on redirige
+  if (!isMobile) {
+    // Remplacez cette URL par celle de la page vers laquelle rediriger PC / tablette
+    const redirectUrl = "../redirect/redirection.html";
+    // Pour éviter les boucles de redirection, vérifiez qu'on n'y est pas déjà
+    if (window.location.href.indexOf(redirectUrl) === -1) {
+      window.location.replace(redirectUrl);
+    }
+  }
+})();
+</script>
 </head>
 <body>
     <!-- Navbar -->
@@ -39,9 +64,9 @@
         <div class="menu-divider"></div>
         <a href="#" class="menu-item">Mes favoris</a>
         <div class="menu-divider"></div>
-        <a href="#" class="menu-item">Autour de moi</a>
+        <a href="../proche-de-moi/autour-de-moi.html" class="menu-item">Autour de moi</a>
         <div class="menu-divider"></div>
-        <a href="#" class="menu-item" style="margin-bottom: 3vh;">Nos partenaires</a>
+        <a href="../partners/partenaires.html" class="menu-item" style="margin-bottom: 3vh;">Nos partenaires</a>
         <a href="../apropos/apropos.html" class="menu-item">Qui sommes-nous ?</a>
         <div class="menu-divider"></div>
         <a href="../summer/summer.html" class="menu-item">Pour l'été</a>
