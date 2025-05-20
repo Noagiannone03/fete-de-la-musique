@@ -3,17 +3,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebas
 import { getFirestore, collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, Timestamp, query, orderBy, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import { browserLocalPersistence } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-
-
-
-  // **ICI** : import Storage depuis le CDN, pas "firebase/storage"
-  import {
-    getStorage,
-    ref as storageRef,
-    uploadBytes,
-    getDownloadURL
-  } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
-
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -29,7 +19,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-  const storage = getStorage(app);
+const storage = getStorage(app);
 // Global variables
 let eventImageFile = null;
 let summerEventImageFile = null;
@@ -366,7 +356,7 @@ async function convertImageToBase64(file) {
   try {
     // Crée un chemin unique pour l'image (ici timestamp + nom d'origine)
     const fileName = `${Date.now()}_${file.name}`;
-    const imgRef   = storageRef(storage, `partners/${fileName}`);
+    const imgRef   = ref(storage, `partners/${fileName}`);
 
     // Upload du fichier brut
     await uploadBytes(imgRef, file);
