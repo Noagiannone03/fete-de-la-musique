@@ -675,8 +675,8 @@ function applyFilters() {
             const eventSection = event.section_toulon.toLowerCase();
             const filterSection = currentFilters.location.toLowerCase();
             
-            // Pour centre-ville, chercher "centreville"
-            if (filterSection === 'centre-ville') {
+            // Pour centreville, chercher "centreville"
+            if (filterSection === 'centreville') {
                 return eventSection === 'centreville';
             }
             
@@ -1144,7 +1144,7 @@ function createSoundPointCard(soundPoint) {
         <div class="sound-point-content">
             <div class="sound-point-header">
                 <div class="sound-point-icon">
-                    <img src="../../../assets/pictos/pinnedsoundpoint.png" alt="Icon" class="header-icon">
+                    <img src="../../assets/pictos/pinnedsoundpoint.png" alt="Icon" class="header-icon">
                 </div>
                 <div class="sound-point-title-container">
                     <h3 class="sound-point-title">${soundPoint.name || 'Point de son'}</h3>
@@ -1157,7 +1157,7 @@ function createSoundPointCard(soundPoint) {
                     <span>${genresHtml || 'Survolté'}</span>
                 </div>
                 <div class="sound-point-button">
-                    <img src="../../../assets/buttons/voir-plus.png" alt="Voir plus" class="voir-plus-icon">
+                    <img src="../../assets/buttons/voir-plus.png" alt="Voir plus" class="voir-plus-icon">
                 </div>
             </div>
         </div>
