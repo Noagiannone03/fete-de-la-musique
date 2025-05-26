@@ -140,6 +140,7 @@
         }
         
         .preview-card-time {
+            height: fit-content;
             background-color: #734432;
             color: white;
             padding: 5px 10px;
@@ -149,8 +150,8 @@
         }
         
         .preview-card-favorite {
-            width: 24px;
-            height: 24px;
+            width: 37px;
+            height: 37px;
             cursor: pointer;
         }
         
@@ -223,7 +224,7 @@
         
         .details-image-container {
             width: 100%;
-            aspect-ratio: 12 / 9;
+            aspect-ratio: 11 / 6;
             overflow: hidden;
             flex-shrink: 0;
             position: relative;
@@ -825,8 +826,9 @@ function getUserLocation() {
                 // Ajouter un marqueur pour la position de l'utilisateur
                 addUserLocationMarker(pos);
                 
-                // Centrer la carte sur la position de l'utilisateur
+                // Centrer la carte sur la position de l'utilisateur avec un zoom de 16
                 map.setCenter(pos);
+                map.setZoom(16); // Zoom plus proche pour une meilleure visibilité
             },
             (error) => {
                 console.error("Erreur de géolocalisation:", error);
