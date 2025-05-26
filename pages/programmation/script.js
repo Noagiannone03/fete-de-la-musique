@@ -227,13 +227,17 @@ function createEventCard(event) {
     `;
     
     // Add event listener for favorite icon
-    card.querySelector('.favorite-icon').addEventListener('click', function() {
+    card.querySelector('.favorite-icon').addEventListener('click', function(e) {
+        e.stopPropagation(); // Empêche la propagation du clic vers la carte
         toggleFavorite(event.id, this);
     });
     
-    // Add event listener for info button
-    card.querySelector('.info-btn').addEventListener('click', function() {
-        showEventDetails(event);
+    // Add event listener for the entire card
+    card.addEventListener('click', function(e) {
+        // Ne pas déclencher si on clique sur l'icône de favori
+        if (!e.target.closest('.favorite-icon')) {
+            showEventDetails(event);
+        }
     });
     
     return card;
@@ -273,12 +277,12 @@ async function showEventDetails(event) {
       overflow: hidden;       /* découpe ce qui dépasse */
     }
 
-    /* L’image remplit le conteneur en conservant son ratio */
+    /* L'image remplit le conteneur en conservant son ratio */
     .details-image {
       width: 100%;
       height: 100%;
       object-fit: cover;      /* cover pour remplir tout en recadrant */
-      object-position: center;/* centre l’image */
+      object-position: center;/* centre l'image */
       display: block;
     }
  
@@ -374,11 +378,13 @@ async function showEventDetails(event) {
     // Animate the overlay
     setTimeout(() => {
         detailsOverlay.classList.add('active');
+        document.body.classList.add('body-no-scroll');
     }, 10);
     
     // Add event listeners
     detailsOverlay.querySelector('.close-details').addEventListener('click', () => {
         detailsOverlay.classList.remove('active');
+        document.body.classList.remove('body-no-scroll');
         setTimeout(() => {
             detailsOverlay.remove();
             // Remove skeleton styles
@@ -657,9 +663,30 @@ function applyFilters() {
     } 
     // Otherwise apply location tab filter
     else if (currentFilters.location !== 'all') {
-        filteredEvents = filteredEvents.filter(event => 
-            event.location && event.location.toLowerCase().includes(currentFilters.location.toLowerCase())
-        );
+        console.log("Filtrage par lieu:", currentFilters.location);
+        
+        filteredEvents = filteredEvents.filter(event => {
+            if (!event.section_toulon) {
+                console.log("Événement sans section:", event);
+                return false;
+            }
+            
+            // Normaliser les noms de sections pour la comparaison
+            const eventSection = event.section_toulon.toLowerCase();
+            const filterSection = currentFilters.location.toLowerCase();
+            
+            // Pour centre-ville, chercher "centreville"
+            if (filterSection === 'centre-ville') {
+                return eventSection === 'centreville';
+            }
+            
+            // Pour mourillon, chercher "mourillon"
+            if (filterSection === 'mourillon') {
+                return eventSection === 'mourillon';
+            }
+            
+            return false;
+        });
         console.log(`Après filtre de lieu: ${filteredEvents.length} événements`);
     }
     
@@ -996,7 +1023,13 @@ function applyFilters() {
                 tabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 
-                currentFilters.location = tab.getAttribute('data-filter');
+                // Transformer 'centre-ville' en 'centreville' pour la correspondance
+                let filterValue = tab.getAttribute('data-filter');
+                if (filterValue === 'centre-ville') {
+                    filterValue = 'centreville';
+                }
+                
+                currentFilters.location = filterValue;
                 applyFilters();
             });
         });
@@ -1767,6 +1800,7 @@ function addEventListenersToRestoredContent(detailsOverlay) {
     if (closeButton) {
         closeButton.addEventListener('click', () => {
             detailsOverlay.classList.remove('active');
+            document.body.classList.remove('body-no-scroll');
             setTimeout(() => {
                 detailsOverlay.remove();
                 // Remove history state to avoid double-back
