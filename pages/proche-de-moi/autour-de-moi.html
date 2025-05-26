@@ -10,7 +10,7 @@
     <!-- Placez ce code dans le <head> ou juste après l'ouverture du <body> -->
 <script>
 (function() {
-  // 1) Détection “moderne” (Chrome, Edge, Opera) via userAgentData
+  // 1) Détection "moderne" (Chrome, Edge, Opera) via userAgentData
   const uaData = navigator.userAgentData;
   let isMobile = false;
 
@@ -23,7 +23,7 @@
     isMobile = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
   }
 
-  // Si CE N’EST PAS un mobile, on redirige
+  // Si CE N'EST PAS un mobile, on redirige
   if (!isMobile) {
     // Remplacez cette URL par celle de la page vers laquelle rediriger PC / tablette
     const redirectUrl = "../redirect/redirection.html";
@@ -91,19 +91,18 @@
             position: fixed;
             bottom: 20px;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%) translateY(100px);
             width: 90%;
             max-width: 400px;
             background-color: white;
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             z-index: 10;
-            padding: 15px;
             display: flex;
             flex-direction: column;
             transition: transform 0.3s ease, opacity 0.3s ease;
             opacity: 0;
-            transform: translateX(-50%) translateY(100px);
+            overflow: hidden;
         }
         
         .preview-card.active {
@@ -111,10 +110,33 @@
             transform: translateX(-50%) translateY(0);
         }
         
+        .preview-card-image-container {
+            width: 100%;
+            height: 170px;
+            position: relative;
+            background: #f0f0f0;
+        }
+        
+        .preview-card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .preview-card-image.loaded {
+            opacity: 1;
+        }
+        
+        .preview-card-content {
+            padding: 12px;
+        }
+        
         .preview-card-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         
         .preview-card-time {
@@ -135,22 +157,22 @@
         .preview-card-title {
             font-family: 'inter-bold', sans-serif;
             font-size: 1.1rem;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
             color: #232222;
         }
         
         .preview-card-subtitle {
             font-family: 'inter-semi-bold', sans-serif;
             font-size: 0.9rem;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             color: #555;
         }
         
         .preview-card-tags {
             display: flex;
             flex-wrap: wrap;
-            gap: 5px;
-            margin-bottom: 10px;
+            gap: 4px;
+            margin-bottom: 4px;
         }
         
         .preview-card-tag {
@@ -271,19 +293,19 @@
 
     <!-- Menu overlay -->
     <div class="menu-overlay">
-        <a href="index.html" class="menu-item" style="margin-bottom: 2vh;">Accueil</a>
+        <a href="../../index.html" class="menu-item" style="margin-bottom: 2vh;">Accueil</a>
         
-        <a href="pages/programmation/programmation.html" class="menu-item">Programmation</a>
+        <a href="../programmation/programmation.html" class="menu-item">Programmation</a>
         <div class="menu-divider"></div>
         <a href="#" class="menu-item">Mes favoris</a>
         <div class="menu-divider"></div>
-        <a href="#" class="menu-item">Autour de moi</a>
+        <a href="autour-de-moi.html" class="menu-item">Autour de moi</a>
         <div class="menu-divider"></div>
-        <a href="#" class="menu-item" style="margin-bottom: 3vh;">Nos partenaires</a>
+        <a href="../partners/partenaires.html" class="menu-item" style="margin-bottom: 3vh;">Nos partenaires</a>
       
-        <a href="pages/apropos/apropos.html" class="menu-item">Qui sommes-nous ?</a>
+        <a href="../apropos/apropos.html" class="menu-item">Qui sommes-nous ?</a>
         <div class="menu-divider"></div>
-        <a href="pages/summer/summer.html" class="menu-item">Pour l'été</a>
+        <a href="../summer/summer.html" class="menu-item">Pour l'été</a>
     </div>
 
     <!-- Favoris overlay -->
@@ -534,6 +556,11 @@ window.initMap = function() {
         fullscreenControl: false
     });
     
+    // Ajouter un écouteur de clic sur la carte
+    map.addListener('click', function() {
+        hidePreviewCard();
+    });
+    
     console.log("Carte créée, chargement des points sonores...");
     
     // Ajouter le bouton de localisation
@@ -543,7 +570,6 @@ window.initMap = function() {
     getUserLocation();
     
     // Une fois Firebase initialisé, cette fonction sera appelée
-    // On utilise setTimeout pour s'assurer que Firebase est bien chargé
     setTimeout(loadSoundPoints, 1000);
 };
 
@@ -720,10 +746,11 @@ function addMarker(position, pointData) {
     console.log("Marqueur ajouté:", position, "avec l'icône:", markerIcon.url);
     
     // Ajouter un écouteur d'événement pour le clic sur le marqueur
-    marker.addListener('click', () => {
+    marker.addListener('click', (e) => {
+        // Empêcher la propagation du clic pour éviter que la carte ne reçoive le clic
+        e.stop();
         // Stocker le point sélectionné
         selectedPoint = pointData;
-        
         // Trouver l'événement le plus proche pour ce point
         findNearestEvent(pointData);
     });
@@ -788,6 +815,7 @@ async function findNearestEvent(pointData) {
 
 // Fonction pour afficher la carte de prévisualisation d'un événement
 function showPreviewCard(event) {
+    console.log("Affichage de la carte de prévisualisation pour l'événement:", event);
     const previewCard = document.querySelector('.preview-card');
     
     // Formater l'heure de début et de fin
@@ -796,28 +824,29 @@ function showPreviewCard(event) {
     const timeTag = `${startTime}-${endTime}`;
     
     // Mettre à jour le contenu de la carte
-    previewCard.querySelector('.preview-card-time').textContent = timeTag;
-    previewCard.querySelector('.preview-card-title').textContent = event.title || 'Événement';
-    previewCard.querySelector('.preview-card-subtitle').textContent = event.subtitle || '';
-    
-    // Mettre à jour les tags
-    const tagsContainer = previewCard.querySelector('.preview-card-tags');
-    tagsContainer.innerHTML = '';
-    
-    if (event.genre && Array.isArray(event.genre)) {
-        event.genre.forEach(tag => {
-            const tagElement = document.createElement('div');
-            tagElement.className = 'preview-card-tag';
-            tagElement.textContent = tag;
-            tagsContainer.appendChild(tagElement);
-        });
-    }
-    
-    // Vérifier si l'événement est en favori
-    const isFavorite = isEventFavorite(event.id);
-    previewCard.querySelector('.preview-card-favorite').src = isFavorite ? 
-        '../../assets/pictos/filled-star.png' : 
-        '../../assets/pictos/star-card.png';
+    previewCard.innerHTML = `
+        <div class="preview-card-image-container">
+            <img src="${event.imageUrl || '../../assets/images/default-event.jpg'}" 
+                 alt="${event.title}" 
+                 class="preview-card-image"
+                 onload="this.classList.add('loaded')">
+        </div>
+        <div class="preview-card-content">
+            <div class="preview-card-header">
+                <div class="preview-card-time">${timeTag}</div>
+                <img src="${isEventFavorite(event.id) ? '../../assets/pictos/filled-star.png' : '../../assets/pictos/star-card.png'}" 
+                     alt="Favoris" 
+                     class="preview-card-favorite">
+            </div>
+            <div class="preview-card-title">${event.title || 'Événement'}</div>
+            <div class="preview-card-subtitle">${event.subtitle || ''}</div>
+            <div class="preview-card-tags">
+                ${event.genre && Array.isArray(event.genre) ? event.genre.map(tag => 
+                    `<div class="preview-card-tag">${tag}</div>`
+                ).join('') : ''}
+            </div>
+        </div>
+    `;
     
     // Ajouter un écouteur d'événement pour le clic sur l'icône de favori
     previewCard.querySelector('.preview-card-favorite').onclick = (e) => {
@@ -832,6 +861,7 @@ function showPreviewCard(event) {
     
     // Afficher la carte
     previewCard.classList.add('active');
+    console.log("Carte de prévisualisation activée");
 }
 
 // Fonction pour formater l'heure à partir d'un timestamp
@@ -1117,4 +1147,62 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Variable pour le point actuellement sélectionné
-let selectedPoint = null;</script>
+let selectedPoint = null;
+
+// Gestion du menu hamburger
+document.addEventListener('DOMContentLoaded', function() {
+    const menuIcon = document.querySelector('.menu-icon');
+    const menuOverlay = document.querySelector('.menu-overlay');
+    const favoritesBtn = document.querySelector('.favorites-btn');
+    const favoritesOverlay = document.querySelector('.favorites-overlay');
+
+    // Gestion du menu hamburger
+    menuIcon.addEventListener('click', function() {
+        menuIcon.classList.toggle('active');
+        menuOverlay.classList.toggle('active');
+        document.body.classList.toggle('body-no-scroll');
+    });
+
+    // Gestion des favoris
+    favoritesBtn.addEventListener('click', function() {
+        favoritesOverlay.classList.toggle('active');
+        document.body.classList.toggle('body-no-scroll');
+    });
+
+    // Fermer les overlays en cliquant sur les liens
+    const menuItems = document.querySelectorAll('.menu-item');
+    menuItems.forEach(item => {
+        item.addEventListener('click', function() {
+            menuIcon.classList.remove('active');
+            menuOverlay.classList.remove('active');
+            document.body.classList.remove('body-no-scroll');
+        });
+    });
+
+    // Fermer les overlays en cliquant en dehors
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.menu-icon') && !event.target.closest('.menu-overlay')) {
+            menuIcon.classList.remove('active');
+            menuOverlay.classList.remove('active');
+        }
+        if (!event.target.closest('.favorites-btn') && !event.target.closest('.favorites-overlay')) {
+            favoritesOverlay.classList.remove('active');
+        }
+        if (!menuOverlay.classList.contains('active') && !favoritesOverlay.classList.contains('active')) {
+            document.body.classList.remove('body-no-scroll');
+        }
+    });
+});
+
+// Fonction pour cacher la carte de prévisualisation
+function hidePreviewCard() {
+    const previewCard = document.querySelector('.preview-card');
+    if (previewCard && previewCard.classList.contains('active')) {
+        previewCard.classList.remove('active');
+        // Attendre la fin de l'animation avant de réinitialiser le contenu
+        setTimeout(() => {
+            previewCard.innerHTML = '';
+        }, 300);
+    }
+}
+</script>
