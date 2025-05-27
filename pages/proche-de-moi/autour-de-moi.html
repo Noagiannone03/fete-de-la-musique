@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>La fête c'est nous | Carte sonore</title>
      <link rel="stylesheet" href="../programmation/styles.css">
+     <!-- Module de gestion des favoris -->
+     <script src="../../utils/favorites-manager.js"></script>
     <!-- Importer les fonts et styles existants -->
 
     <!-- Placez ce code dans le <head> ou juste après l'ouverture du <body> -->
@@ -224,7 +226,7 @@
         
         .details-image-container {
             width: 100%;
-            aspect-ratio: 11 / 6;
+            aspect-ratio: 12 / 9;
             overflow: hidden;
             flex-shrink: 0;
             position: relative;
@@ -485,25 +487,26 @@
         
         .close-details {
             position: absolute;
-            top: 15px;
+            top: 10px;
             right: 15px;
-            background: rgba(0, 0, 0, 0.6);
-            color: white;
-            border: none;
-            width: 36px;
-            height: 36px;
+            width: 45px;
+            height: 45px;
+            background-color: #734432;
             border-radius: 50%;
-            font-size: 24px;
+            border: none;
+            font-size: 26px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.9);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            z-index: 10;
+            z-index: 2;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         
         .details-title-section {
             padding: 20px;
-            border-bottom: 1px solid #eee;
         }
         
         .details-title {
@@ -596,14 +599,15 @@
         }
         
         .partner-logo {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
+            width: 90px;
+            height: 90px;
             object-fit: cover;
-            border: 2px solid white;
-            margin-bottom: 8px;
             background-color: white;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            padding: 2px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+            border: none;
         }
         
         .details-partner:hover .partner-logo {
@@ -1084,6 +1088,12 @@ async function loadSoundPoints() {
         
         console.log("Points sonores avec événements:", soundPoints);
         
+        // Mettre à jour les données du gestionnaire de favoris
+        if (favoritesManager) {
+            favoritesManager.setEventsData([], soundPoints);
+            console.log('Données mises à jour dans le gestionnaire de favoris');
+        }
+        
         // Centrer la carte sur le premier point ou laisser le centre par défaut
         if (soundPoints.length > 0 && markers.length > 0) {
             map.setCenter(markers[0].getPosition());
@@ -1346,228 +1356,53 @@ function formatTime(timestamp) {
     }
 }
 
-// Fonction pour définir un cookie
+// Initialisation du gestionnaire de favoris
+let favoritesManager;
+
+// Fonction pour définir un cookie (conservée pour compatibilité)
 function setCookie(name, value, days) {
-    console.log(`Définition du cookie: ${name}=${value}, valable ${days} jours`);
-    const d = new Date();
-    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-    const expires = 'expires=' + d.toUTCString();
-    const cookieString = `${name}=${value};${expires};path=/;SameSite=Lax`;
-    document.cookie = cookieString;
-    console.log('Cookie défini avec succès:', cookieString);
+    if (favoritesManager) {
+        favoritesManager.setCookie(name, value, days);
+    }
 }
 
-// Fonction pour récupérer un cookie
+// Fonction pour récupérer un cookie (conservée pour compatibilité)
 function getCookie(name) {
-    const nameEQ = name + '=';
-    const ca = document.cookie.split(';');
-    for (let i = 0; i < ca.length; i++) {
-        let c = ca[i];
-        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    if (favoritesManager) {
+        return favoritesManager.getCookie(name);
     }
     return null;
 }
 
-// Fonction pour supprimer un cookie
+// Fonction pour supprimer un cookie (conservée pour compatibilité)
 function deleteCookie(name) {
-    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/';
+    if (favoritesManager) {
+        favoritesManager.deleteCookie(name);
+    }
 }
 
-// Fonction pour vérifier si un événement est en favori
+// Fonction pour vérifier si un événement est en favori (conservée pour compatibilité)
 function isEventFavorite(eventId) {
-    const isFav = getCookie('favorite_event_' + eventId) === 'true';
-    console.log(`Vérification de l'événement ${eventId} dans les favoris:`, isFav);
-    console.log('Tous les cookies:', document.cookie);
-    return isFav;
+    if (favoritesManager) {
+        return favoritesManager.isEventFavorite(eventId);
+    }
+    return false;
 }
 
-// Fonction pour ajouter ou supprimer un événement des favoris
+// Fonction pour ajouter ou supprimer un événement des favoris (conservée pour compatibilité)
 function toggleFavorite(eventId, iconElement) {
-    console.log(`Basculement de l'état de favori pour l'événement ${eventId}`);
-    
-    const wasFavorite = isEventFavorite(eventId);
-    console.log(`Événement ${eventId} était en favori:`, wasFavorite);
-    
-    if (wasFavorite) {
-        console.log(`Suppression du favori pour l'événement ${eventId}`);
-        deleteCookie('favorite_event_' + eventId);
-        if (iconElement) {
-            console.log(`Mise à jour de l'icône pour l'événement ${eventId} en non-favori`);
-            iconElement.src = '../../assets/pictos/star-card.png';
-        }
-    } else {
-        console.log(`Ajout du favori pour l'événement ${eventId}`);
-        setCookie('favorite_event_' + eventId, 'true', 180); // 6 mois
-        if (iconElement) {
-            console.log(`Mise à jour de l'icône pour l'événement ${eventId} en favori`);
-            iconElement.src = '../../assets/pictos/filled-star.png';
-        }
+    if (favoritesManager) {
+        return favoritesManager.toggleFavorite(eventId, iconElement);
     }
-    
-    // Vérifier l'état après basculement
-    const isNowFavorite = isEventFavorite(eventId);
-    console.log(`L'événement ${eventId} est maintenant en favori:`, isNowFavorite);
-    
-    // Mettre à jour l'icône de favori dans l'overlay des détails si elle existe
-    const favIcon = document.querySelector(`.details-favorite-icon[data-id="${eventId}"]`);
-    if (favIcon) {
-        console.log(`Mise à jour de l'icône dans l'overlay des détails pour l'événement ${eventId}`);
-        favIcon.src = isNowFavorite ? 
-            '../../assets/pictos/filled-star.png' : 
-            '../../assets/pictos/star-card.png';
-    }
+    return false;
 }
 
-// Fonction pour charger les favoris
+// Fonction pour charger les favoris (utilise maintenant le gestionnaire de favoris)
 function loadFavorites() {
-    const favoritesOverlay = document.querySelector('.favorites-overlay');
-    if (!favoritesOverlay) {
-        console.error("L'élément .favorites-overlay n'a pas été trouvé");
-        return;
-    }
-    
-    favoritesOverlay.innerHTML = ''; // Effacer le contenu précédent
-    
-    // Activer l'overlay
-    favoritesOverlay.classList.add('active');
-    document.body.classList.add('body-no-scroll');
-    
-    // Filtrer les événements qui sont dans les favoris
-    const favoriteEvents = [];
-    
-    // Parcourir tous les points sonores pour trouver les événements favoris
-    soundPoints.forEach(point => {
-        if (point.events && Array.isArray(point.events)) {
-            point.events.forEach(event => {
-                if (isEventFavorite(event.id)) {
-                    favoriteEvents.push({
-                        ...event,
-                        location: point.name // Ajouter l'emplacement du point sonore
-                    });
-                }
-            });
-        }
-    });
-    
-    console.log("Événements favoris trouvés:", favoriteEvents);
-    
-    if (favoriteEvents.length === 0) {
-        // Afficher l'état vide
-        favoritesOverlay.innerHTML = `
-            <div class="favorites-empty">
-                <img src="../../assets/headline/programmation-outline.png" alt="Icône favoris" id="favorites-icon">
-                <h3>Vous n'avez pas encore sélectionné d'événement favori</h3>
-                <img src="../../assets/pictos/material-symbols_stars-outline.png" alt="Icône étoile" id="program-icon">
-                <h3>Ajoutez des événements à vos favoris en cliquant sur l'étoile</h3>
-            </div>
-        `;
+    if (favoritesManager) {
+        favoritesManager.loadAndShowFavorites();
     } else {
-        // Créer l'en-tête de l'overlay des favoris
-        const favHeader = document.createElement('div');
-        favHeader.style.width = '100%';
-        favHeader.style.padding = '10px 15px';
-        favHeader.innerHTML = `
-            <a href="#" class="back-to-favorites" id="back-from-favorites" style="color: #734432; text-decoration: none; font-size: 14px; margin-bottom: 10px; display: inline-block;">← Retour</a>
-            <img src="../../assets/headline/favoris.png" alt="Mes Favoris" style="width: 70%; max-width: 300px; margin: 10px auto 20px; display: block;">
-        `;
-        favoritesOverlay.appendChild(favHeader);
-        
-        // Créer le conteneur des événements favoris
-        const favoriteContainer = document.createElement('div');
-        favoriteContainer.style.padding = '0 15px';
-        favoriteContainer.style.maxHeight = 'calc(100vh - 200px)';
-        favoriteContainer.style.overflowY = 'auto';
-        
-        // Ajouter chaque événement favori
-        favoriteEvents.forEach(event => {
-            const eventCard = document.createElement('div');
-            eventCard.className = 'event-card';
-            eventCard.style.marginBottom = '15px';
-            eventCard.style.borderRadius = '10px';
-            eventCard.style.overflow = 'hidden';
-            eventCard.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-            
-            // Formater l'heure de début et de fin
-            const startTime = formatTime(event.startDate);
-            const endTime = formatTime(event.endDate);
-            const timeTag = `${startTime}-${endTime}`;
-            
-            eventCard.innerHTML = `
-                <div style="position: relative; width: 100%; height: 150px; background-color: #f5f5f5;">
-                    <img src="${event.imageUrl || '../../assets/images/default-event.jpg'}" 
-                         alt="${event.title}" 
-                         style="width: 100%; height: 100%; object-fit: cover;">
-                    <div style="position: absolute; top: 10px; left: 10px; background-color: #734432; color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px;">
-                        ${timeTag}
-                    </div>
-                    <div style="position: absolute; top: 10px; right: 10px; background-color: rgba(255,255,255,0.9); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer;" class="favorite-toggle">
-                        <img src="${isEventFavorite(event.id) ? '../../assets/pictos/filled-star.png' : '../../assets/pictos/star-card.png'}" 
-                             alt="Favori" 
-                             style="width: 20px; height: 20px;"
-                             data-id="${event.id}">
-                    </div>
-                </div>
-                <div style="padding: 12px;">
-                    <h3 style="margin: 0 0 5px 0; font-size: 16px; color: #232222; font-family: 'inter-semi-bold', sans-serif;">
-                        ${event.title || 'Événement'}
-                    </h3>
-                    <p style="margin: 0 0 5px 0; font-size: 14px; color: #555;">
-                        ${event.subtitle || ''}
-                    </p>
-                    <p style="margin: 0; font-size: 12px; color: #734432;">
-                        ${event.location || ''}
-                    </p>
-                </div>
-            `;
-            
-            // Ajouter un écouteur d'événement pour le clic sur la carte
-            eventCard.addEventListener('click', () => {
-                showEventDetails(event);
-            });
-            
-            // Ajouter un écouteur d'événement pour le bouton de favori
-            const favButton = eventCard.querySelector('.favorite-toggle');
-            if (favButton) {
-                favButton.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const icon = favButton.querySelector('img');
-                    toggleFavorite(event.id, icon);
-                    
-                    // Si l'événement est supprimé des favoris, retirer la carte
-                    if (!isEventFavorite(event.id)) {
-                        eventCard.style.animation = 'fadeOut 0.3s forwards';
-                        setTimeout(() => {
-                            eventCard.remove();
-                            // Si plus de favoris, afficher l'état vide
-                            if (favoriteContainer.children.length === 0) {
-                                loadFavorites(); // Recharger pour afficher l'état vide
-                            }
-                        }, 300);
-                    }
-                });
-            }
-            
-            favoriteContainer.appendChild(eventCard);
-        });
-        
-        favoritesOverlay.appendChild(favoriteContainer);
-        
-        // Ajouter un écouteur d'événement pour le bouton de retour
-        const backButton = document.getElementById('back-from-favorites');
-        if (backButton) {
-            backButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                favoritesOverlay.classList.remove('active');
-                
-                // Ajouter un délai avant de supprimer la classe no-scroll pour permettre l'animation
-                setTimeout(() => {
-                    if (!document.querySelector('.event-details-overlay.active')) {
-                        document.body.classList.remove('body-no-scroll');
-                    }
-                }, 300);
-            });
-        }
+        console.error("Le gestionnaire de favoris n'est pas initialisé");
     }
 }
 
@@ -2062,6 +1897,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const favoritesBtn = document.querySelector('.favorites-btn');
     const favoritesOverlay = document.querySelector('.favorites-overlay');
 
+    // Initialiser le gestionnaire de favoris
+    if (typeof FavoritesManager !== 'undefined') {
+        favoritesManager = new FavoritesManager({
+            assetsPath: '../../assets/'
+        });
+        console.log('Gestionnaire de favoris initialisé');
+    } else {
+        console.error('FavoritesManager non disponible');
+    }
+
     // Gestion du menu hamburger
     menuIcon.addEventListener('click', function() {
         menuIcon.classList.toggle('active');
@@ -2069,12 +1914,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.classList.toggle('body-no-scroll');
     });
 
-    // Gestion des favoris
-    favoritesBtn.addEventListener('click', function() {
-        loadFavorites(); // Charger les favoris avant d'afficher l'overlay
-        favoritesOverlay.classList.toggle('active');
-        document.body.classList.toggle('body-no-scroll');
-    });
+    // Gestion des favoris - maintenant géré par le FavoritesManager
+    // L'écouteur d'événement est configuré automatiquement dans le gestionnaire
 
     // Fermer les overlays en cliquant sur les liens
     const menuItems = document.querySelectorAll('.menu-item');
@@ -2100,70 +1941,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Ajouter l'animation fadeOut si elle n'existe pas déjà
-    if (!document.getElementById('fadeOutAnimation')) {
-        const style = document.createElement('style');
-        style.id = 'fadeOutAnimation';
-        style.textContent = `
-            @keyframes fadeOut {
-                from { opacity: 1; transform: translateY(0); }
-                to { opacity: 0; transform: translateY(20px); height: 0; margin: 0; padding: 0; border: none; }
-            }
-            .favorites-overlay {
-                position: fixed;
-                top: 4.375rem;
-                left: 0;
-                width: 100%;
-                height: calc(100vh - 4.375rem);
-                background-color: white;
-                z-index: 99;
-                padding: 1.25rem;
-                display: none;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            .favorites-overlay.active {
-                display: block;
-                opacity: 1;
-            }
-            .favorites-empty {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                height: 100%;
-                text-align: center;
-                padding: 20px;
-            }
-            .favorites-empty img#favorites-icon {
-                width: 90%;
-                max-width: 300px;
-                margin-bottom: 20px;
-            }
-            .favorites-empty img#program-icon {
-                width: 60px;
-                height: 60px;
-                margin: 20px 0;
-                opacity: 0.7;
-            }
-            .favorites-empty h3 {
-                font-family: 'inter-semi-bold', sans-serif;
-                color: #232222;
-                font-size: 16px;
-                margin: 10px 0;
-                line-height: 1.4;
-            }
-            .event-card {
-                transition: all 0.3s ease;
-            }
-            .event-card:active {
-                transform: scale(0.98);
-            }
-        `;
-        document.head.appendChild(style);
-    }
+    // Les styles CSS sont maintenant gérés par le FavoritesManager
 });
 
 // Fonction pour cacher la carte de prévisualisation
