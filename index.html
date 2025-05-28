@@ -4,6 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>La fête c'est nous | accueil</title>
+    
+    <script>
+(function() {
+  // 1) Détection "moderne" (Chrome, Edge, Opera) via userAgentData
+  const uaData = navigator.userAgentData;
+  let isMobile = false;
+
+  if (uaData && Array.isArray(uaData.mobile)) {
+    // userAgentData.mobile est true sur mobile Chrome récent
+    isMobile = uaData.mobile === true;
+  } else {
+    // 2) Fallback classique sur userAgent
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    isMobile = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+  }
+
+  // Si CE N'EST PAS un mobile, on redirige
+  if (!isMobile) {
+    // Remplacez cette URL par celle de la page vers laquelle rediriger PC / tablette
+    const redirectUrl = "pages/redirect/redirection.html";
+    // Pour éviter les boucles de redirection, vérifiez qu'on n'y est pas déjà
+    if (window.location.href.indexOf(redirectUrl) === -1) {
+      window.location.replace(redirectUrl);
+    }
+  }
+})();
+</script>
+    
     <link rel="stylesheet" href="/assets/css/popup.css">
     <script src="/assets/js/popup.js" defer></script>
     <!-- Module de gestion des favoris -->
@@ -36,7 +64,7 @@
         body {
             background-color: #ffffff;
             overflow-x: hidden;
-            min-height: 100vh;
+            height: 100vh;
             width: 100%;
         }
         
@@ -671,82 +699,69 @@
         /* Contenu principal */
         .main-content {
             margin-top: 4.375rem;
-            min-height: calc(100vh - 4.375rem);
-            padding-bottom: 1.25rem;
+            height: calc(100vh - 4.375rem);
             position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .hero-image {
             width: 100%;
-            height: 75vh;
-            max-height: calc(100vh - 4.375rem - 5rem); /* navbar height + space for button */
-            object-fit: cover;
+            height: auto;
+            max-height: 70vh;
+            object-fit: contain;
             display: block;
+            background-color: #ffffff;
         }
         
         @media (max-height: 600px) {
             .hero-image {
-                height: 70vh;
+                max-height: 65vh;
             }
         }
         
         @media (min-height: 800px) {
             .hero-image {
-                height: 85vh;
+                max-height: 75vh;
             }
         }
 
-        .action-button {
-            position: relative;
+        .action-button-image {
             display: block;
             width: 11.25rem;
-            height: 3.125rem;
-            margin: 1.25rem auto 0;
-            background-color: #734432;
-            border-radius: 0.625rem;
-            font-family: 'inter-bold', sans-serif;
-            color: white;
-            font-size: 1rem;
-            border: none;
+            height: auto;
+            margin: 0.5rem auto 0;
+            margin-top: 60px;
             cursor: pointer;
             transition: transform 0.3s ease;
             z-index: 10;
         }
 
-        .action-button::after {
-            content: '';
-            position: absolute;
-            top: -0.25rem;
-            left: -0.25rem;
-            width: 100%;
-            height: 100%;
-            background-color: #D892B4;
-            border-radius: 0.625rem;
-            z-index: -1;
-        }
-
-        .action-button:hover {
-            transform: translateY(-0.125rem);
+        .action-button-image:hover {
+            transform: translateY(-0.125rem) scale(1.05);
         }
         
-        .action-button:active {
-            transform: translateY(0);
+        .action-button-image:active {
+            transform: translateY(0) scale(0.95);
         }
         
         @media (max-width: 360px) {
-            .action-button {
+            .action-button-image {
                 width: 10rem;
-                height: 2.75rem;
-                font-size: 0.9rem;
             }
         }
         
         @media (min-width: 768px) {
-            .action-button {
+            .action-button-image {
                 width: 12.5rem;
-                height: 3.5rem;
-                font-size: 1.1rem;
             }
+        }
+
+        /* Ancien style du bouton - à supprimer */
+        .action-button {
+            display: none;
         }
     </style>
 </head>
@@ -804,7 +819,7 @@
     <!-- Contenu principal -->
     <main class="main-content">
         <img src="assets/images/main-background.png"  alt="Image principale" class="hero-image">
-        <button class="action-button" onclick="window.location.href='pages/programmation/programmation.html'">DÉCOUVRIR</button>
+        <img src="assets/buttons/programmation-button.png" alt="Découvrir la programmation" class="action-button-image" onclick="window.location.href='pages/programmation/programmation.html'">
     </main>
 
     <!-- Script Firebase -->
