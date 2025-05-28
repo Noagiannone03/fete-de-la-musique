@@ -12,7 +12,7 @@
    
    <script>
 (function() {
-  // 1) Détection “moderne” (Chrome, Edge, Opera) via userAgentData
+  // 1) Détection "moderne" (Chrome, Edge, Opera) via userAgentData
   const uaData = navigator.userAgentData;
   let isMobile = false;
 
@@ -25,7 +25,7 @@
     isMobile = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
   }
 
-  // Si CE N’EST PAS un mobile, on redirige
+  // Si CE N'EST PAS un mobile, on redirige
   if (!isMobile) {
     // Remplacez cette URL par celle de la page vers laquelle rediriger PC / tablette
     const redirectUrl = "../redirect/redirection.html";
@@ -36,6 +36,9 @@
   }
 })();
 </script>
+
+    <!-- Module de gestion des favoris -->
+    <script src="../../utils/favorites-manager.js"></script>
    
    <style>
 
@@ -370,6 +373,333 @@
          
         }
 
+        /* Styles pour les overlays de détails d'événements et partenaires */
+        .event-details-overlay {
+            position: fixed;
+            top: 8vh;
+            left: 0;
+            width: 100%;
+            height: 92vh;
+            background-color: #ffffff;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: transform 0.4s ease-out, opacity 0.3s ease-out;
+            transform-origin: center center;
+        }
+        
+        .event-details-overlay.active {
+            transform: scale(1);
+            opacity: 1;
+        }
+        
+        .event-details-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .details-header {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+        
+        .details-image-container {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            flex-shrink: 0;
+            position: relative;
+        }
+        
+        .details-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            display: block;
+        }
+        
+        .close-details {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            width: 45px;
+            height: 45px;
+            background-color: #734432;
+            border-radius: 50%;
+            border: none;
+            font-size: 26px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 2;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .details-title-section {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            background-color: #fff;
+            flex-shrink: 0;
+        }
+        
+        .details-title-left {
+            flex: 1;
+        }
+        
+        .details-title {
+            color: #D2775B;
+            font-family: 'inter-bold', sans-serif;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .details-subtitle {
+            color: #403B23;
+            font-size: 18px;
+            font-family: 'inter-medium', sans-serif;
+        }
+        
+        .details-title-right {
+            padding-left: 15px;
+            padding-top: 5px;
+        }
+        
+        .details-favorite-icon {
+            width: 38px;
+            height: 38px;
+            cursor: pointer;
+        }
+        
+        .details-description {
+            padding: 0 20px 20px;
+            color: #403B23;
+            font-size: 16px;
+            font-family: 'inter-regular', sans-serif;
+        }
+        
+        .details-more-button {
+            padding: 0 20px 20px;
+            display: flex;
+            justify-content: start;
+            margin: 10px 0 25px;
+            flex-shrink: 0;
+        }
+        
+        .details-more-button img {
+            height: 35px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .details-more-button img:hover {
+            transform: scale(1.05);
+        }
+        
+        .details-info-section {
+            padding: 0 20px 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .details-info-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: #403B23;
+            font-family: 'inter-semi-bold', sans-serif;
+            font-size: 16px;
+        }
+        
+        .info-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 6px;
+        }
+        
+        .details-separator {
+            margin: 0 15px;
+            color: #403B23;
+            font-weight: bold;
+        }
+        
+        .details-map-button {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .details-map-button img {
+            height: 43px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .details-map-button img:hover {
+            transform: scale(1.05);
+        }
+        
+        .details-partners {
+            background-color: #734432;
+            color: white;
+            padding: 25px 20px;
+            flex-shrink: 0;
+            margin-top: auto;
+        }
+        
+        .details-partners h3 {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+            font-family: 'inter-bold', sans-serif;
+            color: white;
+        }
+        
+        .partners-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            padding: 0 10px;
+        }
+        
+        .details-partner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 90px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .partner-logo {
+            width: 90px;
+            height: 90px;
+            object-fit: cover;
+            background-color: white;
+            padding: 2px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+            border: none;
+        }
+        
+        .details-partner:hover .partner-logo {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .partner-name {
+            font-size: 12px;
+            text-align: center;
+            color: white;
+            font-family: 'inter-regular', sans-serif;
+            line-height: 1.3;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        
+        .details-contact-info {
+            padding: 0 20px 20px;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 0.95rem;
+        }
+        
+        .contact-item .info-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            margin-top: 2px;
+        }
+
+        /* Skeleton loading */
+        @keyframes skeleton-loading {
+            0% { background-position: -200px 0; }
+            100% { background-position: calc(200px + 100%) 0; }
+        }
+        
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200px 100%;
+            animation: skeleton-loading 1.5s infinite linear;
+            border-radius: 4px;
+            height: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .skeleton-partner {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            margin: 0 5px 15px;
+        }
+        
+        .skeleton-image {
+            height: 200px;
+            background-color: #eee;
+        }
+        
+        .skeleton-title {
+            height: 28px;
+            width: 70%;
+            background-color: #eee;
+            margin-bottom: 10px;
+        }
+        
+        .skeleton-subtitle {
+            height: 20px;
+            width: 50%;
+            background-color: #eee;
+        }
+        
+        .skeleton-description {
+            height: 100px;
+            background-color: #eee;
+        }
+        
+        .skeleton-text-short {
+            width: 40%;
+        }
+        
+        .skeleton-text-medium {
+            width: 60%;
+        }
+        
+        .skeleton-text-long {
+            width: 90%;
+        }
+        
+        .body-no-scroll {
+            overflow: hidden;
+        }
+
        
     </style>
 </head>
@@ -440,85 +770,564 @@
         </div>
     </div>
 
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+        apiKey: "AIzaSyCwtimDB_Mai-QPyB6d0yqjJX_d5mQjGY8",
+        authDomain: "fete-de-la-musique-64a6b.firebaseapp.com",
+        projectId: "fete-de-la-musique-64a6b",
+        storageBucket: "fete-de-la-musique-64a6b.firebasestorage.app",
+        messagingSenderId: "1087878331068",
+        appId: "1:1087878331068:web:28719d3278a619cb816eb9",
+        measurementId: "G-MW9YYKP1J8"
+    };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Rendre les variables accessibles globalement
+        window.db = db;
+        window.getDoc = getDoc;
+        window.collection = collection;
+        window.getDocs = getDocs;
+        window.doc = doc;
+    </script>
+
     <script>
+        // Variables globales
+        let favoritesManager;
+        let allEvents = [];
+        let soundPoints = [];
+
+        // Function to format time from timestamp
+        function formatTime(timestamp) {
+            try {
+                let date;
+                
+                if (typeof timestamp === 'object') {
+                    if (timestamp instanceof Date) {
+                        date = timestamp;
+                    } else if (timestamp.seconds !== undefined) {
+                        date = new Date(timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000);
+                    } else if (typeof timestamp.toDate === 'function') {
+                        date = timestamp.toDate();
+                    } else {
+                        date = new Date(timestamp);
+                    }
+                } else if (typeof timestamp === 'number') {
+                    date = new Date(timestamp * 1000);
+                } else if (typeof timestamp === 'string') {
+                    date = new Date(timestamp);
+                }
+                
+                if (!date || isNaN(date.getTime())) {
+                    return '00h00';
+                }
+                
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                return `${hours}h${minutes}`;
+            } catch (error) {
+                console.error("Erreur lors du formatage de l'heure:", error);
+                return '00h00';
+            }
+        }
+
+        // Fonction pour afficher les détails d'un événement
+        async function showEventDetails(event) {
+            console.log('Affichage des détails de l\'événement:', event);
+            
+            const detailsOverlay = document.createElement('div');
+            detailsOverlay.className = 'event-details-overlay';
+            
+            const favoriteIconSrc = favoritesManager && favoritesManager.isEventFavorite(event.id) ?
+                '../../assets/pictos/filled-star.png' :
+                '../../assets/pictos/star-card.png';
+                
+            const startTime = formatTime(event.startDate);
+            const endTime = formatTime(event.endDate);
+            const timeTag = `${startTime}-${endTime}`;
+            
+            detailsOverlay.innerHTML = `
+                <div class="event-details-container">
+                    <div class="details-header">
+                        <div class="details-image-container">
+                            <img src="${event.imageUrl || '../../assets/images/default-event.jpg'}" alt="${event.title}" class="details-image">
+                            <button class="close-details">×</button>
+                        </div>
+                        
+                        <div class="details-title-section">
+                            <div class="details-title-left">
+                                <h2 class="details-title">${event.title}</h2>
+                                <p class="details-subtitle">${event.subtitle || ''}</p>
+                            </div>
+                            <div class="details-title-right">
+                                <img src="${favoriteIconSrc}" alt="Ajouter aux favoris" class="details-favorite-icon" data-id="${event.id}">
+                            </div>
+                        </div>
+                        
+                        <div class="details-description">
+                            <p>${event.description || 'Aucune description disponible.'}</p>
+                        </div>
+                        
+                        ${event.plusUrl ? `
+                        <div class="details-more-button">
+                            <a href="${event.plusUrl}" target="_blank">
+                                <img src="../../assets/buttons/savoirplusmarron.png" alt="En savoir plus">
+                            </a>
+                        </div>` : ''}
+                        
+                        <div class="details-info-section">
+                            <div class="details-info-item">
+                                <img src="../../assets/pictos/Clock.png" alt="Time" class="info-icon">
+                                <span>${timeTag}</span>
+                                <span class="details-separator">/</span>
+                                <img src="../../assets/pictos/PinMapmarron.png" alt="Location" class="info-icon">
+                                <span>${event.location || ''}</span>
+                            </div>
+                            
+                            ${event.locationUrl ? `
+                            <div class="details-map-button">
+                                <a href="${event.locationUrl}" target="_blank">
+                                    <img src="../../assets/buttons/syrendre.png" alt="Comment s'y rendre">
+                                </a>
+                            </div>` : ''}
+                        </div>
+                        
+                        <div class="details-partners">
+                            <h3>PARTENAIRES</h3>
+                            <div class="partners-grid" id="partners-grid">
+                                <div class="skeleton skeleton-partner"></div>
+                                <div class="skeleton skeleton-partner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(detailsOverlay);
+            document.body.classList.add('body-no-scroll');
+            
+            setTimeout(() => {
+                detailsOverlay.classList.add('active');
+            }, 10);
+            
+            // Écouteurs d'événements
+            detailsOverlay.querySelector('.close-details').addEventListener('click', () => {
+                detailsOverlay.classList.remove('active');
+                setTimeout(() => {
+                    detailsOverlay.remove();
+                    document.body.classList.remove('body-no-scroll');
+                }, 300);
+            });
+            
+            const favIcon = detailsOverlay.querySelector('.details-favorite-icon');
+            if (favIcon && favoritesManager) {
+                favIcon.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    favoritesManager.toggleFavorite(event.id, favIcon);
+                });
+            }
+            
+            // Charger les partenaires
+            fetchPartnersForEvent(event.location, detailsOverlay);
+        }
+
+        // Fonction pour récupérer les partenaires d'un événement
+        async function fetchPartnersForEvent(location, detailsOverlay) {
+            try {
+                const soundPoint = soundPoints.find(point => point.name === location);
+                
+                if (soundPoint && soundPoint.partners && Array.isArray(soundPoint.partners)) {
+                    const partnersGrid = detailsOverlay.querySelector('.partners-grid');
+                    
+                    partnersGrid.innerHTML = '';
+                    for (let i = 0; i < 4; i++) {
+                        const skeleton = document.createElement('div');
+                        skeleton.className = 'skeleton skeleton-partner';
+                        partnersGrid.appendChild(skeleton);
+                    }
+                    
+                    const partnerPromises = soundPoint.partners.map(partnerId => 
+                        getPartnerDetails(partnerId)
+                    );
+                    
+                    const partners = await Promise.all(partnerPromises);
+                    updatePartnersGrid(detailsOverlay, partners);
+                    
+                } else {
+                    const partnersGrid = detailsOverlay.querySelector('.partners-grid');
+                    partnersGrid.innerHTML = '<p style="color: white; text-align: center; width: 100%;">Aucun partenaire pour cet événement</p>';
+                }
+            } catch (error) {
+                console.error("Erreur lors de la récupération des partenaires:", error);
+                const partnersGrid = detailsOverlay.querySelector('.partners-grid');
+                if (partnersGrid) {
+                    partnersGrid.innerHTML = '<p style="color: white; text-align: center; width: 100%;">Erreur lors du chargement des partenaires</p>';
+                }
+            }
+        }
+
+        // Fonction pour mettre à jour la grille des partenaires
+        function updatePartnersGrid(detailsOverlay, partners) {
+            const partnersGrid = detailsOverlay.querySelector('.partners-grid');
+            
+            partnersGrid.innerHTML = '';
+            
+            if (!partners || partners.length === 0) {
+                partnersGrid.innerHTML = '<p style="color: white; text-align: center; width: 100%;">Aucun partenaire pour cet événement</p>';
+                return;
+            }
+            
+            partners.forEach(partner => {
+                if (partner) {
+                    const partnerDiv = document.createElement('div');
+                    partnerDiv.className = 'details-partner';
+                    partnerDiv.setAttribute('data-partner-id', partner.id);
+                    
+                    const img = document.createElement('img');
+                    img.className = 'partner-logo';
+                    img.alt = partner.name || 'Partenaire';
+                    img.loading = 'lazy';
+                    
+                    img.onerror = function() {
+                        this.src = '../../assets/images/default-partner.jpg';
+                    };
+                    
+                    img.src = partner.logoUrl || '../../assets/images/default-partner.jpg';
+                    
+                    partnerDiv.appendChild(img);
+                    partnerDiv.addEventListener('click', () => showPartnerDetails(partner.id, detailsOverlay));
+                    
+                    partnersGrid.appendChild(partnerDiv);
+                }
+            });
+        }
+
+        // Fonction pour récupérer les détails d'un partenaire
+        async function getPartnerDetails(partnerId) {
+            try {
+                const partnerDoc = await window.getDoc(window.doc(window.db, "partners", partnerId));
+                
+                if (partnerDoc.exists()) {
+                    const partnerData = partnerDoc.data();
+                    return {
+                        id: partnerId,
+                        name: partnerData.name || 'Partenaire',
+                        logoUrl: partnerData.logoUrl || partnerData.imageUrl || '../../assets/images/default-partner.jpg',
+                        description: partnerData.description || partnerData.info || 'Aucune description disponible pour ce partenaire.',
+                        type: partnerData.type || '',
+                        address: partnerData.address || '',
+                        phone: partnerData.phone || '',
+                        website: partnerData.website || ''
+                    };
+                } else {
+                    console.warn("Partenaire non trouvé:", partnerId);
+                    return null;
+                }
+            } catch (error) {
+                console.error("Erreur lors de la récupération des détails du partenaire:", error);
+                return null;
+            }
+        }
+
+        // Fonction pour afficher les détails d'un partenaire
+        async function showPartnerDetails(partnerId, detailsOverlay) {
+            try {
+                const currentContent = detailsOverlay.querySelector('.event-details-container').innerHTML;
+                const container = detailsOverlay.querySelector('.event-details-container');
+                
+                container.style.opacity = '0';
+                
+                setTimeout(() => {
+                    container.innerHTML = `
+                        <div class="details-header">
+                            <div class="details-image-container">
+                                <div class="skeleton-image" style="height: 200px; background-color: #eee;"></div>
+                                <button class="close-details">×</button>
+                            </div>
+                            
+                            <div class="details-title-section">
+                                <div class="details-title-left">
+                                    <div class="skeleton-title" style="height: 28px; width: 70%; background-color: #eee; margin-bottom: 10px;"></div>
+                                    <div class="skeleton-subtitle" style="height: 20px; width: 50%; background-color: #eee;"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="details-description">
+                                <div class="skeleton-description" style="height: 100px; background-color: #eee;"></div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.style.opacity = '1';
+                    
+                    container.querySelector('.close-details').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        container.style.opacity = '0';
+                        
+                        setTimeout(() => {
+                            container.innerHTML = currentContent;
+                            container.style.opacity = '1';
+                            addEventListenersToRestoredContent(detailsOverlay);
+                        }, 300);
+                    });
+                }, 300);
+                
+                const partner = await getPartnerDetails(partnerId);
+                
+                if (!partner) {
+                    throw new Error("Partenaire non trouvé");
+                }
+                
+                setTimeout(() => {
+                    container.innerHTML = `
+                        <div class="details-header">
+                            <div class="details-image-container">
+                                <img src="${partner.logoUrl || '../../assets/images/default-partner.jpg'}" 
+                                     alt="${partner.name || 'Partenaire'}" 
+                                     class="details-image" 
+                                     onerror="this.onerror=null; this.src='../../assets/images/default-partner.jpg';">
+                                <button class="close-details">×</button>
+                            </div>
+                            
+                            <div class="details-title-section">
+                                <div class="details-title-left">
+                                    <h2 class="details-title">${partner.name || 'Partenaire'}</h2>
+                                    <p class="details-subtitle" style="text-transform: uppercase;">${partner.type || ''}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="details-description">
+                                <p>${partner.description || 'Aucune information disponible sur ce partenaire.'}</p>
+                            </div>
+                            
+                            ${partner.address || partner.phone ? `
+                            <div class="details-contact-info" style="margin: 20px 0;">
+                                ${partner.address ? `
+                                <div class="contact-item">
+                                    <img src="../../assets/pictos/PinMapmarron.png" alt="Adresse" class="info-icon">
+                                    <span>${partner.address}</span>
+                                </div>` : ''}
+                                
+                                ${partner.phone ? `
+                                <div class="contact-item">
+                                    <img src="../../assets/pictos/Telephone.png" alt="Téléphone" class="info-icon">
+                                    <span>${partner.phone}</span>
+                                </div>` : ''}
+                            </div>` : ''}
+                            
+                            ${partner.website ? `
+                            <div class="details-more-button" style="text-align: center; margin-top: 20px;">
+                                <a href="${partner.website.startsWith('http') ? partner.website : 'https://' + partner.website}" 
+                                   target="_blank">
+                                    <img src="../../assets/buttons/savoirplusmarron.png" alt="Voir le site web" style="height: 40px;">
+                                </a>
+                            </div>` : ''}
+                        </div>
+                    `;
+                    
+                    container.querySelector('.close-details').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        container.style.opacity = '0';
+                        
+                        setTimeout(() => {
+                            container.innerHTML = currentContent;
+                            container.style.opacity = '1';
+                            addEventListenersToRestoredContent(detailsOverlay);
+                        }, 300);
+                    });
+                    
+                    container.style.opacity = '1';
+                    
+                }, 800);
+                
+            } catch (error) {
+                console.error("Erreur lors du chargement des détails du partenaire:", error);
+                alert("Une erreur est survenue lors du chargement des détails du partenaire");
+            }
+        }
+
+        // Fonction pour réinitialiser les écouteurs d'événements
+        function addEventListenersToRestoredContent(detailsOverlay) {
+            const partnersGrid = detailsOverlay.querySelector('.partners-grid');
+            if (partnersGrid) {
+                const partners = partnersGrid.querySelectorAll('.details-partner');
+                partners.forEach(partnerDiv => {
+                    const partnerId = partnerDiv.getAttribute('data-partner-id');
+                    if (partnerId) {
+                        partnerDiv.addEventListener('click', () => showPartnerDetails(partnerId, detailsOverlay));
+                    }
+                });
+            }
+            
+            const closeButton = detailsOverlay.querySelector('.close-details');
+            if (closeButton) {
+                closeButton.addEventListener('click', () => {
+                    const overlay = document.querySelector('.event-details-overlay.active');
+                    if (overlay) {
+                        overlay.classList.remove('active');
+                        setTimeout(() => {
+                            overlay.remove();
+                            document.body.classList.remove('body-no-scroll');
+                        }, 300);
+                    }
+                });
+            }
+        }
+
+        // Charger les données Firebase
+        async function loadFirebaseData() {
+            try {
+                if (!window.db || !window.collection || !window.getDocs) {
+                    console.error("Firebase n'est pas initialisé correctement");
+                    return;
+                }
+
+                // Charger tous les événements
+                const eventsCollection = window.collection(window.db, "events");
+                const eventsSnapshot = await window.getDocs(eventsCollection);
+                
+                eventsSnapshot.forEach(eventDoc => {
+                    allEvents.push({
+                        id: eventDoc.id,
+                        ...eventDoc.data()
+                    });
+                });
+
+                // Charger tous les points sonores
+                const soundPointsCollection = window.collection(window.db, "sound_points");
+                const soundPointsSnapshot = await window.getDocs(soundPointsCollection);
+                
+                soundPointsSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    const pointEvents = allEvents.filter(event => event.location === data.name);
+                    
+                    soundPoints.push({
+                        id: doc.id,
+                        ...data,
+                        events: pointEvents
+                    });
+                });
+
+                console.log(`Chargé ${allEvents.length} événements et ${soundPoints.length} points sonores`);
+
+                // Mettre à jour les données du gestionnaire de favoris
+                if (favoritesManager) {
+                    favoritesManager.setEventsData(allEvents, soundPoints);
+                }
+
+            } catch (error) {
+                console.error("Erreur lors du chargement des données Firebase:", error);
+            }
+        }
+
+        // Rendre les fonctions accessibles globalement
+        window.showEventDetails = showEventDetails;
+        window.showPartnerDetails = showPartnerDetails;
+        window.loadFirebaseData = loadFirebaseData;
+
         // Gestion de l'écran de chargement
         window.addEventListener('load', function() {
             setTimeout(function() {
-                document.querySelector('.loading-screen').classList.add('hide');
-            }, 1500); // Délai pour voir l'animation de chargement
+                const loadingScreen = document.querySelector('.loading-screen');
+                if (loadingScreen) {
+                    loadingScreen.classList.add('hide');
+                }
+            }, 1500);
         });
 
-        // Gestion du menu hamburger
-        const menuIcon = document.querySelector('.menu-icon');
-        const menuOverlay = document.querySelector('.menu-overlay');
-        const favoritesBtn = document.querySelector('.favorites-btn');
-        const favoritesOverlay = document.querySelector('.favorites-overlay');
-        const goToProgramBtn = document.getElementById('go-to-program');
+        // Gestion du menu hamburger et des favoris
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuIcon = document.querySelector('.menu-icon');
+            const menuOverlay = document.querySelector('.menu-overlay');
+            const favoritesBtn = document.querySelector('.favorites-btn');
+            const favoritesOverlay = document.querySelector('.favorites-overlay');
+            const goToProgramBtn = document.getElementById('go-to-program');
 
-        menuIcon.addEventListener('click', function() {
-            this.classList.toggle('active');
-            menuOverlay.classList.toggle('active');
-            
-            // Fermer l'overlay des favoris si ouvert
-            favoritesOverlay.classList.remove('active');
-        });
+            // Initialiser le gestionnaire de favoris
+            if (typeof FavoritesManager !== 'undefined') {
+                favoritesManager = new FavoritesManager({
+                    assetsPath: '../../assets/'
+                });
+                console.log('Gestionnaire de favoris initialisé');
+            } else {
+                console.error('FavoritesManager non disponible');
+            }
 
-        // Gestion du bouton favoris
-        favoritesBtn.addEventListener('click', function() {
-            // Vérifier s'il y a des cookies de favoris
-            const hasFavorites = checkFavoritesCookies();
-            
-            // Afficher l'overlay approprié
-            favoritesOverlay.classList.toggle('active');
-            
-            // Fermer le menu principal s'il est ouvert
-            menuIcon.classList.remove('active');
-            menuOverlay.classList.remove('active');
-        });
-        
-        // Bouton pour aller à la programmation
-        goToProgramBtn.addEventListener('click', function() {
-            // Fermer l'overlay des favoris
-            favoritesOverlay.classList.remove('active');
-            
-            // Action pour naviguer vers la programmation (à implémenter)
-            // window.location.href = "programmation.html";
-            console.log("Navigation vers la programmation");
-        });
+            // Gestion du menu hamburger
+            menuIcon.addEventListener('click', function() {
+                this.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
+                
+                // Fermer l'overlay des favoris si ouvert
+                favoritesOverlay.classList.remove('active');
+                
+                if (menuOverlay.classList.contains('active')) {
+                    document.body.classList.add('body-no-scroll');
+                } else {
+                    document.body.classList.remove('body-no-scroll');
+                }
+            });
 
-        // Fermer le menu quand on clique sur un lien
-        const menuItems = document.querySelectorAll('.menu-item');
-        menuItems.forEach(item => {
-            item.addEventListener('click', function() {
+            // Gestion du bouton favoris
+            favoritesBtn.addEventListener('click', function() {
+                if (favoritesManager) {
+                    favoritesManager.loadAndShowFavorites();
+                }
+                
+                // Fermer le menu principal s'il est ouvert
                 menuIcon.classList.remove('active');
                 menuOverlay.classList.remove('active');
+                document.body.classList.remove('body-no-scroll');
             });
-        });
-        
-        // Fonction pour vérifier les cookies liés aux favoris
-        function checkFavoritesCookies() {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                // Vérifier si le cookie commence par "favorite_event_"
-                if (cookie.indexOf('favorite_event_') === 0) {
-                    return true;
-                }
+            
+            // Bouton pour aller à la programmation
+            if (goToProgramBtn) {
+                goToProgramBtn.addEventListener('click', function() {
+                    window.location.href = '../programmation/programmation.html';
+                });
             }
-            return false;
-        }
-        
-        // Exemple pour ajouter un favori en cookie (pour tests)
-        function addFavorite(eventId) {
-            const expiryDate = new Date();
-            expiryDate.setMonth(expiryDate.getMonth() + 6); // Cookie valide pour 6 mois
-            document.cookie = `favorite_event_${eventId}=true; expires=${expiryDate.toUTCString()}; path=/`;
-        }
-        
-        // Exemple pour supprimer un favori des cookies (pour tests)
-        function removeFavorite(eventId) {
-            document.cookie = `favorite_event_${eventId}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-        }
+
+            // Fermer le menu quand on clique sur un lien
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    menuIcon.classList.remove('active');
+                    menuOverlay.classList.remove('active');
+                    document.body.classList.remove('body-no-scroll');
+                });
+            });
+
+            // Gestion spéciale du lien "Mes favoris" dans le menu
+            const menuFavorites = document.querySelector('.menu-item[href="#"]');
+            if (menuFavorites && favoritesManager) {
+                menuFavorites.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    favoritesManager.loadAndShowFavorites();
+                });
+            }
+
+            // Fermer les overlays en cliquant en dehors
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('.menu-icon') && !event.target.closest('.menu-overlay')) {
+                    menuIcon.classList.remove('active');
+                    menuOverlay.classList.remove('active');
+                }
+                
+                if (!menuOverlay.classList.contains('active')) {
+                    document.body.classList.remove('body-no-scroll');
+                }
+            });
+
+            // Charger les données Firebase après l'initialisation
+            setTimeout(loadFirebaseData, 1000);
+        });
     </script>
 </body>
 </html>

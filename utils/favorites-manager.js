@@ -307,7 +307,7 @@ class FavoritesManager {
             
             .details-image-container {
                 width: 100%;
-                aspect-ratio: 12 / 9;
+                aspect-ratio: 1 / 1;
                 overflow: hidden;
                 flex-shrink: 0;
                 position: relative;
