@@ -7,7 +7,7 @@
 
 <script>
 (function() {
-  // 1) Détection “moderne” (Chrome, Edge, Opera) via userAgentData
+  // 1) Détection "moderne" (Chrome, Edge, Opera) via userAgentData
   const uaData = navigator.userAgentData;
   let isMobile = false;
 
@@ -20,7 +20,7 @@
     isMobile = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
   }
 
-  // Si CE N’EST PAS un mobile, on redirige
+  // Si CE N'EST PAS un mobile, on redirige
   if (!isMobile) {
     // Remplacez cette URL par celle de la page vers laquelle rediriger PC / tablette
     const redirectUrl = "../redirect/redirection.html";
@@ -434,7 +434,6 @@
             align-items: center;
             color: white;
             text-align: center;
-            padding: 1rem;
         }
         
         .partner-card:nth-child(even) {
@@ -503,12 +502,12 @@
       overflow: hidden;       /* découpe ce qui dépasse */
     }
 
-    /* L’image remplit le conteneur en conservant son ratio */
+    /* L'image remplit le conteneur en conservant son ratio */
     .details-image {
       width: 100%;
       height: 100%;
       object-fit: cover;      /* cover pour remplir tout en recadrant */
-      object-position: center;/* centre l’image */
+      object-position: center;/* centre l'image */
       display: block;
     }
 .close-details {
@@ -794,11 +793,7 @@
         <div class="main-image-container">
             <img src="../../assets/headline/partenaires.png" alt="Points de son" class="main-image">
         </div>
-        
-        <div class="tab-bar">
-            <button class="tab active" data-category="all">Tous</button>
-            <!-- D'autres onglets seront ajoutés dynamiquement si nécessaire -->
-        </div>
+    
         
         <div id="sound-points-container">
             <!-- Les sections de points de son seront injectées ici par JavaScript -->
