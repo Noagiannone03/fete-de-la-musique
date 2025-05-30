@@ -1596,6 +1596,7 @@ document.addEventListener('DOMContentLoaded', () => {
             justify-content: space-between;
             align-items: center;
             margin-top: auto;
+            gap: 10px;
         }
         
         .sound-point-genre {
@@ -1608,6 +1609,9 @@ document.addEventListener('DOMContentLoaded', () => {
             border-radius: 10px;
             color: #000;
             font-size: 12px;
+            flex-shrink: 1;
+            min-width: 0;
+            width: fit-content;
         }
         
         .sound-point-genre .info-icon {
@@ -1620,12 +1624,17 @@ document.addEventListener('DOMContentLoaded', () => {
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
+            width: auto;
+            min-width: fit-content;
         }
         
         .sound-point-button .voir-plus-icon {
-            width: fit-content;
+            width: auto;
             height: 32px;
             transition: transform 0.2s ease;
+            display: block;
+            max-width: 100px;
         }
         
         .sound-point-button:hover .voir-plus-icon {
