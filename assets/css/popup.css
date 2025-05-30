@@ -19,15 +19,19 @@
 }
 
 .fdlm-popup {
-  background: #fff;
-  border-radius: 18px;
-  max-width: 420px;
-  width: 92vw;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  background: transparent;
+  border-radius: 0;
+  max-width: 90vw;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
   overflow: hidden;
   position: relative;
   font-family: 'Montserrat', Arial, sans-serif;
   animation: popupAppear 0.38s cubic-bezier(.4,1.7,.6,.97);
+  padding: 0;
+  margin: 0;
 }
 
 @keyframes popupAppear {
@@ -37,72 +41,86 @@
 
 .fdlm-popup-image {
   width: 100%;
-  height: 140px;
-  object-fit: cover;
+  height: 100%;
+  object-fit: contain;
   display: block;
+  border-radius: 12px;
 }
 
 .fdlm-popup-close {
   position: absolute;
-  top: 14px;
-  right: 16px;
-  background: none;
+  top: 10px;
+  right: 15px;
+  background: rgba(0, 0, 0, 0.7);
   border: none;
-  font-size: 1.5rem;
-  color: #333;
+  font-size: 2rem;
+  color: white;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: all 0.2s;
   z-index: 2;
-}
-.fdlm-popup-close:hover {
-  color: #e74c3c;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
 }
 
+.fdlm-popup-close:hover {
+  background: rgba(0, 0, 0, 0.9);
+  transform: scale(1.1);
+}
+
+.fdlm-popup-close:active {
+  transform: scale(0.95);
+}
+
+/* Masquer le contenu texte car on veut juste l'image */
 .fdlm-popup-content {
-  padding: 24px 22px 18px 22px;
-  text-align: center;
+  display: none;
 }
 
 .fdlm-popup-title {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin-bottom: 0.6em;
-  color: #222;
+  display: none;
 }
 
 .fdlm-popup-desc {
-  font-size: 1.05rem;
-  color: #555;
-  margin-bottom: 1.2em;
+  display: none;
 }
 
 .fdlm-popup-btn {
-  background: linear-gradient(90deg, #ffb347 0%, #ff5e62 100%);
-  color: #fff;
-  border: none;
-  border-radius: 24px;
-  padding: 0.8em 2.2em;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 2px 12px rgba(255,94,98,0.09);
-  transition: background 0.2s, transform 0.1s;
-  margin-bottom: 0.2em;
+  display: none;
 }
-.fdlm-popup-btn:hover {
-  background: linear-gradient(90deg, #ff5e62 0%, #ffb347 100%);
-  transform: scale(1.04);
+
+/* Animation de fermeture */
+.fdlm-popup-hide {
+  animation: fadeOut 0.25s ease-out forwards;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.95); }
 }
 
 @media (max-width: 520px) {
   .fdlm-popup {
+    max-width: 95vw;
+    max-height: 85vh;
+  }
+  
+  .fdlm-popup-close {
+    top: 8px;
+    right: 12px;
+    width: 35px;
+    height: 35px;
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .fdlm-popup {
     max-width: 98vw;
-    padding: 0;
-  }
-  .fdlm-popup-content {
-    padding: 18px 8px 14px 8px;
-  }
-  .fdlm-popup-title {
-    font-size: 1.1rem;
+    max-height: 80vh;
   }
 }
