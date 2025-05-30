@@ -937,7 +937,8 @@ function applyFilters() {
     function setCookie(name, value, days) {
         const expires = new Date();
         expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
-        document.cookie = name + '=' + value + ';expires=' + expires.toUTCString() + ';path=/';
+        const cookieString = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`;
+        document.cookie = cookieString;
     }
     
     function getCookie(name) {
@@ -958,58 +959,193 @@ function applyFilters() {
     // Favorites functionality
     function loadFavorites() {
         const favoritesOverlay = document.querySelector('.favorites-overlay');
-        favoritesOverlay.innerHTML = ''; // Clear previous content
         
-        // Filter events that are in favorites
-        const favoriteEvents = allEvents.filter(event => isEventFavorite(event.id));
+        // Vérifier s'il y a un overlay de détails d'événement ouvert
+        const eventDetailsOverlay = document.querySelector('.event-details-overlay.active');
+        const menuOverlay = document.querySelector('.menu-overlay.active');
         
-        if (favoriteEvents.length === 0) {
-            // Show empty state
-            favoritesOverlay.innerHTML = `
-                <div class="favorites-empty">
-                    <img src="../../assets/headline/programmation-outline.png" alt="Icône favoris" id="favorites-icon">
-                    <h3>Vous n'avez pas encore sélectionné de programme favoris</h3>
-                    <img src="../../assets/pictos/material-symbols_stars-outline.png" alt="Icône programme" id="program-icon">
-                    <h3>Rendez-vous sur la programmation pour faire votre choix</h3>
-                    <img src="../../assets/buttons/programmation-button.png" alt="Aller à la programmation" class="action-img" id="go-to-program">
-                </div>
-            `;
-            
-            // Add event listener for "go to program" button
-            document.getElementById('go-to-program').addEventListener('click', () => {
-                favoritesOverlay.classList.remove('active');
-            });
-        } else {
-            // Create header for favorites overlay
-            const favHeader = document.createElement('div');
-            favHeader.style.width = '100%';
-            favHeader.style.padding = '10px 15px';
-            favHeader.innerHTML = `
-                <a href="#" class="back-to-program" id="back-from-favorites">← Retour vers la programmation</a>
-                <img src="../../assets/headline/favoris.png" alt="Mes Favoris" style="width: 70%;
-  max-width: 300px; margin: 20px auto; display: block;">
-            `;
-            favoritesOverlay.appendChild(favHeader);
-            
-            // Create container for favorite events
-            const favoriteContainer = document.createElement('div');
-            favoriteContainer.className = 'event-list';
-            favoriteContainer.style.padding = '0 15px';
-            
-            // Add each favorite event
-            favoriteEvents.forEach(event => {
-                const card = createEventCard(event);
-                favoriteContainer.appendChild(card);
-            });
-            
-            favoritesOverlay.appendChild(favoriteContainer);
-            
-            // Add event listener for back button
-            document.getElementById('back-from-favorites').addEventListener('click', (e) => {
-                e.preventDefault();
-                favoritesOverlay.classList.remove('active');
-            });
+        // Fermer les overlays existants avant d'ouvrir les favoris
+        if (eventDetailsOverlay) {
+            eventDetailsOverlay.classList.remove('active');
+            setTimeout(() => {
+                eventDetailsOverlay.remove();
+            }, 300);
         }
+        
+        if (menuOverlay) {
+            const menuIcon = document.querySelector('.menu-icon');
+            if (menuIcon) {
+                menuIcon.classList.remove('active');
+            }
+            menuOverlay.classList.remove('active');
+        }
+        
+        // Si l'overlay des favoris est déjà ouvert, ne pas le rouvrir
+        if (favoritesOverlay.classList.contains('active')) {
+            return;
+        }
+        
+        // Vider le contenu et afficher le loader
+        favoritesOverlay.innerHTML = `
+            <div class="favorites-loading" style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: white;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+                z-index: 1000;
+            ">
+                <div style="
+                    width: 50px;
+                    height: 50px;
+                    border: 3px solid #f3f3f3;
+                    border-top: 3px solid #734432;
+                    border-radius: 50%;
+                    animation: favoritesSpinner 1s linear infinite;
+                "></div>
+                <p style="
+                    margin-top: 20px;
+                    color: #734432;
+                    font-family: 'inter-medium', sans-serif;
+                    font-size: 16px;
+                ">Chargement de vos favoris...</p>
+            </div>
+            <style>
+                @keyframes favoritesSpinner {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            </style>
+        `;
+        
+        // Attendre un délai pour s'assurer que les données sont chargées
+        setTimeout(() => {
+            // Filter events that are in favorites
+            const favoriteEvents = allEvents.filter(event => isEventFavorite(event.id));
+            
+            // Supprimer le loader
+            const loader = favoritesOverlay.querySelector('.favorites-loading');
+            if (loader) {
+                loader.remove();
+            }
+            
+            // Vider complètement l'overlay
+            favoritesOverlay.innerHTML = '';
+            
+            if (favoriteEvents.length === 0) {
+                // Show empty state
+                favoritesOverlay.innerHTML = `
+                    <div class="favorites-empty">
+                        <img src="../../assets/headline/programmation-outline.png" alt="Icône favoris" id="favorites-icon">
+                        <h3>Vous n'avez pas encore sélectionné de programme favoris</h3>
+                        <img src="../../assets/pictos/material-symbols_stars-outline.png" alt="Icône programme" id="program-icon">
+                        <h3>Rendez-vous sur la programmation pour faire votre choix</h3>
+                        <img src="../../assets/buttons/programmation-button.png" alt="Aller à la programmation" class="action-img" id="go-to-program">
+                    </div>
+                `;
+                
+                // Add event listener for "go to program" button
+                document.getElementById('go-to-program').addEventListener('click', () => {
+                    favoritesOverlay.classList.remove('active');
+                    document.body.classList.remove('body-no-scroll');
+                });
+            } else {
+                // Create header for favorites overlay
+                const favHeader = document.createElement('div');
+                favHeader.className = 'favorites-header';
+                favHeader.style.width = '100%';
+                favHeader.style.padding = '10px 15px';
+                favHeader.innerHTML = `
+                    <a href="#" class="back-to-program favorites-back-btn" id="back-from-favorites">← Retour vers la programmation</a>
+                    <img src="../../assets/headline/favoris.png" alt="Mes Favoris" style="width: 70%;
+      max-width: 300px; margin: 20px auto; display: block;">
+                `;
+                favoritesOverlay.appendChild(favHeader);
+                
+                // Create container for favorite events
+                const favoriteContainer = document.createElement('div');
+                favoriteContainer.className = 'favorites-container event-list';
+                favoriteContainer.style.padding = '0 15px';
+                
+                // Add each favorite event
+                favoriteEvents.forEach(event => {
+                    const card = createEventCard(event);
+                    favoriteContainer.appendChild(card);
+                    
+                    // Add special handling for favorite removal with animation
+                    const favoriteIcon = card.querySelector('.favorite-icon');
+                    if (favoriteIcon) {
+                        // Remplacer l'event listener existant
+                        favoriteIcon.replaceWith(favoriteIcon.cloneNode(true));
+                        const newIcon = card.querySelector('.favorite-icon');
+                        
+                        newIcon.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            const wasRemoved = !isEventFavorite(event.id);
+                            toggleFavorite(event.id, this);
+                            
+                            // Si l'événement est supprimé des favoris, retirer la carte avec animation
+                            if (!isEventFavorite(event.id)) {
+                                card.style.animation = 'fadeOut 0.3s forwards';
+                                setTimeout(() => {
+                                    card.remove();
+                                    // Si plus de favoris, recharger pour afficher l'état vide
+                                    if (favoriteContainer.children.length === 0) {
+                                        loadFavorites();
+                                    }
+                                }, 300);
+                            }
+                        });
+                    }
+                    
+                    // Add special handling for opening event details from favorites
+                    const infoBtn = card.querySelector('.info-btn');
+                    if (infoBtn) {
+                        infoBtn.replaceWith(infoBtn.cloneNode(true));
+                        const newInfoBtn = card.querySelector('.info-btn');
+                        
+                        newInfoBtn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            // Ouvrir les détails d'événement
+                            showEventDetails(event);
+                            // Fermer l'overlay des favoris après un court délai
+                            setTimeout(() => {
+                                favoritesOverlay.classList.remove('active');
+                                // Ne pas enlever body-no-scroll car les détails sont ouverts
+                            }, 200);
+                        });
+                    }
+                    
+                    // Add handling for clicking on the entire card
+                    card.addEventListener('click', function(e) {
+                        // Vérifier qu'on ne clique pas sur les icônes
+                        if (!e.target.closest('.favorite-icon') && !e.target.closest('.info-btn')) {
+                            // Ouvrir les détails d'événement
+                            showEventDetails(event);
+                            // Fermer l'overlay des favoris après un court délai
+                            setTimeout(() => {
+                                favoritesOverlay.classList.remove('active');
+                                // Ne pas enlever body-no-scroll car les détails sont ouverts
+                            }, 200);
+                        }
+                    });
+                });
+                
+                favoritesOverlay.appendChild(favoriteContainer);
+                
+                // Add event listener for back button
+                document.getElementById('back-from-favorites').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    favoritesOverlay.classList.remove('active');
+                    document.body.classList.remove('body-no-scroll');
+                });
+            }
+        }, 300);
     }
     
     // Document ready function
@@ -1052,6 +1188,11 @@ function applyFilters() {
             favoritesBtn.addEventListener('click', () => {
                 loadFavorites();
                 favoritesOverlay.classList.toggle('active');
+                if (favoritesOverlay.classList.contains('active')) {
+                    document.body.classList.add('body-no-scroll');
+                } else {
+                    document.body.classList.remove('body-no-scroll');
+                }
             });
         }
         
@@ -1118,6 +1259,8 @@ function applyFilters() {
                     }
                 }
             });
+            // Remove body scroll lock
+            document.body.classList.remove('body-no-scroll');
         });
     });
 

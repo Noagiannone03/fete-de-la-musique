@@ -898,8 +898,13 @@ class FavoritesManager {
         if (infoBtn) {
             infoBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                // Ouvrir d'abord les détails d'événement
                 if (typeof window.showEventDetails === 'function') {
                     window.showEventDetails(event);
+                    // Puis fermer discrètement l'overlay des favoris avec un petit délai
+                    setTimeout(() => {
+                        this.closeFavorites(true);
+                    }, 100);
                 } else {
                     console.warn('Fonction showEventDetails non disponible');
                 }
@@ -909,8 +914,13 @@ class FavoritesManager {
         // Clic sur la carte pour afficher les détails (sauf sur les icônes)
         eventCard.addEventListener('click', (e) => {
             if (!e.target.closest('.favorite-icon') && !e.target.closest('.info-btn')) {
+                // Ouvrir d'abord les détails d'événement
                 if (typeof window.showEventDetails === 'function') {
                     window.showEventDetails(event);
+                    // Puis fermer discrètement l'overlay des favoris avec un petit délai
+                    setTimeout(() => {
+                        this.closeFavorites(true);
+                    }, 100);
                 } else {
                     console.warn('Fonction showEventDetails non disponible');
                 }
@@ -923,6 +933,31 @@ class FavoritesManager {
      */
     loadAndShowFavorites() {
         if (!this.favoritesOverlay) return;
+        
+        // Vérifier s'il y a un overlay de détails d'événement ouvert
+        const eventDetailsOverlay = document.querySelector('.event-details-overlay.active');
+        const menuOverlay = document.querySelector('.menu-overlay.active');
+        
+        // Fermer les overlays existants avant d'ouvrir les favoris
+        if (eventDetailsOverlay) {
+            eventDetailsOverlay.classList.remove('active');
+            setTimeout(() => {
+                eventDetailsOverlay.remove();
+            }, 300);
+        }
+        
+        if (menuOverlay) {
+            const menuIcon = document.querySelector('.menu-icon');
+            if (menuIcon) {
+                menuIcon.classList.remove('active');
+            }
+            menuOverlay.classList.remove('active');
+        }
+        
+        // Si l'overlay des favoris est déjà ouvert, ne pas le rouvrir
+        if (this.favoritesOverlay.classList.contains('active')) {
+            return;
+        }
         
         // Afficher l'overlay
         this.favoritesOverlay.classList.add('active');
@@ -1062,14 +1097,16 @@ class FavoritesManager {
     /**
      * Fermer l'overlay des favoris
      */
-    closeFavorites() {
+    closeFavorites(silent = false) {
         if (this.favoritesOverlay) {
             this.favoritesOverlay.classList.remove('active');
+            // Si on ferme silencieusement (après ouverture de détails), pas besoin d'attendre
+            const delay = silent ? 0 : 300;
             setTimeout(() => {
                 if (!document.querySelector('.event-details-overlay.active')) {
                     document.body.classList.remove('body-no-scroll');
                 }
-            }, 300);
+            }, delay);
         }
     }
     

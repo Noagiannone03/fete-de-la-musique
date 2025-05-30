@@ -97,7 +97,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            z-index: 7000;
             transition: opacity 0.8s ease, transform 0.8s ease;
         }
 
@@ -143,7 +143,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 4.5rem;
+            height: 4.5rem !important;
             background-color: white;
             display: flex;
             justify-content: space-between;
@@ -267,7 +267,6 @@
             transition: opacity 0.5s ease;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            text-align: center;
             pointer-events: none;
         }
 
@@ -678,14 +677,14 @@
         }
 
         .menu-item {
-            padding: 1.125rem 0;
-            font-size: 1.5rem;
-            color: #734432;
-            font-family: 'inter-bold', sans-serif;
-            text-transform: uppercase;
-            text-decoration: none;
-            display: block;
-            transition: color 0.3s ease;
+            padding: 1.125rem 0 !important;
+            font-size: 1.5rem !important;
+            color: #734432 !important;
+            font-family: 'inter-bold', sans-serif !important;
+            text-transform: uppercase !important;
+            text-decoration: none !important;
+            display: block !important;
+            transition: color 0.3s ease !important;
         }
         
         .menu-item:active {
@@ -701,7 +700,7 @@
 
         /* Contenu principal */
         .main-content {
-            margin-top: 3.375rem;
+            margin-top: 4.375rem;
             height: calc(100vh - 4.375rem);
             position: relative;
             display: flex;
@@ -1303,19 +1302,60 @@
 
             // Gestion du menu hamburger
             menuIcon.addEventListener('click', function() {
+                // Fermer l'overlay des favoris s'il est ouvert
+                const favoritesOverlay = document.querySelector('.favorites-overlay.active');
+                if (favoritesOverlay) {
+                    favoritesOverlay.classList.remove('active');
+                }
+                
+                // Fermer les détails d'événement s'ils sont ouverts
+                const eventDetailsOverlay = document.querySelector('.event-details-overlay.active');
+                if (eventDetailsOverlay) {
+                    eventDetailsOverlay.classList.remove('active');
+                    setTimeout(() => {
+                        eventDetailsOverlay.remove();
+                    }, 300);
+                }
+                
                 menuIcon.classList.toggle('active');
                 menuOverlay.classList.toggle('active');
                 document.body.classList.toggle('body-no-scroll');
             });
 
+            // Gestion du bouton favoris
+            const favoritesBtn = document.querySelector('.favorites-btn');
+            if (favoritesBtn && favoritesManager) {
+                favoritesBtn.addEventListener('click', function() {
+                    favoritesManager.loadAndShowFavorites();
+                });
+            }
+
+            // Gestion spéciale du lien "Mes favoris" dans le menu
+            const menuFavorites = document.querySelector('.menu-item[href="#"]');
+            if (menuFavorites && favoritesManager) {
+                menuFavorites.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Fermer le menu d'abord
+                    menuIcon.classList.remove('active');
+                    menuOverlay.classList.remove('active');
+                    // Puis ouvrir les favoris
+                    setTimeout(() => {
+                        favoritesManager.loadAndShowFavorites();
+                    }, 300);
+                });
+            }
+
             // Fermer les overlays en cliquant sur les liens
             const menuItems = document.querySelectorAll('.menu-item');
             menuItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    menuIcon.classList.remove('active');
-                    menuOverlay.classList.remove('active');
-                    document.body.classList.remove('body-no-scroll');
-                });
+                // Ne pas ajouter l'événement pour le lien favoris car il est géré spécialement
+                if (item !== menuFavorites) {
+                    item.addEventListener('click', function() {
+                        menuIcon.classList.remove('active');
+                        menuOverlay.classList.remove('active');
+                        document.body.classList.remove('body-no-scroll');
+                    });
+                }
             });
 
             // Fermer les overlays en cliquant en dehors
