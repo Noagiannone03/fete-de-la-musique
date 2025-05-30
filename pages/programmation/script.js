@@ -461,7 +461,7 @@ async function showEventDetails(event) {
                     <div class="details-map-button">
                         <a href="${mapUrl}" target="_blank">
                             <img src="../../assets/buttons/syrendre.png" alt="Comment s'y rendre">
-                            ${event._gpsUrl ? '<span style="font-size: 10px; color: #734432; margin-left: 5px;">📍 GPS</span>' : ''}
+                            ${event._gpsUrl ? '' : ''}
                         </a>
                     </div>` : ''}
                 </div>
@@ -1129,7 +1129,7 @@ function applyFilters() {
                     font-family: 'inter-medium', sans-serif;
                     font-size: 14px;
                     opacity: 0.7;
-                ">Récupération des coordonnées GPS...</p>
+              
             </div>
             <style>
                 @keyframes favoritesSpinner {
@@ -1212,7 +1212,6 @@ function applyFilters() {
                         opacity: 0.8;
                         font-family: 'inter-medium', sans-serif;
                     ">
-                        🗺️ Géolocalisation GPS activée pour tous vos favoris
                     </div>
                 `;
                 favoritesOverlay.appendChild(favHeader);
