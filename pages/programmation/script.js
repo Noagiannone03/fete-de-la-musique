@@ -1273,7 +1273,35 @@ function applyFilters() {
         
         if (menuIcon && menuOverlay) {
             menuIcon.addEventListener('click', () => {
+                // Vérifier s'il y a un overlay de détails d'événement ouvert
+                const eventDetailsOverlay = document.querySelector('.event-details-overlay.active');
+                const favoritesOverlay = document.querySelector('.favorites-overlay.active');
+                
+                // Fermer les overlays existants avant d'ouvrir le menu
+                if (eventDetailsOverlay) {
+                    eventDetailsOverlay.classList.remove('active');
+                    document.body.classList.remove('body-no-scroll');
+                    setTimeout(() => {
+                        eventDetailsOverlay.remove();
+                    }, 300);
+                }
+                
+                if (favoritesOverlay) {
+                    favoritesOverlay.classList.remove('active');
+                    document.body.classList.remove('body-no-scroll');
+                }
+                
+                // Toggle du menu avec transformation en croix
+                menuIcon.classList.toggle('active');
                 menuOverlay.classList.toggle('active');
+            });
+            
+            // Fermer le menu quand on clique en dehors
+            menuOverlay.addEventListener('click', (e) => {
+                if (e.target === menuOverlay) {
+                    menuIcon.classList.remove('active');
+                    menuOverlay.classList.remove('active');
+                }
             });
         }
         
@@ -1356,6 +1384,17 @@ function applyFilters() {
                     }
                 }
             });
+            
+            // Close menu and reset icon
+            const menuOverlay = document.querySelector('.menu-overlay');
+            const menuIcon = document.querySelector('.menu-icon');
+            if (menuOverlay && menuOverlay.classList.contains('active')) {
+                menuOverlay.classList.remove('active');
+                if (menuIcon) {
+                    menuIcon.classList.remove('active');
+                }
+            }
+            
             // Remove body scroll lock
             document.body.classList.remove('body-no-scroll');
         });
