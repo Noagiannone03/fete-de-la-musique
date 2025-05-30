@@ -1470,6 +1470,42 @@ function loadFavorites() {
     }
 }
 
+// Fonction pour récupérer les coordonnées GPS d'un lieu
+async function fetchGpsCoordinatesForLocation(locationName) {
+    try {
+        console.log('Recherche des coordonnées GPS pour:', locationName);
+        
+        const soundPointsCol = collection(db, "sound_points");
+        const soundPointsSnapshot = await getDocs(soundPointsCol);
+        
+        let gpsCoordinates = null;
+        
+        soundPointsSnapshot.forEach((doc) => {
+            const soundPointData = doc.data();
+            // Check if name matches the event location
+            if (soundPointData.name && 
+                soundPointData.name.toLowerCase() === locationName.toLowerCase()) {
+                gpsCoordinates = soundPointData.gpsCoordinates;
+                console.log('Coordonnées GPS trouvées:', gpsCoordinates);
+            }
+        });
+        
+        return gpsCoordinates;
+    } catch (error) {
+        console.error("Erreur lors de la récupération des coordonnées GPS:", error);
+        return null;
+    }
+}
+
+// Fonction pour créer une URL Google Maps depuis des coordonnées GPS
+function createGoogleMapsUrl(gpsCoordinates) {
+    if (!gpsCoordinates) return null;
+    
+    // If coordinates are in format "43.111298260217424, 5.939361714369257"
+    const cleanCoords = gpsCoordinates.replace(/\s/g, ''); // Remove spaces
+    return `https://www.google.com/maps?q=${cleanCoords}`;
+}
+
 // Fonction pour afficher les détails d'un événement
 async function showEventDetails(event) {
     console.log('Données de l\'événement reçu :', event);
@@ -1493,7 +1529,27 @@ async function showEventDetails(event) {
     
     // Vérifier les différents noms possibles pour les URLs
     const moreInfoUrl = event.plusUrl || event.moreUrl || event.infoUrl || event.websiteUrl || event.website;
-    const mapUrl = event.locationUrl || event.mapUrl || event.googleMapsUrl || event.adresseUrl;
+    let mapUrl = event.locationUrl || event.mapUrl || event.googleMapsUrl || event.adresseUrl;
+    
+    // Try to get GPS coordinates for the location
+    // Check if GPS URL is pre-loaded (from favorites)
+    if (event._gpsUrl) {
+        mapUrl = event._gpsUrl;
+        console.log('🚀 Utilisation de l\'URL GPS pré-chargée:', mapUrl);
+    } else {
+        // Fetch GPS coordinates dynamically
+        try {
+            console.log('🔍 Récupération dynamique des coordonnées GPS...');
+            const gpsCoordinates = await fetchGpsCoordinatesForLocation(event.location);
+            if (gpsCoordinates) {
+                mapUrl = createGoogleMapsUrl(gpsCoordinates);
+                console.log('✅ URL Google Maps créée dynamiquement:', mapUrl);
+            }
+        } catch (error) {
+            console.error('❌ Erreur lors de la récupération des coordonnées:', error);
+            // Keep the original mapUrl as fallback
+        }
+    }
     
     console.log('URLs trouvées - Plus d\'infos:', moreInfoUrl, 'Carte:', mapUrl);
     
@@ -1589,6 +1645,7 @@ async function showEventDetails(event) {
                     <div class="details-map-button">
                         <a href="${mapUrl}" target="_blank">
                             <img src="../../assets/buttons/syrendre.png" alt="Comment s'y rendre">
+                            ${event._gpsUrl ? '<span style="font-size: 10px; color: #734432; margin-left: 5px;">📍 GPS</span>' : ''}
                         </a>
                     </div>` : ''}
                 </div>

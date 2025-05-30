@@ -292,7 +292,43 @@ function createEventCard(event, isInFavorites = false) {
     return card;
 }
 
-// Updated showEventDetails function with skeleton loader
+// New function to fetch GPS coordinates for an event location
+async function fetchGpsCoordinatesForLocation(locationName) {
+    try {
+        console.log('Recherche des coordonnées GPS pour:', locationName);
+        
+        const soundPointsCol = collection(db, "sound_points");
+        const soundPointsSnapshot = await getDocs(soundPointsCol);
+        
+        let gpsCoordinates = null;
+        
+        soundPointsSnapshot.forEach((doc) => {
+            const soundPointData = doc.data();
+            // Check if name matches the event location
+            if (soundPointData.name && 
+                soundPointData.name.toLowerCase() === locationName.toLowerCase()) {
+                gpsCoordinates = soundPointData.gpsCoordinates;
+                console.log('Coordonnées GPS trouvées:', gpsCoordinates);
+            }
+        });
+        
+        return gpsCoordinates;
+    } catch (error) {
+        console.error("Erreur lors de la récupération des coordonnées GPS:", error);
+        return null;
+    }
+}
+
+// Function to create Google Maps URL from GPS coordinates
+function createGoogleMapsUrl(gpsCoordinates) {
+    if (!gpsCoordinates) return null;
+    
+    // If coordinates are in format "43.111298260217424, 5.939361714369257"
+    const cleanCoords = gpsCoordinates.replace(/\s/g, ''); // Remove spaces
+    return `https://www.google.com/maps?q=${cleanCoords}`;
+}
+
+// Updated showEventDetails function with GPS coordinates lookup
 async function showEventDetails(event) {
     console.log('Données de l\'événement reçu :', event);
     
@@ -361,6 +397,28 @@ async function showEventDetails(event) {
     `;
     document.head.appendChild(skeletonStyle);
     
+    // Try to get GPS coordinates for the location
+    let mapUrl = event.locationUrl; // Fallback to original locationUrl
+    
+    // Check if GPS URL is pre-loaded (from favorites)
+    if (event._gpsUrl) {
+        mapUrl = event._gpsUrl;
+        console.log('🚀 Utilisation de l\'URL GPS pré-chargée:', mapUrl);
+    } else {
+        // Fetch GPS coordinates dynamically
+        try {
+            console.log('🔍 Récupération dynamique des coordonnées GPS...');
+            const gpsCoordinates = await fetchGpsCoordinatesForLocation(event.location);
+            if (gpsCoordinates) {
+                mapUrl = createGoogleMapsUrl(gpsCoordinates);
+                console.log('✅ URL Google Maps créée dynamiquement:', mapUrl);
+            }
+        } catch (error) {
+            console.error('❌ Erreur lors de la récupération des coordonnées:', error);
+            // Keep the original locationUrl as fallback
+        }
+    }
+    
     detailsOverlay.innerHTML = `
         <div class="event-details-container">
             <div class="details-header">
@@ -399,11 +457,13 @@ async function showEventDetails(event) {
                         <span>${event.location}</span>
                     </div>
                     
+                    ${mapUrl ? `
                     <div class="details-map-button">
-                        <a href="${event.locationUrl}" target="_blank">
+                        <a href="${mapUrl}" target="_blank">
                             <img src="../../assets/buttons/syrendre.png" alt="Comment s'y rendre">
+                            ${event._gpsUrl ? '<span style="font-size: 10px; color: #734432; margin-left: 5px;">📍 GPS</span>' : ''}
                         </a>
-                    </div>
+                    </div>` : ''}
                 </div>
                 
                 <div class="details-partners">
@@ -1005,7 +1065,7 @@ function applyFilters() {
         document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/';
     }
     
-    // Favorites functionality
+    // Favorites functionality - Enhanced with GPS coordinates pre-loading
     function loadFavorites() {
         const favoritesOverlay = document.querySelector('.favorites-overlay');
         
@@ -1063,6 +1123,13 @@ function applyFilters() {
                     font-family: 'inter-medium', sans-serif;
                     font-size: 16px;
                 ">Chargement de vos favoris...</p>
+                <p style="
+                    margin-top: 10px;
+                    color: #734432;
+                    font-family: 'inter-medium', sans-serif;
+                    font-size: 14px;
+                    opacity: 0.7;
+                ">Récupération des coordonnées GPS...</p>
             </div>
             <style>
                 @keyframes favoritesSpinner {
@@ -1073,9 +1140,33 @@ function applyFilters() {
         `;
         
         // Attendre un délai pour s'assurer que les données sont chargées
-        setTimeout(() => {
+        setTimeout(async () => {
             // Filter events that are in favorites
             const favoriteEvents = allEvents.filter(event => isEventFavorite(event.id));
+            
+            // Pre-load GPS coordinates for favorite events to improve performance
+            console.log('🗺️ Pré-chargement des coordonnées GPS pour les favoris...');
+            const gpsCache = new Map();
+            
+            if (favoriteEvents.length > 0) {
+                // Get unique locations from favorite events
+                const uniqueLocations = [...new Set(favoriteEvents.map(event => event.location))];
+                
+                // Pre-fetch GPS coordinates for all favorite event locations
+                for (const location of uniqueLocations) {
+                    try {
+                        const gpsCoordinates = await fetchGpsCoordinatesForLocation(location);
+                        if (gpsCoordinates) {
+                            gpsCache.set(location, createGoogleMapsUrl(gpsCoordinates));
+                            console.log(`✅ Coordonnées GPS chargées pour: ${location}`);
+                        }
+                    } catch (error) {
+                        console.error(`❌ Erreur GPS pour ${location}:`, error);
+                    }
+                }
+                
+                console.log(`🎯 ${gpsCache.size} coordonnées GPS préchargées pour les favoris`);
+            }
             
             // Supprimer le loader
             const loader = favoritesOverlay.querySelector('.favorites-loading');
@@ -1113,6 +1204,16 @@ function applyFilters() {
                     <a href="#" class="back-to-program favorites-back-btn" id="back-from-favorites">← Retour vers la programmation</a>
                     <img src="../../assets/headline/favoris.png" alt="Mes Favoris" style="width: 70%;
       max-width: 300px; margin: 20px auto; display: block;">
+                    <div style="
+                        text-align: center; 
+                        color: #734432; 
+                        font-size: 12px; 
+                        margin-top: 10px;
+                        opacity: 0.8;
+                        font-family: 'inter-medium', sans-serif;
+                    ">
+                        🗺️ Géolocalisation GPS activée pour tous vos favoris
+                    </div>
                 `;
                 favoritesOverlay.appendChild(favHeader);
                 
@@ -1121,8 +1222,14 @@ function applyFilters() {
                 favoriteContainer.className = 'favorites-container event-list';
                 favoriteContainer.style.padding = '0 15px';
                 
-                // Add each favorite event
+                // Add each favorite event with enhanced GPS functionality
                 favoriteEvents.forEach(event => {
+                    // Add GPS info to event object for faster access
+                    if (gpsCache.has(event.location)) {
+                        event._gpsUrl = gpsCache.get(event.location);
+                        console.log(`🎯 GPS URL attachée pour ${event.title}: ${event._gpsUrl}`);
+                    }
+                    
                     const card = createEventCard(event, true);
                     favoriteContainer.appendChild(card);
                 });
