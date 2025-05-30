@@ -18,7 +18,7 @@
 
     <script>
 (function() {
-  // 1) Détection “moderne” (Chrome, Edge, Opera) via userAgentData
+  // 1) Détection "moderne" (Chrome, Edge, Opera) via userAgentData
   const uaData = navigator.userAgentData;
   let isMobile = false;
 
@@ -31,7 +31,7 @@
     isMobile = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
   }
 
-  // Si CE N’EST PAS un mobile, on redirige
+  // Si CE N'EST PAS un mobile, on redirige
   if (!isMobile) {
     // Remplacez cette URL par celle de la page vers laquelle rediriger PC / tablette
     const redirectUrl = "../redirect/redirection.html";
@@ -62,11 +62,11 @@
         <a href="../../index.html" class="menu-item" style="margin-bottom: 2vh;">Accueil</a>
         <a href="programmation.html" class="menu-item">Programmation</a>
         <div class="menu-divider"></div>
-        <a href="#" class="menu-item">Mes favoris</a>
-        <div class="menu-divider"></div>
+        
         <a href="../proche-de-moi/autour-de-moi.html" class="menu-item">Autour de moi</a>
         <div class="menu-divider"></div>
-        <a href="../partners/partenaires.html" class="menu-item" style="margin-bottom: 3vh;">Nos partenaires</a>
+        <a href="../partners/partenaires.html" class="menu-item">Nos partenaires</a>
+        <div class="menu-divider"></div>
         <a href="../apropos/apropos.html" class="menu-item">Qui sommes-nous ?</a>
         <div class="menu-divider"></div>
         <a href="../summer/summer.html" class="menu-item">Pour l'été</a>
