@@ -75,18 +75,20 @@ class FavoritesManager {
                 width: 100%;
                 height: calc(100vh - 4.375rem);
                 background-color: white;
-                z-index: 99;
+                z-index: 1001;
                 padding: 1.25rem;
                 display: none;
                 opacity: 0;
                 transition: opacity 0.3s ease;
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
+                pointer-events: none;
             }
             
             .favorites-overlay.active {
                 display: block;
                 opacity: 1;
+                pointer-events: auto;
             }
             
             .favorites-empty {
@@ -219,6 +221,7 @@ class FavoritesManager {
                 font-size: 18px;
                 font-weight: bold;
                 margin-bottom: 5px;
+                margin-right: 55px;
                 font-family: 'inter-bold', sans-serif;
                 text-align: left;
             }
