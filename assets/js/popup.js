@@ -5,7 +5,7 @@
     // Options d'affichage (choisir UNE seule option) :
     
     // Option 1: Afficher à chaque visite (pour les tests)
-    SHOW_ALWAYS: false,
+    SHOW_ALWAYS: true,  // ← Activé : popup à chaque visite !
     
     // Option 2: Afficher toutes les X visites
     SHOW_EVERY_X_VISITS: {
@@ -15,7 +15,7 @@
     
     // Option 3: Afficher une seule fois par session
     SHOW_ONCE_PER_SESSION: {
-      enabled: true  // ← Plus prévisible pour l'utilisateur
+      enabled: false  // ← Désactivé
     },
     
     // Option 4: Afficher une seule fois au total (jamais plus)
@@ -24,10 +24,10 @@
     },
     
     // Debug: afficher les logs dans la console
-    DEBUG_MODE: false,  // ← Désactivé en production
+    DEBUG_MODE: true,  // ← Réactivé pour vérifier que ça marche
     
     // Délai avant affichage du popup (en millisecondes)
-    DISPLAY_DELAY: 2000  // ← 2 secondes pour être sûr que tout est chargé
+    DISPLAY_DELAY: 2000  // ← 2 secondes après le chargement
   };
 
   const STORAGE_KEYS = {
