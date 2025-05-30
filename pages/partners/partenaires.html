@@ -1849,7 +1849,7 @@
         window.showPartnerDetails = showPartnerDetails;
         window.loadFirebaseData = loadFirebaseData;
 
-        // Gestion du menu hamburger et des favoris
+        // Gestion du menu hamburger
         document.addEventListener('DOMContentLoaded', function() {
             const menuIcon = document.querySelector('.menu-icon');
             const menuOverlay = document.querySelector('.menu-overlay');
@@ -1885,14 +1885,6 @@
                 menuOverlay.classList.toggle('active');
                 document.body.classList.toggle('body-no-scroll');
             });
-
-            // Gestion du bouton favoris
-            const favoritesBtn = document.querySelector('.favorites-btn');
-            if (favoritesBtn && favoritesManager) {
-                favoritesBtn.addEventListener('click', function() {
-                    favoritesManager.loadAndShowFavorites();
-                });
-            }
 
             // Gestion spéciale du lien "Mes favoris" dans le menu
             const menuFavorites = document.getElementById('menu-favorites');

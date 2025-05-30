@@ -1380,14 +1380,6 @@
                 document.body.classList.toggle('body-no-scroll');
             });
 
-            // Gestion du bouton favoris
-            const favoritesBtn = document.querySelector('.favorites-btn');
-            if (favoritesBtn && favoritesManager) {
-                favoritesBtn.addEventListener('click', function() {
-                    favoritesManager.loadAndShowFavorites();
-                });
-            }
-
             // Gestion spéciale du lien "Mes favoris" dans le menu
             const menuFavorites = document.querySelector('.menu-item[href="#"]');
             if (menuFavorites && favoritesManager) {

@@ -40,7 +40,14 @@ class FavoritesManager {
         const favoritesBtn = document.querySelector('.favorites-btn');
         if (favoritesBtn) {
             favoritesBtn.addEventListener('click', () => {
-                this.loadAndShowFavorites();
+                // Vérifier si l'overlay est déjà ouvert
+                if (this.favoritesOverlay.classList.contains('active')) {
+                    // Si ouvert, on le ferme
+                    this.closeFavorites();
+                } else {
+                    // Si fermé, on l'ouvre
+                    this.loadAndShowFavorites();
+                }
             });
         }
         

@@ -1348,17 +1348,7 @@
                 }
             });
 
-            // Gestion du bouton favoris
-            favoritesBtn.addEventListener('click', function() {
-                if (favoritesManager) {
-                    favoritesManager.loadAndShowFavorites();
-                }
-                
-                // Fermer le menu principal s'il est ouvert
-                menuIcon.classList.remove('active');
-                menuOverlay.classList.remove('active');
-                document.body.classList.remove('body-no-scroll');
-            });
+            // Le bouton favoris est maintenant géré automatiquement par le FavoritesManager
             
             // Bouton pour aller à la programmation
             if (goToProgramBtn) {
