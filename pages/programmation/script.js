@@ -188,7 +188,7 @@ function formatTime(timestamp) {
     }
     
   // Updated createEventCard function with proper time handling
-function createEventCard(event) {
+function createEventCard(event, isInFavorites = false) {
     const card = document.createElement('div');
     card.className = 'event-card';
     card.setAttribute('data-location', event.location.toLowerCase().includes('mourillon') ? 'mourillon' : 'centre-ville');
@@ -226,19 +226,68 @@ function createEventCard(event) {
         </div>
     `;
     
-    // Add event listener for favorite icon
-    card.querySelector('.favorite-icon').addEventListener('click', function(e) {
-        e.stopPropagation(); // Empêche la propagation du clic vers la carte
-        toggleFavorite(event.id, this);
-    });
-    
-    // Add event listener for the entire card
-    card.addEventListener('click', function(e) {
-        // Ne pas déclencher si on clique sur l'icône de favori
-        if (!e.target.closest('.favorite-icon')) {
+    if (isInFavorites) {
+        // Event listeners spécifiques pour les favoris
+        const favoriteIcon = card.querySelector('.favorite-icon');
+        favoriteIcon.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleFavorite(event.id, this);
+            
+            // Si l'événement est supprimé des favoris, retirer la carte avec animation
+            if (!isEventFavorite(event.id)) {
+                card.style.animation = 'fadeOut 0.3s forwards';
+                setTimeout(() => {
+                    card.remove();
+                    // Si plus de favoris, recharger pour afficher l'état vide
+                    const favoriteContainer = document.querySelector('.favorites-container');
+                    if (favoriteContainer && favoriteContainer.children.length === 0) {
+                        loadFavorites();
+                    }
+                }, 300);
+            }
+        });
+        
+        const infoBtn = card.querySelector('.info-btn');
+        infoBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
             showEventDetails(event);
-        }
-    });
+            // Fermer l'overlay des favoris après un court délai
+            setTimeout(() => {
+                const favoritesOverlay = document.querySelector('.favorites-overlay');
+                if (favoritesOverlay) {
+                    favoritesOverlay.classList.remove('active');
+                }
+            }, 200);
+        });
+        
+        // Clic sur la carte entière pour les favoris
+        card.addEventListener('click', function(e) {
+            if (!e.target.closest('.favorite-icon') && !e.target.closest('.info-btn')) {
+                showEventDetails(event);
+                // Fermer l'overlay des favoris après un court délai
+                setTimeout(() => {
+                    const favoritesOverlay = document.querySelector('.favorites-overlay');
+                    if (favoritesOverlay) {
+                        favoritesOverlay.classList.remove('active');
+                    }
+                }, 200);
+            }
+        });
+    } else {
+        // Event listeners standards pour la programmation normale
+        const favoriteIcon = card.querySelector('.favorite-icon');
+        favoriteIcon.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleFavorite(event.id, this);
+        });
+        
+        // Clic sur la carte entière pour la programmation normale
+        card.addEventListener('click', function(e) {
+            if (!e.target.closest('.favorite-icon')) {
+                showEventDetails(event);
+            }
+        });
+    }
     
     return card;
 }
@@ -1074,66 +1123,8 @@ function applyFilters() {
                 
                 // Add each favorite event
                 favoriteEvents.forEach(event => {
-                    const card = createEventCard(event);
+                    const card = createEventCard(event, true);
                     favoriteContainer.appendChild(card);
-                    
-                    // Add special handling for favorite removal with animation
-                    const favoriteIcon = card.querySelector('.favorite-icon');
-                    if (favoriteIcon) {
-                        // Remplacer l'event listener existant
-                        favoriteIcon.replaceWith(favoriteIcon.cloneNode(true));
-                        const newIcon = card.querySelector('.favorite-icon');
-                        
-                        newIcon.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            const wasRemoved = !isEventFavorite(event.id);
-                            toggleFavorite(event.id, this);
-                            
-                            // Si l'événement est supprimé des favoris, retirer la carte avec animation
-                            if (!isEventFavorite(event.id)) {
-                                card.style.animation = 'fadeOut 0.3s forwards';
-                                setTimeout(() => {
-                                    card.remove();
-                                    // Si plus de favoris, recharger pour afficher l'état vide
-                                    if (favoriteContainer.children.length === 0) {
-                                        loadFavorites();
-                                    }
-                                }, 300);
-                            }
-                        });
-                    }
-                    
-                    // Add special handling for opening event details from favorites
-                    const infoBtn = card.querySelector('.info-btn');
-                    if (infoBtn) {
-                        infoBtn.replaceWith(infoBtn.cloneNode(true));
-                        const newInfoBtn = card.querySelector('.info-btn');
-                        
-                        newInfoBtn.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            // Ouvrir les détails d'événement
-                            showEventDetails(event);
-                            // Fermer l'overlay des favoris après un court délai
-                            setTimeout(() => {
-                                favoritesOverlay.classList.remove('active');
-                                // Ne pas enlever body-no-scroll car les détails sont ouverts
-                            }, 200);
-                        });
-                    }
-                    
-                    // Add handling for clicking on the entire card
-                    card.addEventListener('click', function(e) {
-                        // Vérifier qu'on ne clique pas sur les icônes
-                        if (!e.target.closest('.favorite-icon') && !e.target.closest('.info-btn')) {
-                            // Ouvrir les détails d'événement
-                            showEventDetails(event);
-                            // Fermer l'overlay des favoris après un court délai
-                            setTimeout(() => {
-                                favoritesOverlay.classList.remove('active');
-                                // Ne pas enlever body-no-scroll car les détails sont ouverts
-                            }, 200);
-                        }
-                    });
                 });
                 
                 favoritesOverlay.appendChild(favoriteContainer);
