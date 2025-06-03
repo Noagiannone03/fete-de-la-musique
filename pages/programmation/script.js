@@ -214,7 +214,7 @@ function createEventCard(event, isInFavorites = false) {
             <h3 class="event-title">${event.title}</h3>
             <p class="event-type">${event.subtitle}</p>
             <div class="event-location">
-                <img src="../../assets/pictos/pinMap.png" alt="Location" class="info-icon">
+                <img src="../../assets/pictos/PinMap.png" alt="Location" class="info-icon">
                 <span>${event.location}</span>
             </div>
             <div class="event-style">
