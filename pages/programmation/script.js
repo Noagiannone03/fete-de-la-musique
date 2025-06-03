@@ -1505,10 +1505,16 @@ function selectSoundPoint(soundPoint) {
     // Update the event list with filtered events
     updateEventList(filteredEvents);
     
-    // Remove transition class after animation completes
+    // Scroll to top AFTER content is updated, using multiple methods for better compatibility
     setTimeout(() => {
+        // Multiple scroll methods for better browser compatibility
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        
+        // Remove transition class after animation completes
         eventList.classList.remove('transition-in');
-    }, 300);
+    }, 50); // Short delay to ensure content is updated
 }
 
 // Add CSS styles for the new sound point card design
@@ -1778,6 +1784,14 @@ function showSoundPointsView() {
     
     // Display sound points
     filterSoundPointsByTab();
+    
+    // Scroll to top AFTER content is updated
+    setTimeout(() => {
+        // Multiple scroll methods for better browser compatibility
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    }, 50); // Short delay to ensure content is updated
 }
 
 // Add this function to filter sound points by tab selection
