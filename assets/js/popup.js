@@ -1,5 +1,5 @@
 // Popup FDLM - Affichage configurable
-//(function() {
+(function() {
   // === CONFIGURATION ===
   const CONFIG = {
     // Options d'affichage (choisir UNE seule option) :
