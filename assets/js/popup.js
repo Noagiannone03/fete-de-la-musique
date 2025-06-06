@@ -147,7 +147,7 @@
     // Image du popup - change cette URL pour ton image
     const imageUrl = 'assets/images/popup.png';
     // URL de redirection - change cette URL pour ta destination
-    const redirectUrl = 'https://fb.me/e/3kghazyHu';
+    const redirectUrl = 'https://fb.me/e/2lyU8hYyY';
 
     const overlay = document.createElement('div');
     overlay.className = 'fdlm-popup-overlay';
