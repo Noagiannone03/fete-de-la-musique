@@ -536,7 +536,7 @@
         }
 
         /* Styles originaux pour les cartes d'événements d'été */
-        .summer-event-card {
+                .summer-event-card {
             font-family: 'inter-semi-bold', sans-serif;
             width: 100%;
             overflow: hidden;
@@ -566,38 +566,10 @@
             overflow: hidden;
         }
 
-        .summer-card-image {
+                .summer-card-image {
             width: 100%;
             height: 100%;
             object-fit: cover;
-        }
-
-        /* New organizer tag in top right corner */
-        .summer-organizer-tag {
-            position: absolute;
-            top: 10px;
-            right: 7px;
-            background-color: #FF6B35; /* Default color, will be changed dynamically */
-            color: white;
-            padding: 5px 10px;
-            font-size: 12px;
-            font-weight: bold;
-            z-index: 10;
-        }
-
-        .summer-time-tag {
-            position: absolute;
-            top: 5px;
-            left: 0px;
-            background-color: #D892B4; /* Default color, will be changed dynamically */
-            color: white;
-            padding: 5px 10px;
-            transform: rotate(-7deg);
-            font-size: 12px;
-            font-weight: bold;
-            border-radius: 5px;
-            box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
-            z-index: 10;
         }
 
         .summer-card-info {
@@ -621,38 +593,11 @@
             margin-bottom: 3px;
         }
 
-        .summer-event-location {
-            display: flex;
-            align-items: center;
-            margin-bottom: 2px;
-            color: #734432;
-            font-size: 14px;
-        }
-
         .summer-event-date {
-            position: absolute;
-            bottom: 15px;
-            left: 15px;
+            margin-top: 15px;
             color: #734432;
             font-size: 16px;
             font-weight: bold;
-        }
-
-        .summer-event-time {
-            position: absolute;
-            bottom: 12px;
-            right: 15px;
-            color: #734432;
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        .summer-event-style {
-            display: flex;
-            align-items: center;
-            margin-bottom: 30px;
-            color: #734432;
-            font-size: 14px;
         }
 
         .summer-info-icon {
@@ -907,41 +852,7 @@
             transform: scale(1.05);
         }
 
-        .details-partners {
-            background-color: #734432;
-            color: white;
-            padding: 25px 20px; /* Increased padding */
-            margin-top: auto; /* Pushes this section to the bottom */
-        }
 
-        .details-partners h3 {
-            text-align: center;
-            font-size: 20px; /* Larger font */
-            margin-bottom: 20px; /* Increased margin */
-            letter-spacing: 1px;
-        }
-
-        .partners-grid {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px; /* Increased gap */
-        }
-
-        .partner-logo {
-            width: 90px; /* Larger logo */
-            height: 90px; /* Larger logo */
-            object-fit: contain;
-            background-color: white;
-            border-radius: 8px; /* Increased radius */
-            padding: 8px; /* Increased padding */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            transition: transform 0.2s ease;
-        }
-
-        .partner-logo:hover {
-            transform: scale(1.05);
-        }
 
         /* Style pour l'étiquette de temps (horaire) sur l'image */
         .details-time-tag {
@@ -957,14 +868,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
-        /* Style pour l'organisateur */
-        .details-organizer {
-            color: #734432;
-            font-size: 14px;
-            font-family: 'inter-medium', sans-serif;
-            margin-top: 5px;
-            font-weight: normal;
-        }
+
 
         /* Correction pour assurer que le contenu s'affiche correctement */
         .event-details-overlay {
@@ -987,23 +891,7 @@
             width: auto;
         }
 
-        /* Améliorer l'affichage sur mobile */
-        @media (max-width: 768px) {
-            .details-info-item {
-                flex-wrap: wrap;
-                justify-content: center;
-                text-align: center;
-            }
-            
-            .details-separator {
-                margin: 5px 15px;
-                display: none;
-            }
-            
-            .details-info-item > * {
-                margin: 5px;
-            }
-        }
+
 
         /* Styles pour les cartes d'événements - corrections */
         .location-icon {
@@ -1246,6 +1134,55 @@
             }
         }
 
+        // Function to format summer event date from event.date field
+        function formatSummerEventDate(eventDateField) {
+            try {
+                if (!eventDateField) {
+                    return { weekday: 'LUN.', dayMonth: '1 janvier' };
+                }
+
+                let date;
+                
+                // Handle Firebase Timestamp objects
+                if (typeof eventDateField === 'object' && eventDateField.seconds !== undefined) {
+                    date = new Date(eventDateField.seconds * 1000 + (eventDateField.nanoseconds || 0) / 1000000);
+                } 
+                // Handle Date objects
+                else if (eventDateField instanceof Date) {
+                    date = eventDateField;
+                } 
+                // Handle timestamp numbers
+                else if (typeof eventDateField === 'number') {
+                    date = new Date(eventDateField * 1000);
+                } 
+                // Handle date strings
+                else if (typeof eventDateField === 'string') {
+                    date = new Date(eventDateField);
+                } 
+                // Handle toDate method (Firebase Timestamp)
+                else if (typeof eventDateField.toDate === 'function') {
+                    date = eventDateField.toDate();
+                } else {
+                    date = new Date(eventDateField);
+                }
+                
+                if (!date || isNaN(date.getTime())) {
+                    return { weekday: 'LUN.', dayMonth: '1 janvier' };
+                }
+                
+                const days = ['DIM.', 'LUN.', 'MAR.', 'MER.', 'JEU.', 'VEN.', 'SAM.'];
+                const months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+                
+                const weekday = days[date.getDay()];
+                const dayMonth = date.getDate() + ' ' + months[date.getMonth()];
+                
+                return { weekday, dayMonth };
+            } catch (error) {
+                console.error("Erreur lors du formatage de la date d'été:", error);
+                return { weekday: 'LUN.', dayMonth: '1 janvier' };
+            }
+                }
+
         // Function to get color based on organizer
         function getOrganizerColor(organizer) {
             const colorMap = {
@@ -1265,65 +1202,26 @@
             const card = document.createElement('div');
             card.className = 'summer-event-card';
             card.dataset.id = event.id;
-            card.dataset.genre = event.genre;
             
-            const favoriteIconSrc = favoritesManager && favoritesManager.isEventFavorite(event.id) ?
-                '../../assets/pictos/filled-star.png' :
-                '../../assets/pictos/star-card.png';
+            // Use the new function to format summer event date correctly
+            const dateFormatted = formatSummerEventDate(event.date);
             
-            // Parse the timestamp for various format displays
-            const timestampValue = event.timestamp?.seconds || event.timestamp || 0;
-            
-            // Format event date information using the original functions
-            const formattedWeekday = formatWeekday(timestampValue);
-            const formattedDayMonth = formatDate(timestampValue);
-            const formattedTime = formatTime(timestampValue);
-            
-            // Get organizer color
-            const organizerColor = getOrganizerColor(event.organizer);
+            // Get organizer color (utiliser un organizer par défaut puisqu'on n'a plus ce champ)
+            const organizerColor = getOrganizerColor('default');
             
             card.innerHTML = `
                 <div class="summer-organizer-bar" style="background-color: ${organizerColor};"></div>
                 <div class="summer-card-content">
                     <div class="summer-card-image-container">
                         <img src="${event.imageUrl}" alt="${event.title}" class="summer-card-image">
-                        <div class="summer-organizer-tag" style="background-color: ${organizerColor};">${event.organizer}</div>
-                        
                     </div>
                     <div class="summer-card-info">
                         <h3 class="summer-event-title">${event.title}</h3>
-                        <p class="summer-event-type">${event.subtitle || 'Type d\'événement'}</p>
-                        <div class="summer-event-location">
-                            <img src="../../assets/pictos/pinMap.png" alt="Location" class="summer-info-icon">
-                            <span>${event.location}</span>
-                        </div>
-                        <div class="summer-event-style">
-                            <img src="../../assets/pictos/MusicNoteBeamed.png" alt="Style" class="summer-info-icon">
-                            <span>${event.genre}</span>
-                        </div>
-                        <div class="summer-event-date">${formattedWeekday} ${formattedDayMonth}</div>
-                        <div class="summer-event-time">${formattedTime}</div>
+                        <p class="summer-event-type">${event.subtitle || ''}</p>
+                        <div class="summer-event-date">${dateFormatted.weekday} ${dateFormatted.dayMonth}</div>
                     </div>
                 </div>
             `;
-            
-            // Ajouter l'événement de clic pour les favoris
-            const favIcon = card.querySelector('.summer-favorite-icon');
-            if (favIcon && favoritesManager) {
-                favIcon.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    favoritesManager.toggleFavorite(event.id, favIcon);
-                });
-            }
-            
-            // Ajouter l'événement de clic pour le bouton info
-            const infoBtn = card.querySelector('.summer-info-btn');
-            if (infoBtn) {
-                infoBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    showEventDetails(event);
-                });
-            }
             
             return card;
         }
@@ -1375,21 +1273,12 @@
                 '../../assets/pictos/filled-star.png' :
                 '../../assets/pictos/star-card.png';
                 
-            // Format timestamp information
-            const timestampValue = event.timestamp?.seconds || event.timestamp || 0;
-            const startTime = formatTime(timestampValue);
-            // For end time, we'll add 2 hours as default if not specified
-            const endTime = event.timestamp_end ? 
-                formatTime(event.timestamp_end) : 
-                formatTime(timestampValue + 7200); // 2 hours = 7200 seconds
-            const timeTag = `${startTime}-${endTime}`;
-            
-            // Format date for display
-            const formattedWeekday = formatWeekday(timestampValue);
-            const formattedDate = formatDate(timestampValue);
+            // Format date for display using the summer event date formatting
+            const dateFormatted = formatSummerEventDate(event.date);
+            const displayDate = `${dateFormatted.weekday} ${dateFormatted.dayMonth}`;
             
             // Try to get GPS coordinates for the location
-            let mapUrl = event.locationUrl || event.plusUrl; // Fallback to original URLs
+            let mapUrl = event.locationUrl || event.moreUrl; // Use correct field names
             
             // Check if GPS URL is pre-loaded (from favorites)
             if (event._gpsUrl) {
@@ -1421,9 +1310,8 @@
                         <div class="details-title-section">
                             <div class="details-title-left">
                                 <h2 class="details-title">${event.title}</h2>
-                                <p class="details-subtitle">${event.subtitle || 'Type d\'événement'}</p>
-                                <p class="details-organizer">Organisé par: ${event.organizer}</p>
-                                <p class="details-date-location">${formattedWeekday} ${formattedDate} | ${event.location}</p>
+                                <p class="details-subtitle">${event.subtitle || ''}</p>
+                                <p class="details-date-location">${displayDate}</p>
                             </div>
                             <div class="details-title-right">
                                 <img src="${favoriteIconSrc}" alt="Ajouter aux favoris" class="details-favorite-icon" data-id="${event.id}">
@@ -1431,45 +1319,23 @@
                         </div>
                         
                         <div class="details-description">
-                            <p>${event.description}</p>
+                            <p>${event.description || 'Aucune description disponible'}</p>
                         </div>
                         
-                        ${event.plusUrl ? `
+                        ${event.moreUrl ? `
                         <div class="details-more-button">
-                            <a href="${event.plusUrl}" target="_blank">
+                            <a href="${event.moreUrl}" target="_blank">
                                 <img src="../../assets/buttons/savoirplusete.png" alt="En savoir plus">
                             </a>
                         </div>` : ''}
                         
-                        <div class="details-info-section">
-                            <div class="details-info-item">
-                                <img src="../../assets/pictos/Clock.png" alt="Time" class="info-icon">
-                                <span>${timeTag}</span>
-                                <span class="details-separator">/</span>
-                                <img src="../../assets/pictos/PinMapmarron.png" alt="Location" class="info-icon">
-                                <span>${event.location}</span>
-                            </div>
-                            
-                            ${mapUrl ? `
-                            <div class="details-map-button">
-                                <a href="${mapUrl}" target="_blank">
-                                    <img src="../../assets/buttons/syrendre.png" alt="Comment s'y rendre">
-                                    ${event._gpsUrl ? '<span style="font-size: 10px; color: #734432; margin-left: 5px;">📍 GPS</span>' : ''}
-                                </a>
-                            </div>` : ''}
-                        </div>
-                        
-                        <div class="details-partners">
-                            <h3>PARTENAIRES</h3>
-                            <div class="partners-grid" id="partners-grid">
-                                ${event.partners && event.partners.length > 0 ? 
-                                    event.partners.map(partner => `
-                                        <img src="${partner}" alt="Partenaire" class="partner-logo">
-                                    `).join('') : 
-                                    '<p style="color: white; text-align: center; width: 100%;">Aucun partenaire pour cet événement</p>'
-                                }
-                            </div>
-                        </div>
+                        ${mapUrl ? `
+                        <div class="details-map-button">
+                            <a href="${mapUrl}" target="_blank">
+                                <img src="../../assets/buttons/syrendre.png" alt="Comment s'y rendre">
+                                ${event._gpsUrl ? '<span style="font-size: 10px; color: #734432; margin-left: 5px;">📍 GPS</span>' : ''}
+                            </a>
+                        </div>` : ''}
                     </div>
                 </div>
             `;
@@ -1520,22 +1386,11 @@
                         subtitle: eventData.subtitle || '',
                         imageUrl: eventData.imageUrl || '../../assets/images/default-event.jpg',
                         location: eventData.location || 'Lieu non spécifié',
-                        genre: eventData.genre || 'Genre non spécifié',
-                        organizer: eventData.organizer || 'Organisateur non spécifié',
-                        // Handle different timestamp formats
-                        timestamp: eventData.timestamp || {
-                            seconds: eventData.timestamp_start || 0,
-                            nanoseconds: 0
-                        },
-                        startDate: eventData.timestamp || eventData.timestamp_start,
-                        endDate: eventData.timestamp_end,
-                        timestamp_end: eventData.timestamp_end,
+                        // Use the correct date field for summer events
+                        date: eventData.date || eventData.timestamp,
                         locationUrl: eventData.locationUrl || '',
-                        description: eventData.description || 'Aucune description disponible',
-                        partners: eventData.partners || [],
-                        plusUrl: eventData.plusUrl || '',
-                        type: eventData.type || '',
-                        style: eventData.genre || eventData.style || 'Musique'
+                        moreUrl: eventData.moreUrl || '',
+                        description: eventData.description || 'Aucune description disponible'
                     };
                     
                     allEvents.push(event);
@@ -1581,26 +1436,18 @@
                 return;
             }
             
-            // Trier les événements par timestamp
+            // Trier les événements par date
             events.sort((a, b) => {
-                const aTime = a.timestamp?.seconds || a.timestamp || 0;
-                const bTime = b.timestamp?.seconds || b.timestamp || 0;
-                return aTime - bTime;
+                const aDate = new Date(a.date?.seconds ? a.date.seconds * 1000 : a.date);
+                const bDate = new Date(b.date?.seconds ? b.date.seconds * 1000 : b.date);
+                return aDate - bDate;
             });
             
             events.forEach(event => {
                 const card = createEventCard(event);
                 
-                // Ajouter un événement de clic à chaque carte (sauf sur les boutons)
+                // Ajouter un événement de clic à chaque carte
                 card.addEventListener('click', (e) => {
-                    // Éviter le clic si on clique sur un bouton ou une icône
-                    if (e.target.classList.contains('summer-favorite-icon') || 
-                        e.target.classList.contains('summer-info-btn') ||
-                        e.target.closest('.summer-favorite-icon') ||
-                        e.target.closest('.summer-info-btn')) {
-                        return;
-                    }
-                    
                     const clickedEvent = allEvents.find(ev => ev.id === event.id);
                     if (clickedEvent) {
                         showEventDetails(clickedEvent);

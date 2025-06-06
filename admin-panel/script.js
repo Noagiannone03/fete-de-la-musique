@@ -677,12 +677,16 @@ function extractValue(item) {
         throw new Error("Missing required event data");
       }
       
+      // Debug: vérifier que moreUrl arrive bien dans la fonction
+      console.log("DEBUG - addSummerEvent - moreUrl reçue:", event.moreUrl);
+      
       const docRef = await addDoc(collection(db, "summer_events"), {
         title:       event.title,
         subtitle:    event.subtitle || null,
         location:    event.location,
         locationName:event.locationName || "",
         date:        Timestamp.fromDate(new Date(event.date)),
+        endDate:     event.endDate ? Timestamp.fromDate(new Date(event.endDate)) : null,
         locationUrl: event.locationUrl || null,
         moreUrl:     event.moreUrl     || null,
         description: event.description || "",
@@ -934,11 +938,12 @@ if (summerEventForm) {
             const subtitleInput = document.getElementById('summer-event-subtitle');
             const locationInput = document.getElementById('summer-event-location');
             const dateInput = document.getElementById('summer-event-date');
+            const endDateInput = document.getElementById('summer-event-end-date');
             const locationUrlInput = document.getElementById('summer-event-location-url');
             const plusUrlInput = document.getElementById('summer-event-plus-url');
             const descriptionInput = document.getElementById('summer-event-description');
             
-            if (!titleInput || !locationInput || !dateInput || !descriptionInput) {
+            if (!titleInput || !locationInput || !dateInput || !endDateInput || !descriptionInput) {
                 throw new Error("Required form elements not found for summer event");
             }
             
@@ -947,12 +952,16 @@ if (summerEventForm) {
             const location = locationInput.value;
             const locationName = location; // Use location as locationName since it's a text input now
             const date = dateInput.value;
+            const endDate = endDateInput.value;
             const locationUrl = locationUrlInput ? locationUrlInput.value : '';
             const plusUrl = plusUrlInput ? plusUrlInput.value : '';
             const description = descriptionInput.value;
             
+            // Debug: vérifier que plusUrl est bien récupéré
+            console.log("DEBUG - Plus URL récupérée:", plusUrl);
+            
             // Validate data
-            if (!title || !location || !date || !description) {
+            if (!title || !location || !date || !endDate || !description) {
                 showToast("Veuillez remplir tous les champs obligatoires", "error");
                 return;
             }
@@ -964,8 +973,9 @@ if (summerEventForm) {
                 location,
                 locationName,
                 date,
+                endDate,
                 locationUrl,
-                plusUrl,
+                moreUrl: plusUrl,  // Correction: mapper plusUrl vers moreUrl pour correspondre à addSummerEvent
                 description
             };
             
@@ -1716,6 +1726,7 @@ async viewEvent(eventId) {
             if (isSummerEvent) {
                 // Structure pour les événements d'été - formatage date sans heure
                 const dateFormatted = eventData.date ? this.formatDateOnly(eventData.date) : '-';
+                const endDateFormatted = eventData.endDate ? this.formatDateOnly(eventData.endDate) : '-';
                 const locationUrl = eventData.locationUrl || '';
                 const moreUrl = eventData.moreUrl || '';
                 
@@ -1731,9 +1742,14 @@ async viewEvent(eventId) {
                             <p>${subtitle}</p>
                         </div>` : ''}
                         <div class="event-detail">
-                            <h4>Date de l'événement</h4>
+                            <h4>Date de début</h4>
                             <p>${dateFormatted}</p>
                         </div>
+                        ${endDateFormatted !== '-' ? `
+                        <div class="event-detail">
+                            <h4>Date de fin</h4>
+                            <p>${endDateFormatted}</p>
+                        </div>` : ''}
                         <div class="event-detail">
                             <h4>Lieu</h4>
                             <p>${location}</p>
@@ -2033,11 +2049,16 @@ async editEvent(eventId, eventData = null) {
         if (isSummerEvent) {
             // Pour les événements d'été - structure simplifiée
             const dateInput = timestampToInputDate(eventData.date);
+            const endDateInput = timestampToInputDate(eventData.endDate);
             
             dateSection = `
                 <div class="form-group">
-                    <label for="edit-date">Date</label>
+                    <label for="edit-date">Date de début</label>
                     <input type="date" id="edit-date" class="swal2-input" value="${dateInput}">
+                </div>
+                <div class="form-group">
+                    <label for="edit-end-date">Date de fin</label>
+                    <input type="date" id="edit-end-date" class="swal2-input" value="${endDateInput}">
                 </div>
             `;
 
@@ -2188,11 +2209,16 @@ async editEvent(eventId, eventData = null) {
                     if (isSummerEvent) {
                         // Pour les événements d'été - structure simplifiée
                         const dateValue = document.getElementById('edit-date').value;
+                        const endDateValue = document.getElementById('edit-end-date').value;
                         const locationUrlValue = document.getElementById('edit-location-url')?.value;
                         const plusUrlValue = document.getElementById('edit-plus-url')?.value;
                         
                         if (dateValue) {
                             formData.date = Timestamp.fromDate(new Date(dateValue));
+                        }
+                        
+                        if (endDateValue) {
+                            formData.endDate = Timestamp.fromDate(new Date(endDateValue));
                         }
                         
                         if (locationUrlValue) {
