@@ -1415,6 +1415,50 @@ formatDate(timestamp) {
         return "Erreur de date";
     }
 }
+
+// Méthode spécialisée pour formater les dates des événements d'été (sans heure)
+formatDateOnly(timestamp) {
+    if (!timestamp) return "Date non définie";
+    
+    let date;
+    try {
+        // Gestion des différents formats possibles
+        if (typeof timestamp === 'string') {
+            date = new Date(timestamp);
+        } else if (timestamp instanceof Timestamp) {
+            date = timestamp.toDate();
+        } else if (timestamp.seconds && timestamp.nanoseconds) {
+            date = new Date(timestamp.seconds * 1000);
+        } else if (timestamp._seconds && timestamp._nanoseconds) {
+            date = new Date(timestamp._seconds * 1000);
+        } else if (typeof timestamp === 'object' && timestamp.toDate instanceof Function) {
+            date = timestamp.toDate();
+        } else if (timestamp instanceof Date) {
+            date = timestamp;
+        } else if (typeof timestamp === 'number') {
+            date = new Date(timestamp);
+        } else {
+            console.error("Format de date non reconnu:", timestamp);
+            return "Format inconnu";
+        }
+        
+        if (isNaN(date.getTime())) {
+            console.error("Date invalide après conversion");
+            return "Date invalide";
+        }
+        
+        // Formatage sans heure pour les événements d'été
+        return date.toLocaleDateString('fr-FR', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+    } catch (error) {
+        console.error("Erreur lors du formatage de la date:", error, "Pour la valeur:", timestamp);
+        return "Erreur de date";
+    }
+}
 // Modifiez la partie de la méthode createEventRow qui gère les formatters
 // À l'intérieur de la classe EventManager, remplacez la partie concernant les formatters par ce code:
 
@@ -1665,93 +1709,127 @@ async viewEvent(eventId) {
             const subtitle = eventData.subtitle || '-';
             const description = eventData.description || '-';
             const location = eventData.location || eventData.locationName || '-';
-            const locationUrl = eventData.locationUrl || '-';
             
-            // Formatage des genres
-            let genreDisplay = '-';
-            if (eventData.genre) {
-                if (Array.isArray(eventData.genre)) {
-                    genreDisplay = eventData.genre.map(g => g.name || g).join(', ');
-                } else {
-                    genreDisplay = eventData.genre;
-                }
-            }
-            
-            // Formatter les dates en fonction du type d'événement
-            let dateSection = '';
+            // Construction du HTML en fonction du type d'événement
+            let viewHtml = '';
             
             if (isSummerEvent) {
-                // Pour les événements d'été
-                const dateFormatted = eventData.date ? this.formatDate(eventData.date) : '-';
-                const organizer = eventData.organizer || '-';
+                // Structure pour les événements d'été - formatage date sans heure
+                const dateFormatted = eventData.date ? this.formatDateOnly(eventData.date) : '-';
+                const locationUrl = eventData.locationUrl || '';
+                const moreUrl = eventData.moreUrl || '';
                 
-                dateSection = `
-                    <div class="event-detail">
-                        <h4>Date</h4>
-                        <p>${dateFormatted}</p>
-                    </div>
-                    <div class="event-detail">
-                        <h4>Organisateur</h4>
-                        <p>${organizer}</p>
+                viewHtml = `
+                    <div class="swal-event-details">
+                        <div class="event-detail">
+                            <h4>Titre</h4>
+                            <p>${title}</p>
+                        </div>
+                        ${subtitle !== '-' ? `
+                        <div class="event-detail">
+                            <h4>Style musical</h4>
+                            <p>${subtitle}</p>
+                        </div>` : ''}
+                        <div class="event-detail">
+                            <h4>Date de l'événement</h4>
+                            <p>${dateFormatted}</p>
+                        </div>
+                        <div class="event-detail">
+                            <h4>Lieu</h4>
+                            <p>${location}</p>
+                        </div>
+                        ${locationUrl ? `
+                        <div class="event-detail">
+                            <h4>URL du lieu</h4>
+                            <p><a href="${locationUrl}" target="_blank" class="event-link">${locationUrl}</a></p>
+                        </div>` : ''}
+                        ${moreUrl ? `
+                        <div class="event-detail">
+                            <h4>Plus d'informations</h4>
+                            <p><a href="${moreUrl}" target="_blank" class="event-link">${moreUrl}</a></p>
+                        </div>` : ''}
+                        <div class="event-detail">
+                            <h4>Description</h4>
+                            <p>${description}</p>
+                        </div>
+                        ${eventData.imageUrl ? `
+                        <div class="event-detail">
+                            <h4>Image de l'événement</h4>
+                            <div class="event-image">
+                                <img src="${eventData.imageUrl}" alt="${title}" style="max-width: 100%; max-height: 300px;">
+                            </div>
+                        </div>` : ''}
                     </div>
                 `;
             } else {
-                // Pour les événements normaux
+                // Structure pour les événements normaux (FDLM)
                 const startDateFormatted = eventData.startDate ? this.formatDate(eventData.startDate) : '-';
                 const endDateFormatted = eventData.endDate ? this.formatDate(eventData.endDate) : '-';
+                const plusUrl = eventData.plusUrl || '';
                 
-                // Formatage des partenaires
+                // Formatage des genres
+                let genreDisplay = '-';
+                if (eventData.genre) {
+                    if (Array.isArray(eventData.genre)) {
+                        genreDisplay = eventData.genre.map(g => g.name || g).join(', ');
+                    } else {
+                        genreDisplay = eventData.genre;
+                    }
+                }
+                
+                // Formatage des partenaires  
                 let partnersDisplay = '-';
                 if (eventData.partners && Array.isArray(eventData.partners)) {
                     partnersDisplay = eventData.partners.map(p => p.name || p).join(', ');
                 }
                 
-                dateSection = `
-                    <div class="event-detail">
-                        <h4>Date de début</h4>
-                        <p>${startDateFormatted}</p>
-                    </div>
-                    <div class="event-detail">
-                        <h4>Date de fin</h4>
-                        <p>${endDateFormatted}</p>
+                viewHtml = `
+                    <div class="swal-event-details">
+                        <div class="event-detail">
+                            <h4>Titre</h4>
+                            <p>${title}</p>
+                        </div>
+                        ${subtitle !== '-' ? `
+                        <div class="event-detail">
+                            <h4>Sous-titre</h4>
+                            <p>${subtitle}</p>
+                        </div>` : ''}
+                        <div class="event-detail">
+                            <h4>Date de début</h4>
+                            <p>${startDateFormatted}</p>
+                        </div>
+                        <div class="event-detail">
+                            <h4>Date de fin</h4>
+                            <p>${endDateFormatted}</p>
+                        </div>
+                        <div class="event-detail">
+                            <h4>Point de son</h4>
+                            <p>${location}</p>
+                        </div>
+                        ${genreDisplay !== '-' ? `
+                        <div class="event-detail">
+                            <h4>Genre musical</h4>
+                            <p>${genreDisplay}</p>
+                        </div>` : ''}
+                        ${plusUrl ? `
+                        <div class="event-detail">
+                            <h4>Plus d'informations</h4>
+                            <p><a href="${plusUrl}" target="_blank" class="event-link">${plusUrl}</a></p>
+                        </div>` : ''}
+                        <div class="event-detail">
+                            <h4>Description</h4>
+                            <p>${description}</p>
+                        </div>
+                        ${eventData.imageUrl ? `
+                        <div class="event-detail">
+                            <h4>Image de l'artiste</h4>
+                            <div class="event-image">
+                                <img src="${eventData.imageUrl}" alt="${title}" style="max-width: 100%; max-height: 300px;">
+                            </div>
+                        </div>` : ''}
                     </div>
                 `;
             }
-            
-            // Création du contenu HTML pour l'affichage
-            const viewHtml = `
-                <div class="swal-event-details">
-                    <div class="event-detail">
-                        <h4>Titre</h4>
-                        <p>${title}</p>
-                    </div>
-                    <div class="event-detail">
-                        <h4>Sous-titre</h4>
-                        <p>${subtitle}</p>
-                    </div>
-                    ${dateSection}
-                    <div class="event-detail">
-                        <h4>Lieu</h4>
-                        <p>${location}</p>
-                    </div>
-                    
-                    <div class="event-detail">
-                        <h4>Genre</h4>
-                        <p>${genreDisplay}</p>
-                    </div>
-                    <div class="event-detail">
-                        <h4>Description</h4>
-                        <p>${description}</p>
-                    </div>
-                    ${eventData.imageUrl ? `
-                    <div class="event-detail">
-                        <h4>Image</h4>
-                        <div class="event-image">
-                            <img src="${eventData.imageUrl}" alt="${title}" style="max-width: 100%; max-height: 300px;">
-                        </div>
-                    </div>` : ''}
-                </div>
-            `;
             
             // Afficher le overlay de visualisation
             Swal.fire({
@@ -1797,6 +1875,13 @@ async viewEvent(eventId) {
                     margin-bottom: 15px;
                     border-bottom: 1px solid #eee;
                     padding-bottom: 10px;
+                    transition: background-color 0.2s ease;
+                }
+                .event-detail:hover {
+                    background-color: #f8f9fa;
+                    border-radius: 4px;
+                    padding: 10px;
+                    margin: 0 -10px 15px -10px;
                 }
                 .event-detail:last-child {
                     border-bottom: none;
@@ -1806,14 +1891,39 @@ async viewEvent(eventId) {
                     color: #555;
                     font-size: 14px;
                     font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
                 }
                 .event-detail p {
-                    margin: 5px 0 0;
+                    margin: 8px 0 0;
                     font-size: 16px;
+                    line-height: 1.5;
+                    color: #333;
+                }
+                .event-link {
+                    color: #3085d6;
+                    text-decoration: none;
+                    border-bottom: 1px solid transparent;
+                    transition: all 0.2s ease;
+                }
+                .event-link:hover {
+                    border-bottom-color: #3085d6;
+                    color: #1c5aa0;
                 }
                 .event-image {
                     margin-top: 10px;
                     text-align: center;
+                    background: #f8f9fa;
+                    padding: 15px;
+                    border-radius: 8px;
+                }
+                .event-image img {
+                    border-radius: 8px;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                    transition: transform 0.2s ease;
+                }
+                .event-image img:hover {
+                    transform: scale(1.02);
                 }
             `;
             document.head.appendChild(styleElement);
