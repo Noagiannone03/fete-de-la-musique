@@ -1275,7 +1275,13 @@
                 
             // Format date for display using the summer event date formatting
             const dateFormatted = formatSummerEventDate(event.date);
-            const displayDate = `${dateFormatted.weekday} ${dateFormatted.dayMonth}`;
+            let displayDate = `${dateFormatted.weekday} ${dateFormatted.dayMonth}`;
+            
+            // Ajouter la date de fin si elle existe
+            if (event.endDate) {
+                const endDateFormatted = formatSummerEventDate(event.endDate);
+                displayDate += ` | ${endDateFormatted.weekday} ${endDateFormatted.dayMonth}`;
+            }
             
             // Try to get GPS coordinates for the location
             let mapUrl = event.locationUrl || event.moreUrl; // Use correct field names
@@ -1388,6 +1394,7 @@
                         location: eventData.location || 'Lieu non spécifié',
                         // Use the correct date field for summer events
                         date: eventData.date || eventData.timestamp,
+                        endDate: eventData.endDate || null, // Ajouter la date de fin
                         locationUrl: eventData.locationUrl || '',
                         moreUrl: eventData.moreUrl || '',
                         description: eventData.description || 'Aucune description disponible'
