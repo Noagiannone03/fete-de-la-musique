@@ -411,9 +411,7 @@ function initializeHardcodedData() {
         // Populate dropdowns
         populateSelectDropdown('event-location', locations);
         populateMultiselectDropdown('event-genre', genres);
-        populateMultiselectDropdown('summer-event-genre', genres);
         populateMultiselectDropdown('event-partners', partners);
-        populateMultiselectDropdown('summer-event-partners', partners);
     } catch (error) {
         console.error("Error initializing hardcoded data:", error);
         showToast("Erreur lors de l'initialisation des données", "error");
@@ -679,22 +677,15 @@ function extractValue(item) {
         throw new Error("Missing required event data");
       }
       
-      const genresArray   = (event.genres   || []).map(extractValue);
-      const partnersArray = (event.partners || []).map(extractValue);
-      
       const docRef = await addDoc(collection(db, "summer_events"), {
         title:       event.title,
         subtitle:    event.subtitle || null,
         location:    event.location,
         locationName:event.locationName || "",
-        genre:       genresArray,
-        organizer:   event.organizer || "",
         date:        Timestamp.fromDate(new Date(event.date)),
-        endDate:     event.endDate ? Timestamp.fromDate(new Date(event.endDate)) : null,
         locationUrl: event.locationUrl || null,
         moreUrl:     event.moreUrl     || null,
         description: event.description || "",
-        partners:    partnersArray,
         imageUrl:    event.imageUrl || null,
         createdAt:   Timestamp.now(),
         updatedAt:   Timestamp.now()
@@ -912,16 +903,6 @@ if (summerEventCancelButton) {
                 previewElement.style.display = 'none';
             }
             
-            const genreSelectedElement = document.getElementById('summer-event-genre-selected');
-            if (genreSelectedElement) {
-                genreSelectedElement.innerHTML = '';
-            }
-            
-            const partnersSelectedElement = document.getElementById('summer-event-partners-selected');
-            if (partnersSelectedElement) {
-                partnersSelectedElement.innerHTML = '';
-            }
-            
             summerEventImageFile = null;
         }
     });
@@ -951,38 +932,27 @@ if (summerEventForm) {
             // Get form values
             const titleInput = document.getElementById('summer-event-title');
             const subtitleInput = document.getElementById('summer-event-subtitle');
-            const locationSelect = document.getElementById('summer-event-location');
-            const genreInput = document.getElementById('summer-event-genre');
-            const organizerInput = document.getElementById('summer-event-organizer');
+            const locationInput = document.getElementById('summer-event-location');
             const dateInput = document.getElementById('summer-event-date');
-            const endDateInput = document.getElementById('summer-event-end-date');
             const locationUrlInput = document.getElementById('summer-event-location-url');
             const plusUrlInput = document.getElementById('summer-event-plus-url');
             const descriptionInput = document.getElementById('summer-event-description');
-            const partnersInput = document.getElementById('summer-event-partners');
             
-            if (!titleInput || !locationSelect || !genreInput || !dateInput || 
-                !organizerInput || !descriptionInput) {
+            if (!titleInput || !locationInput || !dateInput || !descriptionInput) {
                 throw new Error("Required form elements not found for summer event");
             }
             
             const title = titleInput.value;
             const subtitle = subtitleInput ? subtitleInput.value : '';
-            const location = locationSelect ? subtitleInput.value : '';
-            const locationName = locationSelect ? subtitleInput.value : '';;
-            const genresValue = genreInput.value;
-            const genres = genresValue ? JSON.parse(genresValue) : [];
-            const organizer = organizerInput.value;
+            const location = locationInput.value;
+            const locationName = location; // Use location as locationName since it's a text input now
             const date = dateInput.value;
-            const endDate = endDateInput ? endDateInput.value : '';
             const locationUrl = locationUrlInput ? locationUrlInput.value : '';
             const plusUrl = plusUrlInput ? plusUrlInput.value : '';
             const description = descriptionInput.value;
-            const partnersValue = partnersInput ? partnersInput.value : '[]';
-            const partners = partnersValue ? JSON.parse(partnersValue) : [];
             
             // Validate data
-            if (!title || !location || genres.length === 0 || !date || !organizer || !description) {
+            if (!title || !location || !date || !description) {
                 showToast("Veuillez remplir tous les champs obligatoires", "error");
                 return;
             }
@@ -993,14 +963,10 @@ if (summerEventForm) {
                 subtitle,
                 location,
                 locationName,
-                genres,
-                organizer,
                 date,
-                endDate,
                 locationUrl,
                 plusUrl,
-                description,
-                partners
+                description
             };
             
             // Convertir l'image en Base64 si présente
@@ -1024,16 +990,6 @@ if (summerEventForm) {
             const previewElement = document.getElementById('summer-event-image-preview');
             if (previewElement) {
                 previewElement.style.display = 'none';
-            }
-            
-            const genreSelectedElement = document.getElementById('summer-event-genre-selected');
-            if (genreSelectedElement) {
-                genreSelectedElement.innerHTML = '';
-            }
-            
-            const partnersSelectedElement = document.getElementById('summer-event-partners-selected');
-            if (partnersSelectedElement) {
-                partnersSelectedElement.innerHTML = '';
             }
             
             summerEventImageFile = null;
@@ -1931,31 +1887,58 @@ async editEvent(eventId, eventData = null) {
         const locationUrl = eventData.locationUrl || '';
         const description = eventData.description || '';
         
+        // Fonction pour convertir timestamp en string pour input date
+        const timestampToInputDate = (timestamp) => {
+            if (!timestamp) return '';
+            
+            let date;
+            try {
+                if (timestamp instanceof Timestamp) {
+                    date = timestamp.toDate();
+                } else if (timestamp.seconds && timestamp.nanoseconds) {
+                    date = new Date(timestamp.seconds * 1000);
+                } else if (timestamp._seconds && timestamp._nanoseconds) {
+                    date = new Date(timestamp._seconds * 1000);
+                } else if (timestamp instanceof Date) {
+                    date = timestamp;
+                } else {
+                    date = new Date(timestamp);
+                }
+                
+                if (isNaN(date.getTime())) return '';
+                
+                // Retourne au format YYYY-MM-DD pour input de type date
+                return date.toISOString().split('T')[0];
+            } catch (e) {
+                console.error("Erreur conversion timestamp:", e);
+                return '';
+            }
+        };
+
         // Préparation des valeurs pour le formulaire en fonction du type d'événement
         let dateSection = '';
-        let genreValue = '';
-        
-        if (eventData.genre) {
-            if (Array.isArray(eventData.genre)) {
-                genreValue = eventData.genre.map(g => g.name || g).join(', ');
-            } else {
-                genreValue = eventData.genre;
-            }
-        }
+        let genreSection = '';
+        let additionalFields = '';
         
         if (isSummerEvent) {
-            // Pour les événements d'été
-            const dateInput = timestampToInputDatetime(eventData.date);
-            const organizer = eventData.organizer || '';
+            // Pour les événements d'été - structure simplifiée
+            const dateInput = timestampToInputDate(eventData.date);
             
             dateSection = `
                 <div class="form-group">
                     <label for="edit-date">Date</label>
-                    <input type="datetime-local" id="edit-date" class="swal2-input" value="${dateInput}">
+                    <input type="date" id="edit-date" class="swal2-input" value="${dateInput}">
+                </div>
+            `;
+
+            additionalFields = `
+                <div class="form-group">
+                    <label for="edit-location-url">URL du lieu</label>
+                    <input type="url" id="edit-location-url" class="swal2-input" value="${locationUrl}">
                 </div>
                 <div class="form-group">
-                    <label for="edit-organizer">Organisateur</label>
-                    <input type="text" id="edit-organizer" class="swal2-input" value="${organizer}">
+                    <label for="edit-plus-url">URL Plus d'info</label>
+                    <input type="url" id="edit-plus-url" class="swal2-input" value="${eventData.moreUrl || ''}">
                 </div>
             `;
         } else {
@@ -1967,6 +1950,15 @@ async editEvent(eventId, eventData = null) {
             if (eventData.partners && Array.isArray(eventData.partners)) {
                 partnersValue = eventData.partners.map(p => p.name || p).join(', ');
             }
+
+            let genreValue = '';
+            if (eventData.genre) {
+                if (Array.isArray(eventData.genre)) {
+                    genreValue = eventData.genre.map(g => g.name || g).join(', ');
+                } else {
+                    genreValue = eventData.genre;
+                }
+            }
             
             dateSection = `
                 <div class="form-group">
@@ -1977,7 +1969,20 @@ async editEvent(eventId, eventData = null) {
                     <label for="edit-end-date">Date de fin</label>
                     <input type="datetime-local" id="edit-end-date" class="swal2-input" value="${endDateInput}">
                 </div>
-             
+            `;
+
+            genreSection = `
+                <div class="form-group">
+                    <label for="edit-genre">Genre (séparés par des virgules)</label>
+                    <input type="text" id="edit-genre" class="swal2-input" value="${genreValue}">
+                </div>
+            `;
+
+            additionalFields = `
+                <div class="form-group">
+                    <label for="edit-plus-url">URL Plus d'info</label>
+                    <input type="url" id="edit-plus-url" class="swal2-input" value="${eventData.plusUrl || ''}">
+                </div>
             `;
         }
         
@@ -1989,7 +1994,7 @@ async editEvent(eventId, eventData = null) {
                     <input type="text" id="edit-title" class="swal2-input" value="${title}" required>
                 </div>
                 <div class="form-group">
-                    <label for="edit-subtitle">Sous-titre</label>
+                    <label for="edit-subtitle">${isSummerEvent ? 'Style musical' : 'Sous-titre'}</label>
                     <input type="text" id="edit-subtitle" class="swal2-input" value="${subtitle}">
                 </div>
                 ${dateSection}
@@ -1997,11 +2002,8 @@ async editEvent(eventId, eventData = null) {
                     <label for="edit-location">Lieu</label>
                     <input type="text" id="edit-location" class="swal2-input" value="${location}">
                 </div>
-               
-                <div class="form-group">
-                    <label for="edit-genre">Genre (séparés par des virgules)</label>
-                    <input type="text" id="edit-genre" class="swal2-input" value="${genreValue}">
-                </div>
+                ${genreSection}
+                ${additionalFields}
                 <div class="form-group">
                     <label for="edit-description">Description</label>
                     <textarea id="edit-description" class="swal2-textarea">${description}</textarea>
@@ -2074,21 +2076,30 @@ async editEvent(eventId, eventData = null) {
                     
                     // Collecte des données spécifiques au type d'événement
                     if (isSummerEvent) {
-                        // Pour les événements d'été
+                        // Pour les événements d'été - structure simplifiée
                         const dateValue = document.getElementById('edit-date').value;
-                        const organizer = document.getElementById('edit-organizer').value;
+                        const locationUrlValue = document.getElementById('edit-location-url')?.value;
+                        const plusUrlValue = document.getElementById('edit-plus-url')?.value;
                         
                         if (dateValue) {
                             formData.date = Timestamp.fromDate(new Date(dateValue));
                         }
                         
-                        if (organizer) {
-                            formData.organizer = organizer;
+                        if (locationUrlValue) {
+                            formData.locationUrl = locationUrlValue;
                         }
+                        
+                        if (plusUrlValue) {
+                            formData.moreUrl = plusUrlValue;
+                        }
+
+                        // Set locationName same as location for summer events
+                        formData.locationName = formData.location;
                     } else {
                         // Pour les événements normaux
                         const startDateValue = document.getElementById('edit-start-date').value;
                         const endDateValue = document.getElementById('edit-end-date').value;
+                        const plusUrlValue = document.getElementById('edit-plus-url')?.value;
                         
                         if (startDateValue) {
                             formData.startDate = Timestamp.fromDate(new Date(startDateValue));
@@ -2098,15 +2109,17 @@ async editEvent(eventId, eventData = null) {
                             formData.endDate = Timestamp.fromDate(new Date(endDateValue));
                         }
                         
-                       
-                    }
-                    
-                    // Gestion du genre pour tous les types d'événements
-                    const genreValue = document.getElementById('edit-genre').value;
-                    if (genreValue) {
-                        formData.genre = genreValue.split(',').map(g => g.trim()).filter(g => g);
-                    } else {
-                        formData.genre = [];
+                        if (plusUrlValue) {
+                            formData.plusUrl = plusUrlValue;
+                        }
+
+                        // Gestion du genre pour les événements normaux uniquement
+                        const genreValue = document.getElementById('edit-genre')?.value;
+                        if (genreValue) {
+                            formData.genre = genreValue.split(',').map(g => g.trim()).filter(g => g);
+                        } else {
+                            formData.genre = [];
+                        }
                     }
                     
                     // Gestion de l'image
@@ -2487,23 +2500,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             return event.location || event.locationName || '-';
                         }
                     },
-                    { 
-                        key: 'organizer', 
-                        label: 'Organisateur',
-                        formatter: function(event) {
-                            return event.organizer || '-';
-                        }
-                    },
-                    { 
-                        key: 'genre', 
-                        label: 'Genre',
-                        formatter: function(event) {
-                            if (!event.genre) return '-';
-                            return Array.isArray(event.genre) 
-                                ? event.genre.map(g => g.name || g).join(', ')
-                                : event.genre;
-                        }
-                    },
+
                     { 
                         key: 'description', 
                         label: 'Description',
@@ -2516,7 +2513,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ],
                 searchFields: [
                     'title', 'subtitle', 'location', 'locationName', 
-                    'organizer', 'genre', 'description'
+                    'description'
                 ]
             }
         );
