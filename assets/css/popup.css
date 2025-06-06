@@ -5,12 +5,18 @@
   left: 0;
   width: 100vw;
   height: 100vh;
+  /* Forcer la hauteur minimum pour mobile */
+  min-height: 100vh;
   background: rgba(30, 30, 30, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
   animation: fadeIn 0.3s;
+  /* Empêcher le scroll et forcer le positionnement */
+  overflow: hidden;
+  /* Support pour les anciens navigateurs mobiles */
+  -webkit-overflow-scrolling: touch;
 }
 
 @keyframes fadeIn {
@@ -32,6 +38,8 @@
   animation: popupAppear 0.38s cubic-bezier(.4,1.7,.6,.97);
   padding: 0;
   margin: 0;
+  /* Centrage forcé pour mobile */
+  flex-shrink: 0;
 }
 
 @keyframes popupAppear {
@@ -45,6 +53,13 @@
   object-fit: contain;
   display: block;
   border-radius: 12px;
+  /* Empêcher la sélection sur mobile */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  /* Empêcher le zoom sur double-tap */
+  touch-action: manipulation;
 }
 
 .fdlm-popup-close {
@@ -65,6 +80,9 @@
   align-items: center;
   justify-content: center;
   font-weight: bold;
+  /* Améliorer le toucher sur mobile */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .fdlm-popup-close:hover {
@@ -103,24 +121,89 @@
   to { opacity: 0; transform: scale(0.95); }
 }
 
+/* Améliorations pour mobile */
+@media (max-width: 768px) {
+  .fdlm-popup-overlay {
+    /* Forcer le centrage vertical sur mobile */
+    align-items: center;
+    justify-content: center;
+    /* Gérer les barres d'adresse mobile */
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height pour mobile */
+  }
+  
+  .fdlm-popup {
+    max-width: 92vw;
+    max-height: 85vh;
+    /* Centrage forcé */
+    margin: auto;
+  }
+}
+
 @media (max-width: 520px) {
+  .fdlm-popup-overlay {
+    /* Position absolue en fallback pour les anciens mobiles */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+  }
+  
   .fdlm-popup {
     max-width: 95vw;
-    max-height: 85vh;
+    max-height: 80vh;
+    /* Assurer le centrage même avec des contenus variables */
+    align-self: center;
+    justify-self: center;
   }
   
   .fdlm-popup-close {
     top: 8px;
     right: 12px;
-    width: 35px;
-    height: 35px;
+    width: 36px;
+    height: 36px;
     font-size: 1.8rem;
+    /* Zone de toucher plus large sur mobile */
+    padding: 8px;
+    margin: -8px;
   }
 }
 
 @media (max-width: 375px) {
   .fdlm-popup {
     max-width: 98vw;
-    max-height: 80vh;
+    max-height: 75vh;
+  }
+  
+  .fdlm-popup-close {
+    width: 32px;
+    height: 32px;
+    font-size: 1.6rem;
+  }
+}
+
+/* Fix pour iOS Safari et les problèmes de viewport */
+@supports (-webkit-appearance: none) and (not (transform-style: preserve-3d)) {
+  .fdlm-popup-overlay {
+    /* Fix pour Safari mobile */
+    height: -webkit-fill-available;
+  }
+}
+
+/* Fix pour les très petits écrans */
+@media (max-height: 500px) {
+  .fdlm-popup {
+    max-height: 90vh;
+  }
+}
+
+/* Amélioration du contraste pour les écrans avec luminosité élevée */
+@media (prefers-contrast: high) {
+  .fdlm-popup-close {
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid white;
   }
 }
