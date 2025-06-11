@@ -27,7 +27,7 @@
     DEBUG_MODE: true,  // ← Réactivé pour vérifier que ça marche
     
     // Délai avant affichage du popup (en millisecondes)
-    DISPLAY_DELAY: 2000  // ← 2 secondes après le chargement
+    DISPLAY_DELAY: 200  // ← 2 secondes après le chargement
   };
 
   const STORAGE_KEYS = {
