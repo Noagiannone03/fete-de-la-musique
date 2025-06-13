@@ -145,7 +145,7 @@
     log('🎨 Création du popup...');
     
     // Image du popup - change cette URL pour ton image
-    const imageUrl = 'assets/images/popup.png';
+    const imageUrl = 'assets/images/popup.jpg';
     // URL de redirection - change cette URL pour ta destination
     const redirectUrl = 'https://fb.me/e/2lyU8hYyY';
 
