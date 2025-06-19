@@ -1502,6 +1502,34 @@ function selectSoundPoint(soundPoint) {
         event.location.toLowerCase() === soundPoint.name.toLowerCase()
     );
     
+    // Sort events by start time chronologically
+    filteredEvents.sort((a, b) => {
+        if (!a.timestamp || !a.timestamp.start) return 1; // Place events without start time at the end
+        if (!b.timestamp || !b.timestamp.start) return -1;
+        
+        let startA, startB;
+        
+        if (typeof a.timestamp.start === 'object' && a.timestamp.start.seconds) {
+            startA = a.timestamp.start.seconds;
+        } else if (typeof a.timestamp.start === 'number') {
+            startA = a.timestamp.start;
+        } else if (typeof a.timestamp.start === 'string') {
+            // Tentative de conversion en Date puis en timestamp
+            startA = new Date(a.timestamp.start).getTime() / 1000;
+        }
+        
+        if (typeof b.timestamp.start === 'object' && b.timestamp.start.seconds) {
+            startB = b.timestamp.start.seconds;
+        } else if (typeof b.timestamp.start === 'number') {
+            startB = b.timestamp.start;
+        } else if (typeof b.timestamp.start === 'string') {
+            // Tentative de conversion en Date puis en timestamp
+            startB = new Date(b.timestamp.start).getTime() / 1000;
+        }
+        
+        return startA - startB;
+    });
+    
     // Update the event list with filtered events
     updateEventList(filteredEvents);
     

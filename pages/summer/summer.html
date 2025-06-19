@@ -1519,6 +1519,46 @@
 
                 console.log(`Chargé ${allEvents.length} événements d'été et ${soundPoints.length} points sonores`);
 
+                // Trier les événements par date avant de les afficher
+                allEvents.sort((a, b) => {
+                    if (!a.date) return 1;
+                    if (!b.date) return -1;
+                    
+                    let dateA, dateB;
+                    
+                    // Gérer différents formats de date pour A
+                    if (typeof a.date === 'object' && a.date.seconds) {
+                        dateA = a.date.seconds;
+                    } else if (typeof a.date === 'number') {
+                        dateA = a.date;
+                    } else if (typeof a.date === 'string') {
+                        dateA = new Date(a.date).getTime() / 1000;
+                    } else if (a.date instanceof Date) {
+                        dateA = a.date.getTime() / 1000;
+                    } else if (typeof a.date?.toDate === 'function') {
+                        dateA = a.date.toDate().getTime() / 1000;
+                    }
+                    
+                    // Gérer différents formats de date pour B
+                    if (typeof b.date === 'object' && b.date.seconds) {
+                        dateB = b.date.seconds;
+                    } else if (typeof b.date === 'number') {
+                        dateB = b.date;
+                    } else if (typeof b.date === 'string') {
+                        dateB = new Date(b.date).getTime() / 1000;
+                    } else if (b.date instanceof Date) {
+                        dateB = b.date.getTime() / 1000;
+                    } else if (typeof b.date?.toDate === 'function') {
+                        dateB = b.date.toDate().getTime() / 1000;
+                    }
+                    
+                    // S'assurer que les dates sont valides
+                    if (isNaN(dateA)) return 1;
+                    if (isNaN(dateB)) return -1;
+                    
+                    return dateA - dateB;
+                });
+
                 // Mettre à jour les données du gestionnaire de favoris
                 if (favoritesManager) {
                     favoritesManager.setEventsData(allEvents, soundPoints);
@@ -1542,11 +1582,47 @@
                 return;
             }
             
-            // Trier les événements par date
+            // Trier les événements par date chronologiquement
             events.sort((a, b) => {
-                const aDate = new Date(a.date?.seconds ? a.date.seconds * 1000 : a.date);
-                const bDate = new Date(b.date?.seconds ? b.date.seconds * 1000 : b.date);
-                return aDate - bDate;
+                if (!a.date) return 1; // Place events without date at the end
+                if (!b.date) return -1;
+                
+                let dateA, dateB;
+                
+                // Gérer différents formats de date pour A
+                if (typeof a.date === 'object' && a.date.seconds) {
+                    dateA = a.date.seconds;
+                } else if (typeof a.date === 'number') {
+                    dateA = a.date;
+                } else if (typeof a.date === 'string') {
+                    // Tentative de conversion en Date puis en timestamp
+                    dateA = new Date(a.date).getTime() / 1000;
+                } else if (a.date instanceof Date) {
+                    dateA = a.date.getTime() / 1000;
+                } else if (typeof a.date?.toDate === 'function') {
+                    dateA = a.date.toDate().getTime() / 1000;
+                }
+                
+                // Gérer différents formats de date pour B
+                if (typeof b.date === 'object' && b.date.seconds) {
+                    dateB = b.date.seconds;
+                } else if (typeof b.date === 'number') {
+                    dateB = b.date;
+                } else if (typeof b.date === 'string') {
+                    // Tentative de conversion en Date puis en timestamp
+                    dateB = new Date(b.date).getTime() / 1000;
+                } else if (b.date instanceof Date) {
+                    dateB = b.date.getTime() / 1000;
+                } else if (typeof b.date?.toDate === 'function') {
+                    dateB = b.date.toDate().getTime() / 1000;
+                }
+                
+                // S'assurer que les dates sont valides
+                if (isNaN(dateA)) return 1;
+                if (isNaN(dateB)) return -1;
+                
+                // Tri croissant : du plus proche au plus lointain
+                return dateA - dateB;
             });
             
             events.forEach(event => {
