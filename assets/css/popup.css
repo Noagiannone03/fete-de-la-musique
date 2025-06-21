@@ -62,6 +62,62 @@
   touch-action: manipulation;
 }
 
+/* Styles optimisés pour la vidéo du popup */
+.fdlm-popup-video {
+  width: 100%;
+  height: auto;
+  max-height: 80vh;
+  object-fit: contain;
+  display: block;
+  border-radius: 12px;
+  background: #000;
+  
+  /* Optimisations pour mobile */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  
+  /* Empêcher le zoom sur double-tap */
+  touch-action: manipulation;
+  
+  /* Optimisations performance vidéo */
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  
+  /* Forcer l'accélération matérielle */
+  will-change: transform;
+  
+  /* Précharger les contrôles vidéo si nécessaire */
+  outline: none;
+  
+  /* Transition fluide */
+  transition: opacity 0.3s ease;
+}
+
+/* États de la vidéo */
+.fdlm-popup-video::-webkit-media-controls {
+  display: none !important;
+}
+
+.fdlm-popup-video::-webkit-media-controls-enclosure {
+  display: none !important;
+}
+
+/* Fallback pour les navigateurs qui ne supportent pas les vidéos */
+.fdlm-popup-video[data-error="true"] {
+  display: none;
+}
+
+/* Loading state pour la vidéo */
+.fdlm-popup-video:not([data-loaded="true"]) {
+  opacity: 0.8;
+  background: #000 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="20" fill="none" stroke="white" stroke-width="2" stroke-dasharray="31.416" stroke-dashoffset="31.416"><animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/></circle></svg>') center center no-repeat;
+  background-size: 40px 40px;
+}
+
 .fdlm-popup-close {
   position: absolute;
   top: 10px;
@@ -138,6 +194,12 @@
     /* Centrage forcé */
     margin: auto;
   }
+  
+  /* Vidéo optimisée pour tablette */
+  .fdlm-popup-video {
+    max-height: 75vh;
+    min-height: 200px;
+  }
 }
 
 @media (max-width: 520px) {
@@ -170,6 +232,18 @@
     padding: 8px;
     margin: -8px;
   }
+  
+  /* Vidéo optimisée pour mobile */
+  .fdlm-popup-video {
+    max-height: 70vh;
+    min-height: 180px;
+    /* Optimisations spécifiques mobile */
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+    /* Améliorer la qualité sur mobile */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+  }
 }
 
 @media (max-width: 375px) {
@@ -182,6 +256,15 @@
     width: 32px;
     height: 32px;
     font-size: 1.6rem;
+  }
+  
+  /* Vidéo optimisée pour très petits écrans */
+  .fdlm-popup-video {
+    max-height: 65vh;
+    min-height: 160px;
+    /* Réduire la qualité pour améliorer les performances */
+    -webkit-filter: contrast(1.1) brightness(1.05);
+    filter: contrast(1.1) brightness(1.05);
   }
 }
 
@@ -197,6 +280,17 @@
 @media (max-height: 500px) {
   .fdlm-popup {
     max-height: 90vh;
+  }
+  
+  /* Optimisation vidéo pour mode paysage mobile */
+  .fdlm-popup-video {
+    max-height: 85vh;
+    min-height: 120px;
+    /* Centrage forcé en mode paysage */
+    margin: 0 auto;
+    /* Performance optimisée pour mode paysage */
+    -webkit-transform: translateZ(0) scale(1);
+    transform: translateZ(0) scale(1);
   }
 }
 

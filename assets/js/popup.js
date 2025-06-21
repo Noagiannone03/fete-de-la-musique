@@ -144,8 +144,8 @@
   function createPopup() {
     log('🎨 Création du popup...');
     
-    // Image du popup - change cette URL pour ton image
-    const imageUrl = 'assets/images/popup.jpg';
+    // Vidéo du popup - optimisée pour le chargement mobile
+    const videoUrl = 'assets/videos/4nap-phone.mov';
     // URL de redirection - change cette URL pour ta destination
     const redirectUrl = 'https://fb.me/e/2lyU8hYyY';
 
@@ -154,7 +154,23 @@
     overlay.innerHTML = `
       <div class="fdlm-popup">
         <button class="fdlm-popup-close" aria-label="Fermer">&times;</button>
-        <img class="fdlm-popup-image" src="${imageUrl}" alt="Fête de la Musique" loading="eager" style="cursor: pointer;">
+        <video 
+          class="fdlm-popup-video" 
+          src="${videoUrl}" 
+          preload="metadata"
+          muted
+          autoplay
+          loop
+          playsinline
+          webkit-playsinline
+          style="cursor: pointer; width: 100%; height: auto; max-height: 80vh; object-fit: contain;"
+          poster=""
+          onloadstart="console.log('[POPUP] Début du chargement vidéo')"
+          oncanplay="console.log('[POPUP] Vidéo prête à être lue')"
+          onerror="console.error('[POPUP] Erreur de chargement vidéo'); this.style.display='none';"
+        >
+          Votre navigateur ne supporte pas la vidéo HTML5.
+        </video>
       </div>
     `;
     
@@ -169,11 +185,49 @@
     // Fermeture popup
     const closeBtn = overlay.querySelector('.fdlm-popup-close');
     const popup = overlay.querySelector('.fdlm-popup');
-    const popupImage = overlay.querySelector('.fdlm-popup-image');
+    const popupVideo = overlay.querySelector('.fdlm-popup-video');
+    
+    // Optimisations vidéo pour mobile
+    if (popupVideo) {
+      // Forcer le démarrage de la vidéo
+      popupVideo.load();
+      
+      // Gestion des événements vidéo
+      popupVideo.addEventListener('loadedmetadata', () => {
+        log('📹 Métadonnées vidéo chargées');
+      });
+      
+      popupVideo.addEventListener('canplay', () => {
+        log('📹 Vidéo prête à être lue');
+        // Tenter de lancer la vidéo
+        const playPromise = popupVideo.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            log('⚠️ Autoplay bloqué, vidéo en attente d\'interaction:', error.message);
+          });
+        }
+      });
+      
+      popupVideo.addEventListener('error', (e) => {
+        log('❌ Erreur de chargement vidéo:', e);
+        // Fallback : masquer la vidéo et afficher un message
+        popupVideo.style.display = 'none';
+        const errorMsg = document.createElement('div');
+        errorMsg.innerHTML = '<p style="color: white; text-align: center; padding: 20px;">Impossible de charger la vidéo</p>';
+        popup.appendChild(errorMsg);
+      });
+    }
     
     function closePopup(e) {
       if (e) e.preventDefault();
       log('❌ Fermeture du popup');
+      
+      // Arrêter la vidéo avant de fermer
+      if (popupVideo && !popupVideo.paused) {
+        popupVideo.pause();
+        popupVideo.currentTime = 0;
+      }
+      
       overlay.classList.add('fdlm-popup-hide');
       document.body.style.overflow = '';
       setTimeout(() => {
@@ -183,7 +237,7 @@
       }, 300);
     }
 
-    // Redirection au clic sur l'image
+    // Redirection au clic sur la vidéo
     function redirectToUrl(e) {
       e.preventDefault();
       e.stopPropagation();
@@ -199,11 +253,13 @@
     closeBtn.addEventListener('click', closePopup);
     closeBtn.addEventListener('touchend', closePopup);
     
-    // Événement de redirection sur l'image
-    popupImage.addEventListener('click', redirectToUrl);
-    popupImage.addEventListener('touchend', redirectToUrl);
+    // Événement de redirection sur la vidéo
+    if (popupVideo) {
+      popupVideo.addEventListener('click', redirectToUrl);
+      popupVideo.addEventListener('touchend', redirectToUrl);
+    }
     
-    // Fermer en cliquant sur l'overlay (mais pas sur l'image)
+    // Fermer en cliquant sur l'overlay (mais pas sur la vidéo)
     overlay.addEventListener('click', function(e) {
       if (e.target === overlay) {
         closePopup(e);
@@ -221,8 +277,8 @@
     
     // Gestion spéciale pour iOS - empêcher le zoom sur double-tap
     popup.addEventListener('touchstart', function(e) {
-      // Ne pas empêcher le clic sur l'image
-      if (e.target !== popupImage) {
+      // Ne pas empêcher le clic sur la vidéo
+      if (e.target !== popupVideo) {
         e.preventDefault();
       }
     });
