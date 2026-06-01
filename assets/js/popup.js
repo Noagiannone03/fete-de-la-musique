@@ -2,10 +2,13 @@
 (function() {
   // === CONFIGURATION ===
   const CONFIG = {
+    // Interrupteur global : passer à true pour réactiver le popup au lancement
+    ENABLED: false,
+
     // Options d'affichage (choisir UNE seule option) :
     
     // Option 1: Afficher à chaque visite (pour les tests)
-    SHOW_ALWAYS: true,  // ← Activé : popup à chaque visite !
+    SHOW_ALWAYS: false,
     
     // Option 2: Afficher toutes les X visites
     SHOW_EVERY_X_VISITS: {
@@ -24,7 +27,7 @@
     },
     
     // Debug: afficher les logs dans la console
-    DEBUG_MODE: true,  // ← Réactivé pour vérifier que ça marche
+    DEBUG_MODE: false,
     
     // Délai avant affichage du popup (en millisecondes)
     DISPLAY_DELAY: 200  // ← 2 secondes après le chargement
@@ -333,6 +336,11 @@
 
   async function initPopup() {
     log('🚀 Initialisation du popup...');
+
+    if (!CONFIG.ENABLED) {
+      log('Popup désactivé (CONFIG.ENABLED = false)');
+      return;
+    }
     
     // Vérifier si on doit afficher le popup
     if (shouldShowPopup()) {
@@ -371,10 +379,10 @@
     }
   };
 
-  // Fonction pour forcer l'affichage du popup (utile pour les tests)
+  // Fonction pour forcer l'affichage du popup (utile pour les tests, même si ENABLED = false)
   window.forceShowPopup = function() {
     createPopup();
-    console.log('✅ Popup forcé');
+    console.log('✅ Popup forcé (affichage manuel)');
   };
 
   // Fonction pour voir l'état actuel
