@@ -1086,22 +1086,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 loginContainer.style.display = 'none';
             }
             
-            // Afficher le contenu de l'admin (vous devrez ajuster selon votre structure)
-            const adminContent = document.getElementByid('dashboard-container');
+            // Afficher le contenu de l'admin
+            const adminContent = document.getElementById('dashboard-container');
             if (adminContent) {
                 adminContent.style.display = 'flex';
             }
         } else {
             // Utilisateur non connecté
             console.log("Utilisateur non connecté");
-            
+
             // Afficher la page de connexion et masquer le contenu admin
             if (loginContainer) {
                 loginContainer.style.display = 'flex';
             }
-            
+
             // Masquer le contenu de l'admin
-            const adminContent = document.getElementById('admin-content');
+            const adminContent = document.getElementById('dashboard-container');
             if (adminContent) {
                 adminContent.style.display = 'none';
             }

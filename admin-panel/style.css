@@ -904,9 +904,9 @@ animation: spin 1s ease-in-out infinite;
     background-color: var(--bg-alt);
 }
 
-/* Hide dashboard initially */
+/* Hide dashboard initially - shown by JS after auth check */
 #dashboard-container {
-    display:flex;
+    display: none;
 }
 
 
