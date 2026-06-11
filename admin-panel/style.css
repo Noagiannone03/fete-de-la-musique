@@ -2,7 +2,7 @@
     --primary: #4F46E5;
     --primary-hover: #4338CA;
     --secondary: #F9FAFB;
-    --accent: #EC4899;
+    --accent: #e1ce05;
     --text: #111827;
     --text-light: #6B7280;
     --bg: #FFFFFF;
@@ -278,8 +278,8 @@ body {
     color: var(--primary);
 }
 
-.stats-icon.pink {
-    background-color: rgba(236, 72, 153, 0.1);
+.stats-icon.yellow {
+    background-color: rgba(225, 206, 5, 0.16);
     color: var(--accent);
 }
 

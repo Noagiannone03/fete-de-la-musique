@@ -1611,7 +1611,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         .sound-point-title {
         font-family: 'inter-bold', sans-serif;
-            color: #F48FBB;
+            color: #e1ce05;
             font-size: 1.3em;
      
             margin: 0 0 5px 0;
@@ -1722,7 +1722,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         .back-to-sound-points:hover {
-            color: #FF81A8;
+            color: #e1ce05;
         }
         
         .back-to-sound-points span {

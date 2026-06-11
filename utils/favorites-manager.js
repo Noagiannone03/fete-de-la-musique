@@ -365,7 +365,7 @@ class FavoritesManager {
             }
             
             .details-title {
-                color: #D2775B;
+                color: #e1ce05;
                 font-family: 'inter-bold', sans-serif;
                 font-size: 24px;
                 margin-bottom: 8px;
