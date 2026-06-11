@@ -10,7 +10,7 @@
     <link rel="preload" as="image" href="../../assets/pictos/pinMap.png">
     <link rel="preload" as="image" href="../../assets/pictos/MusicNoteBeamed.png">
     <link rel="preload" as="image" href="../../assets/pictos/Clock.png">
-    <link rel="preload" as="image" href="../../assets/pictos/PinMapmarron.png">
+    <link rel="preload" as="image" href="../../assets/pictos/pinmap-bleu.svg">
     <link rel="preload" as="image" href="../../assets/buttons/syrendre.png">
     <link rel="preload" as="image" href="../../assets/pictos/star-card.png">
     <link rel="preload" as="image" href="../../assets/buttons/savoirplusete.png">
@@ -163,9 +163,9 @@
             width: 22%;
             padding: 8px 5px;
             border-radius: 10px;
-            border: 2px solid #734432;
+            border: 2px solid #06409e;
             background-color: white;
-            color: #734432;
+            color: #06409e;
             font-size: 12px;
             text-align: center;
             cursor: pointer;
@@ -173,8 +173,8 @@
         }
         
         .filter-chip.active {
-            background-color: #D892B4;
-            border: 2px solid #D892B4;
+            background-color: #e1ce05;
+            border: 2px solid #e1ce05;
 
             color: white;
         }
@@ -206,14 +206,14 @@
         }
         
         .time-selector span {
-            color: #734432;
+            color: #06409e;
         }
         
         .time-select {
             padding: 8px 15px;
-            border: 0px solid #D892B4;
+            border: 0px solid #e1ce05;
             border-radius: 5px;
-            color: #D892B4;
+            color: #e1ce05;
             background-color: white;
         }
         
@@ -230,17 +230,17 @@
             padding-top: 7px;
             padding-bottom: 7px;
             border-radius: 10px;
-            border: 1px solid #734432;
-            color: #734432;
+            border: 1px solid #06409e;
+            color: #06409e;
             font-size: 12px;
             cursor: pointer;
             transition: all 0.2s ease;
         }
         
         .location-chip.active {
-            background-color: #D892B4;
+            background-color: #e1ce05;
             color: white;
-            border-color: #D892B4;
+            border-color: #e1ce05;
         }
         
         .location-detail {
@@ -550,7 +550,7 @@
         /* Organizer color bar on the left */
         .summer-organizer-bar {
             width: 10px;
-            background-color: #D892B4; /* Default color, will be overridden */
+            background-color: #e1ce05; /* Default color, will be overridden */
             height: auto;
         }
 
@@ -580,7 +580,7 @@
         .summer-event-title {
             font-family: 'inter-bold', sans-serif;
             text-transform: uppercase;
-            color: #734432;
+            color: #06409e;
             font-size: 19px;
             font-weight: normal;
             margin-bottom: 3px;
@@ -595,7 +595,7 @@
 
         .summer-event-date {
             margin-top: 15px;
-            color: #734432;
+            color: #06409e;
             font-size: 16px;
             font-weight: bold;
         }
@@ -684,7 +684,7 @@
             left: 0;
             width: 100%;
             height: 4px;
-            background: linear-gradient(90deg, #D892B4, #D2775B, #734432);
+            background: linear-gradient(90deg, #e1ce05, #D2775B, #06409e);
             border-radius: 12px 12px 0 0;
         }
         
@@ -713,7 +713,7 @@
         }
 
         .favorites-empty h3 {
-            color: #734432;
+            color: #06409e;
             margin: 20px 0;
         }
 
@@ -731,7 +731,7 @@
         }
 
         .back-to-program {
-            color: #734432;
+            color: #06409e;
             text-decoration: none;
             font-weight: bold;
             display: inline-block;
@@ -797,7 +797,7 @@
             right: 15px;
             width: 45px; /* Larger button */
             height: 45px; /* Larger button */
-            background-color: #734432;
+            background-color: #06409e;
             border-radius: 50%;
             border: none;
             font-size: 26px;
@@ -831,7 +831,7 @@
         }
 
         .details-subtitle {
-            color: #403B23;
+            color: #06409e;
             font-weight: normal;
             font-size: 17px; /* Larger font */
             font-family: 'inter-medium', sans-serif;
@@ -850,7 +850,7 @@
 
         .details-description {
             padding: 0 20px 20px; /* Increased padding */
-            color: #403B23;
+            color: #06409e;
             height: fit-content;
             font-size: 16px; /* Larger font */
             font-family: 'inter-regular', sans-serif;
@@ -887,7 +887,7 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 20px; /* Increased margin */
-            color: #403B23;
+            color: #06409e;
             font-family: 'inter-semi-bold', sans-serif;
             font-size: 16px; /* Larger font */
         }
@@ -900,7 +900,7 @@
 
         .details-separator {
             margin: 0 15px; /* Increased margin */
-            color: #403B23;
+            color: #06409e;
             font-weight: bold;
         }
 
@@ -1259,7 +1259,7 @@
                 'Association Musicale': '#FF5964',
                 'Club Brise-Glace': '#38618C',
                 'Conservatoire': '#35A7FF',
-                'default': '#D892B4'
+                'default': '#e1ce05'
             };
             
             return colorMap[organizer] || colorMap['default'];
@@ -1425,7 +1425,7 @@
                         <div class="details-map-button">
                             <a href="${mapUrl}" target="_blank">
                                 <img src="../../assets/buttons/syrendre.png" alt="Comment s'y rendre">
-                                ${event._gpsUrl ? '<span style="font-size: 10px; color: #734432; margin-left: 5px;">📍 GPS</span>' : ''}
+                                ${event._gpsUrl ? '<span style="font-size: 10px; color: #06409e; margin-left: 5px;">📍 GPS</span>' : ''}
                             </a>
                         </div>` : ''}
                     </div>
@@ -1569,7 +1569,7 @@
 
             } catch (error) {
                 console.error("Erreur lors du chargement des données Firebase:", error);
-                eventList.innerHTML = '<p style="color: #734432; text-align: center; padding: 20px;">Erreur lors du chargement des événements. Veuillez réessayer.</p>';
+                eventList.innerHTML = '<p style="color: #06409e; text-align: center; padding: 20px;">Erreur lors du chargement des événements. Veuillez réessayer.</p>';
             }
         }
 
@@ -1578,7 +1578,7 @@
             eventList.innerHTML = '';
             
             if (events.length === 0) {
-                eventList.innerHTML = '<p style="color: #734432; text-align: center; padding: 20px;">Aucun événement d\'été trouvé.</p>';
+                eventList.innerHTML = '<p style="color: #06409e; text-align: center; padding: 20px;">Aucun événement d\'été trouvé.</p>';
                 return;
             }
             

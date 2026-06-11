@@ -143,7 +143,7 @@
         
         .preview-card-time {
             height: fit-content;
-            background-color: #734432;
+            background-color: #06409e;
             color: white;
             padding: 5px 10px;
             border-radius: 5px;
@@ -246,7 +246,7 @@
             right: 15px;
             width: 45px;
             height: 45px;
-            background-color: #734432;
+            background-color: #06409e;
             border-radius: 50%;
             border: none;
             font-size: 26px;
@@ -281,7 +281,7 @@
         }
         
         .details-subtitle {
-            color: #403B23;
+            color: #06409e;
             font-size: 18px;
             font-family: 'inter-medium', sans-serif;
         }
@@ -299,7 +299,7 @@
         
         .details-description {
             padding: 0 20px 20px;
-            color: #403B23;
+            color: #06409e;
             font-size: 16px;
             font-family: 'inter-regular', sans-serif;
         }
@@ -335,7 +335,7 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 20px;
-            color: #403B23;
+            color: #06409e;
             font-family: 'inter-semi-bold', sans-serif;
             font-size: 16px;
         }
@@ -353,12 +353,12 @@
         
         .details-separator {
             margin: 0 15px;
-            color: #403B23;
+            color: #06409e;
             font-weight: bold;
         }
         
         .details-partners-section {
-            background-color: #734432;
+            background-color: #06409e;
             color: white;
             padding: 25px 20px;
             flex-shrink: 0;
@@ -422,7 +422,7 @@
         
         /* Styles pour les partenaires */
         .details-partners {
-            background-color: #734432;
+            background-color: #06409e;
             color: white;
             padding: 25px 20px;
             flex-shrink: 0;
@@ -488,7 +488,7 @@
         
         /* Styles pour la grille de partenaires */
         .details-partners {
-            background-color: #734432;
+            background-color: #06409e;
             color: white;
             padding: 25px 20px;
             flex-shrink: 0;
@@ -568,7 +568,7 @@
             height: 30px;
             border-radius: 50%;
             cursor: pointer;
-            border: 2px solid #734432;
+            border: 2px solid #06409e;
         }
         
         /* Styles pour le skeleton loading */
@@ -637,7 +637,7 @@
         }
 
         .favorites-btn {
-            background-color: #734432;
+            background-color: #06409e;
             color: white;
             font-family: 'inter-bold', sans-serif;
             border: none;
@@ -663,7 +663,7 @@
             display: block;
             height: 3px;
             width: 100%;
-            background-color: #734432;
+            background-color: #06409e;
             border-radius: 3px;
             transition: all 0.3s ease;
         }
@@ -707,7 +707,7 @@
         .menu-item {
             padding: 1.125rem 0;
             font-size: 1.5rem;
-            color: #734432;
+            color: #06409e;
             font-family: 'inter-bold', sans-serif;
             text-transform: uppercase;
             text-decoration: none;
@@ -718,7 +718,7 @@
         .menu-divider {
             width: 100%;
             height: 1px;
-            background-color: #734432;
+            background-color: #06409e;
             margin: 5px 0;
         }
 
@@ -1628,7 +1628,7 @@ async function showEventDetails(event) {
                 ${moreInfoUrl ? `
                 <div class="details-more-button">
                     <a href="${moreInfoUrl}" target="_blank">
-                        <img src="../../assets/buttons/savoirplusmarron.png" alt="En savoir plus">
+                        <img src="../../assets/buttons/savoirplusbleu.svg" alt="En savoir plus">
                     </a>
                 </div>` : ''}
                 
@@ -1637,7 +1637,7 @@ async function showEventDetails(event) {
                         <img src="../../assets/pictos/Clock.png" alt="Time" class="info-icon">
                         <span>${timeTag}</span>
                         <span class="details-separator">/</span>
-                        <img src="../../assets/pictos/PinMapmarron.png" alt="Location" class="info-icon">
+                        <img src="../../assets/pictos/pinmap-bleu.svg" alt="Location" class="info-icon">
                         <span>${event.location || ''}</span>
                     </div>
                     
@@ -1645,7 +1645,7 @@ async function showEventDetails(event) {
                     <div class="details-map-button">
                         <a href="${mapUrl}" target="_blank">
                             <img src="../../assets/buttons/syrendre.png" alt="Comment s'y rendre">
-                            ${event._gpsUrl ? '<span style="font-size: 10px; color: #734432; margin-left: 5px;">📍 GPS</span>' : ''}
+                            ${event._gpsUrl ? '<span style="font-size: 10px; color: #06409e; margin-left: 5px;">📍 GPS</span>' : ''}
                         </a>
                     </div>` : ''}
                 </div>
@@ -1890,7 +1890,7 @@ async function showPartnerDetails(partnerId, detailsOverlay) {
                     <div class="details-contact-info" style="margin: 20px 0;">
                         ${partner.address ? `
                         <div class="contact-item" style="display: flex; align-items: flex-start; margin-bottom: 10px;">
-                            <img src="../../assets/pictos/PinMapmarron.png" alt="Adresse" class="info-icon" style="width: 20px; height: 20px; margin-right: 10px; margin-top: 2px;">
+                            <img src="../../assets/pictos/pinmap-bleu.svg" alt="Adresse" class="info-icon" style="width: 20px; height: 20px; margin-right: 10px; margin-top: 2px;">
                             <span>${partner.address}</span>
                         </div>` : ''}
                         
@@ -1906,7 +1906,7 @@ async function showPartnerDetails(partnerId, detailsOverlay) {
                         <a href="${partner.website.startsWith('http') ? partner.website : 'https://' + partner.website}" 
                            target="_blank" 
                            style="display: inline-block;">
-                            <img src="../../assets/buttons/savoirplusmarron.png" alt="Voir le site web" style="height: 40px;">
+                            <img src="../../assets/buttons/savoirplusbleu.svg" alt="Voir le site web" style="height: 40px;">
                         </a>
                     </div>` : ''}
                 </div>

@@ -206,7 +206,7 @@ class FavoritesManager {
                 position: absolute;
                 top: 5px;
                 left: 0px;
-                background-color: #D892B4;
+                background-color: #e1ce05;
                 color: white;
                 padding: 5px 10px;
                 transform: rotate(-7deg);
@@ -224,7 +224,7 @@ class FavoritesManager {
             }
             
             .favorites-overlay .event-title {
-                color: #734432;
+                color: #06409e;
                 font-size: 18px;
                 font-weight: bold;
                 margin-bottom: 5px;
@@ -234,7 +234,7 @@ class FavoritesManager {
             }
             
             .favorites-overlay .event-type {
-                color: #D892B4;
+                color: #e1ce05;
                 font-size: 14px;
                 margin-bottom: 10px;
                 font-family: 'inter-medium', sans-serif;
@@ -246,7 +246,7 @@ class FavoritesManager {
                 display: flex;
                 align-items: center;
                 margin-bottom: 8px;
-                color: #734432;
+                color: #06409e;
                 font-size: 14px;
                 font-family: 'inter-regular', sans-serif;
                 text-align: left;
@@ -337,7 +337,7 @@ class FavoritesManager {
                 right: 15px;
                 width: 45px;
                 height: 45px;
-                background-color: #734432;
+                background-color: #06409e;
                 border-radius: 50%;
                 border: none;
                 font-size: 26px;
@@ -372,7 +372,7 @@ class FavoritesManager {
             }
             
             .details-subtitle {
-                color: #403B23;
+                color: #06409e;
                 font-size: 18px;
                 font-family: 'inter-medium', sans-serif;
             }
@@ -390,7 +390,7 @@ class FavoritesManager {
             
             .details-description {
                 padding: 0 20px 20px;
-                color: #403B23;
+                color: #06409e;
                 font-size: 16px;
                 font-family: 'inter-regular', sans-serif;
             }
@@ -426,14 +426,14 @@ class FavoritesManager {
                 align-items: center;
                 justify-content: center;
                 margin-bottom: 20px;
-                color: #403B23;
+                color: #06409e;
                 font-family: 'inter-semi-bold', sans-serif;
                 font-size: 16px;
             }
             
             .details-separator {
                 margin: 0 15px;
-                color: #403B23;
+                color: #06409e;
                 font-weight: bold;
             }
             
@@ -455,7 +455,7 @@ class FavoritesManager {
             }
             
             .details-partners {
-                background-color: #734432;
+                background-color: #06409e;
                 color: white;
                 padding: 25px 20px;
                 flex-shrink: 0;
@@ -989,13 +989,13 @@ class FavoritesManager {
                     width: 50px;
                     height: 50px;
                     border: 3px solid #f3f3f3;
-                    border-top: 3px solid #734432;
+                    border-top: 3px solid #06409e;
                     border-radius: 50%;
                     animation: favoritesSpinner 1s linear infinite;
                 "></div>
                 <p style="
                     margin-top: 20px;
-                    color: #734432;
+                    color: #06409e;
                     font-family: 'inter-medium', sans-serif;
                     font-size: 16px;
                 ">Chargement de vos favoris...</p>

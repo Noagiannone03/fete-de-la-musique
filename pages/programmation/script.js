@@ -444,7 +444,7 @@ async function showEventDetails(event) {
                 ${event.plusUrl ? `
                 <div class="details-more-button">
                     <a href="${event.plusUrl}" target="_blank">
-                        <img src="../../assets/buttons/savoirplusmarron.png" alt="En savoir plus">
+                        <img src="../../assets/buttons/savoirplusbleu.svg" alt="En savoir plus">
                     </a>
                 </div>` : ''}
                 
@@ -453,7 +453,7 @@ async function showEventDetails(event) {
                         <img src="../../assets/pictos/Clock.png" alt="Time" class="info-icon">
                         <span>${timeTag}</span>
                         <span class="details-separator">/</span>
-                        <img src="../../assets/pictos/PinMapmarron.png" alt="Location" class="info-icon">
+                        <img src="../../assets/pictos/pinmap-bleu.svg" alt="Location" class="info-icon">
                         <span>${event.location}</span>
                     </div>
                     
@@ -731,7 +731,7 @@ async function fetchEvents() {
         const remainingTime = Math.max(0, 600 - elapsedTime);
         
         setTimeout(() => {
-            eventList.innerHTML = '<p style="color: #734432; text-align: center; padding: 20px;">Erreur lors du chargement des données. Veuillez réessayer.</p>';
+            eventList.innerHTML = '<p style="color: #06409e; text-align: center; padding: 20px;">Erreur lors du chargement des données. Veuillez réessayer.</p>';
         }, remainingTime);
     }
 }
@@ -1032,7 +1032,7 @@ function applyFilters() {
         eventList.innerHTML = '';
         
         if (events.length === 0) {
-            eventList.innerHTML = '<p style="color: #734432; text-align: center; padding: 20px;">Aucun événement ne correspond à vos critères de recherche.</p>';
+            eventList.innerHTML = '<p style="color: #06409e; text-align: center; padding: 20px;">Aucun événement ne correspond à vos critères de recherche.</p>';
             return;
         }
         
@@ -1113,19 +1113,19 @@ function applyFilters() {
                     width: 50px;
                     height: 50px;
                     border: 3px solid #f3f3f3;
-                    border-top: 3px solid #734432;
+                    border-top: 3px solid #06409e;
                     border-radius: 50%;
                     animation: favoritesSpinner 1s linear infinite;
                 "></div>
                 <p style="
                     margin-top: 20px;
-                    color: #734432;
+                    color: #06409e;
                     font-family: 'inter-medium', sans-serif;
                     font-size: 16px;
                 ">Chargement de vos favoris...</p>
                 <p style="
                     margin-top: 10px;
-                    color: #734432;
+                    color: #06409e;
                     font-family: 'inter-medium', sans-serif;
                     font-size: 14px;
                     opacity: 0.7;
@@ -1206,7 +1206,7 @@ function applyFilters() {
       max-width: 300px; margin: 20px auto; display: block;">
                     <div style="
                         text-align: center; 
-                        color: #734432; 
+                        color: #06409e; 
                         font-size: 12px; 
                         margin-top: 10px;
                         opacity: 0.8;
@@ -1715,7 +1715,7 @@ document.addEventListener('DOMContentLoaded', () => {
             display: flex;
             align-items: center;
             margin: 15px 0;
-            color: #734432;
+            color: #06409e;
             font-weight: 500;
             cursor: pointer;
             transition: color 0.2s ease;
@@ -1777,7 +1777,7 @@ function updateSoundPointsList(soundPoints) {
     eventList.classList.add('sound-points-grid');
     
     if (soundPoints.length === 0) {
-        eventList.innerHTML = '<p style="color: #734432; text-align: center; padding: 20px; width: 100%;">Aucun point de son trouvé.</p>';
+        eventList.innerHTML = '<p style="color: #06409e; text-align: center; padding: 20px; width: 100%;">Aucun point de son trouvé.</p>';
         return;
     }
     
@@ -2077,7 +2077,7 @@ async function showPartnerDetails(partnerId, detailsOverlay) {
                     <div class="details-contact-info" style="padding-left: 20px;">
                         ${partner.address ? `
                         <div class="contact-item">
-                            <img src="../../assets/pictos/PinMapmarron.png" alt="Adresse" class="info-icon">
+                            <img src="../../assets/pictos/pinmap-bleu.svg" alt="Adresse" class="info-icon">
                             <span>${partner.address}</span>
                         </div>` : ''}
                         
@@ -2090,7 +2090,7 @@ async function showPartnerDetails(partnerId, detailsOverlay) {
                     ${partner.website ? `
                     <div class="details-more-button">
                         <a href="${partner.website}" target="_blank">
-                            <img src="../../assets/buttons/savoirplusmarron.png" alt="Site web">
+                            <img src="../../assets/buttons/savoirplusbleu.svg" alt="Site web">
                         </a>
                     </div>` : ''}
                     

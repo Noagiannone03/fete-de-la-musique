@@ -41,9 +41,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Fête de la Musique">
-    <meta name="theme-color" content="#734432">
-    <meta name="msapplication-navbutton-color" content="#734432">
-    <meta name="apple-mobile-web-app-status-bar-style" content="#734432">
+    <meta name="theme-color" content="#06409e">
+    <meta name="msapplication-navbutton-color" content="#06409e">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#06409e">
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="assets/logo/favicon.png">
@@ -64,7 +64,7 @@
             "@type": "Organization",
             "name": "La Fête c'est Nous"
         },
-        "image": "assets/images/affiche-mobile@2x.png",
+        "image": "assets/images/fete-musique-toulon-2026.jpg",
         "url": ""
     }
     </script>
@@ -157,7 +157,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #d791b4;
+            background-color: #e1ce05;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -228,7 +228,7 @@
         }
 
         .favorites-btn {
-            background-color: #734432;
+            background-color: #06409e;
             color: white;
             font-family: 'inter-bold', sans-serif;
             border: none;
@@ -275,7 +275,7 @@
             display: block;
             height: 3px;
             width: 100%;
-            background-color: #734432;
+            background-color: #06409e;
             border-radius: 3px;
             transition: all 0.3s ease;
         }
@@ -450,7 +450,7 @@
             right: 15px;
             width: 45px;
             height: 45px;
-            background-color: #734432;
+            background-color: #06409e;
             border-radius: 50%;
             border: none;
             font-size: 26px;
@@ -485,7 +485,7 @@
         }
         
         .details-subtitle {
-            color: #403B23;
+            color: #06409e;
             font-size: 18px;
             font-family: 'inter-medium', sans-serif;
         }
@@ -503,7 +503,7 @@
         
         .details-description {
             padding: 0 20px 20px;
-            color: #403B23;
+            color: #06409e;
             font-size: 16px;
             font-family: 'inter-regular', sans-serif;
         }
@@ -539,7 +539,7 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 20px;
-            color: #403B23;
+            color: #06409e;
             font-family: 'inter-semi-bold', sans-serif;
             font-size: 16px;
         }
@@ -557,7 +557,7 @@
         
         .details-separator {
             margin: 0 15px;
-            color: #403B23;
+            color: #06409e;
             font-weight: bold;
         }
         
@@ -566,7 +566,7 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 20px;
-            color: #403B23;
+            color: #06409e;
             font-family: 'inter-semi-bold', sans-serif;
             font-size: 16px;
         }
@@ -589,7 +589,7 @@
         }
         
         .details-partners {
-            background-color: #734432;
+            background-color: #06409e;
             color: white;
             padding: 25px 20px;
             flex-shrink: 0;
@@ -743,7 +743,7 @@
         .menu-item {
             padding: 1.125rem 0 !important;
             font-size: 1.5rem !important;
-            color: #734432 !important;
+            color: #06409e !important;
             font-family: 'inter-bold', sans-serif !important;
             text-transform: uppercase !important;
             text-decoration: none !important;
@@ -758,7 +758,7 @@
         .menu-divider {
             width: 100%;
             height: 1px;
-            background-color: #734432;
+            background-color: #06409e;
             margin: 5px 0;
         }
 
@@ -775,9 +775,9 @@
 
         .hero-image {
             width: 100%;
-            height: fit-content;
-          
-            object-fit: cover;
+            max-height: calc(100vh - 10rem);
+            height: auto;
+            object-fit: contain;
             display: block;
             background-color: #ffffff;
         }
@@ -873,7 +873,7 @@
 
     <!-- Contenu principal -->
     <main class="main-content">
-        <img src="assets/images/affiche-mobile@2x.png"  alt="Image principale" class="hero-image">
+        <img src="assets/images/fete-musique-toulon-2026.jpg"  alt="Image principale" class="hero-image">
         <img src="assets/buttons/programmation-button.png" alt="Découvrir la programmation" class="action-button-image" onclick="window.location.href='pages/programmation/programmation.html'">
     </main>
 
@@ -1100,7 +1100,7 @@
                         ${event.plusUrl ? `
                         <div class="details-more-button">
                             <a href="${event.plusUrl}" target="_blank">
-                                <img src="assets/buttons/savoirplusmarron.png" alt="En savoir plus">
+                                <img src="assets/buttons/savoirplusbleu.svg" alt="En savoir plus">
                             </a>
                         </div>` : ''}
                         
@@ -1109,7 +1109,7 @@
                                 <img src="assets/pictos/Clock.png" alt="Time" class="info-icon">
                                 <span>${timeTag}</span>
                                 <span class="details-separator">/</span>
-                                <img src="assets/pictos/PinMapmarron.png" alt="Location" class="info-icon">
+                                <img src="assets/pictos/pinmap-bleu.svg" alt="Location" class="info-icon">
                                 <span>${event.location || ''}</span>
                             </div>
                             
@@ -1117,7 +1117,7 @@
                             <div class="details-map-button">
                                 <a href="${mapUrl}" target="_blank">
                                     <img src="assets/buttons/syrendre.png" alt="Comment s'y rendre">
-                                    ${event._gpsUrl ? '<span style="font-size: 10px; color: #734432; margin-left: 5px;">📍 GPS</span>' : ''}
+                                    ${event._gpsUrl ? '<span style="font-size: 10px; color: #06409e; margin-left: 5px;">📍 GPS</span>' : ''}
                                 </a>
                             </div>` : ''}
                         </div>
@@ -1307,7 +1307,7 @@
                             <div class="details-contact-info" style="margin: 20px 0;">
                                 ${partner.address ? `
                                 <div class="contact-item">
-                                    <img src="assets/pictos/PinMapmarron.png" alt="Adresse" class="info-icon">
+                                    <img src="assets/pictos/pinmap-bleu.svg" alt="Adresse" class="info-icon">
                                     <span>${partner.address}</span>
                                 </div>` : ''}
                                 
@@ -1322,7 +1322,7 @@
                             <div class="details-more-button" style="text-align: center; margin-top: 20px;">
                                 <a href="${partner.website.startsWith('http') ? partner.website : 'https://' + partner.website}" 
                                    target="_blank">
-                                    <img src="assets/buttons/savoirplusmarron.png" alt="Voir le site web" style="height: 40px;">
+                                    <img src="assets/buttons/savoirplusbleu.svg" alt="Voir le site web" style="height: 40px;">
                                 </a>
                             </div>` : ''}
                         </div>
