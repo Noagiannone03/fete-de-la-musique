@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const linkToPageMap = {
             'dashboard': 'dashboard',
             'summer-events': 'summer-events',
+            'partners-list': 'partners-list',
             'add-event': 'add-event',
             'add-partner': 'add-partner',
             'pointdeson': 'pointdeson' // Correction pour utiliser pointdeson comme ID

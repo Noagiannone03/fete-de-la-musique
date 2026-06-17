@@ -274,7 +274,7 @@
         }
         
         .details-title {
-            color: #e1ce05;
+            color: #06409e;
             font-family: 'inter-bold', sans-serif;
             font-size: 24px;
             margin-bottom: 8px;
@@ -776,6 +776,18 @@
         .body-no-scroll {
             overflow: hidden;
         }
+        .menu-icon {
+            display: none !important;
+            pointer-events: none !important;
+        }
+
+        .menu-overlay,
+        .menu-overlay.active {
+            display: none !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
     </style>
     <!-- Importer l'API Google Maps avec la clé -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBjA9ZA490VxOTYxl28k2e25S3sOrS_CQw&callback=initMap" defer></script>

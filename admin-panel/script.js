@@ -24,6 +24,98 @@ const storage = getStorage(app);
 let eventImageFile = null;
 let summerEventImageFile = null;
 
+function padDatePart(value) {
+    return String(value).padStart(2, '0');
+}
+
+function timestampToDate(timestamp) {
+    if (!timestamp) return null;
+
+    if (timestamp instanceof Date) {
+        return Number.isNaN(timestamp.getTime()) ? null : timestamp;
+    }
+
+    if (timestamp instanceof Timestamp || typeof timestamp.toDate === 'function') {
+        const date = timestamp.toDate();
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    if (timestamp.seconds !== undefined) {
+        const date = new Date(timestamp.seconds * 1000 + (timestamp.nanoseconds || 0) / 1000000);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    if (timestamp._seconds !== undefined) {
+        const date = new Date(timestamp._seconds * 1000 + (timestamp._nanoseconds || 0) / 1000000);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    const date = new Date(timestamp);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function toDatetimeLocalInputValue(timestamp) {
+    const date = timestampToDate(timestamp);
+    if (!date) return '';
+
+    return [
+        date.getFullYear(),
+        padDatePart(date.getMonth() + 1),
+        padDatePart(date.getDate())
+    ].join('-') + 'T' + [
+        padDatePart(date.getHours()),
+        padDatePart(date.getMinutes())
+    ].join(':');
+}
+
+function toDateInputValue(timestamp) {
+    const date = timestampToDate(timestamp);
+    if (!date) return '';
+
+    return [
+        date.getFullYear(),
+        padDatePart(date.getMonth() + 1),
+        padDatePart(date.getDate())
+    ].join('-');
+}
+
+function localDateTimeInputToDate(value) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value || '');
+    if (!match) return null;
+
+    const [, year, month, day, hour, minute] = match.map(Number);
+    const date = new Date(year, month - 1, day, hour, minute, 0, 0);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function localDateInputToDate(value) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '');
+    if (!match) return null;
+
+    const [, year, month, day] = match.map(Number);
+    const date = new Date(year, month - 1, day, 0, 0, 0, 0);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function localDateTimeInputToTimestamp(value) {
+    const date = localDateTimeInputToDate(value);
+    return date ? Timestamp.fromDate(date) : null;
+}
+
+function localDateInputToTimestamp(value) {
+    const date = localDateInputToDate(value);
+    return date ? Timestamp.fromDate(date) : null;
+}
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 // Déclaration du tableau locations comme avant, mais vide au départ
 let locations = [];
 
@@ -654,8 +746,8 @@ function extractValue(item) {
         location:    event.location,
         locationName:event.locationName || "",
         genre:       genresArray,
-        startDate:   Timestamp.fromDate(new Date(event.startDate)),
-        endDate:     Timestamp.fromDate(new Date(event.endDate)),
+        startDate:   localDateTimeInputToTimestamp(event.startDate),
+        endDate:     localDateTimeInputToTimestamp(event.endDate),
         plusUrl:     event.plusUrl     || null,
         description: event.description || "",
         imageUrl:    event.imageUrl || null,
@@ -685,8 +777,8 @@ function extractValue(item) {
         subtitle:    event.subtitle || null,
         location:    event.location,
         locationName:event.locationName || "",
-        date:        Timestamp.fromDate(new Date(event.date)),
-        endDate:     event.endDate ? Timestamp.fromDate(new Date(event.endDate)) : null,
+        date:        localDateInputToTimestamp(event.date),
+        endDate:     event.endDate ? localDateInputToTimestamp(event.endDate) : null,
         locationUrl: event.locationUrl || null,
         moreUrl:     event.moreUrl     || null,
         description: event.description || "",
@@ -1979,67 +2071,12 @@ async editEvent(eventId, eventData = null) {
         // Déterminer le type d'événement basé sur la collection
         const isSummerEvent = this.collectionName === 'summer_events';
         
-        // Fonction pour convertir les timestamps en chaînes pour input datetime-local
-        const timestampToInputDatetime = (timestamp) => {
-            if (!timestamp) return '';
-            
-            let date;
-            try {
-                if (timestamp instanceof Timestamp) {
-                    date = timestamp.toDate();
-                } else if (timestamp.seconds && timestamp.nanoseconds) {
-                    date = new Date(timestamp.seconds * 1000);
-                } else if (timestamp._seconds && timestamp._nanoseconds) {
-                    date = new Date(timestamp._seconds * 1000);
-                } else if (timestamp instanceof Date) {
-                    date = timestamp;
-                } else {
-                    date = new Date(timestamp);
-                }
-                
-                if (isNaN(date.getTime())) return '';
-                
-                return date.toISOString().slice(0, 16);
-            } catch (e) {
-                console.error("Erreur conversion timestamp:", e);
-                return '';
-            }
-        };
-        
         // Préparation des champs communs
         const title = eventData.title || '';
         const subtitle = eventData.subtitle || '';
         const location = eventData.location || eventData.locationName || '';
         const locationUrl = eventData.locationUrl || '';
         const description = eventData.description || '';
-        
-        // Fonction pour convertir timestamp en string pour input date
-        const timestampToInputDate = (timestamp) => {
-            if (!timestamp) return '';
-            
-            let date;
-            try {
-                if (timestamp instanceof Timestamp) {
-                    date = timestamp.toDate();
-                } else if (timestamp.seconds && timestamp.nanoseconds) {
-                    date = new Date(timestamp.seconds * 1000);
-                } else if (timestamp._seconds && timestamp._nanoseconds) {
-                    date = new Date(timestamp._seconds * 1000);
-                } else if (timestamp instanceof Date) {
-                    date = timestamp;
-                } else {
-                    date = new Date(timestamp);
-                }
-                
-                if (isNaN(date.getTime())) return '';
-                
-                // Retourne au format YYYY-MM-DD pour input de type date
-                return date.toISOString().split('T')[0];
-            } catch (e) {
-                console.error("Erreur conversion timestamp:", e);
-                return '';
-            }
-        };
 
         // Préparation des valeurs pour le formulaire en fonction du type d'événement
         let dateSection = '';
@@ -2048,34 +2085,34 @@ async editEvent(eventId, eventData = null) {
         
         if (isSummerEvent) {
             // Pour les événements d'été - structure simplifiée
-            const dateInput = timestampToInputDate(eventData.date);
-            const endDateInput = timestampToInputDate(eventData.endDate);
+            const dateInput = toDateInputValue(eventData.date);
+            const endDateInput = toDateInputValue(eventData.endDate);
             
             dateSection = `
                 <div class="form-group">
                     <label for="edit-date">Date de début</label>
-                    <input type="date" id="edit-date" class="swal2-input" value="${dateInput}">
+                    <input type="date" id="edit-date" class="swal2-input" value="${escapeHtml(dateInput)}">
                 </div>
                 <div class="form-group">
                     <label for="edit-end-date">Date de fin</label>
-                    <input type="date" id="edit-end-date" class="swal2-input" value="${endDateInput}">
+                    <input type="date" id="edit-end-date" class="swal2-input" value="${escapeHtml(endDateInput)}">
                 </div>
             `;
 
             additionalFields = `
                 <div class="form-group">
                     <label for="edit-location-url">URL du lieu</label>
-                    <input type="url" id="edit-location-url" class="swal2-input" value="${locationUrl}">
+                    <input type="url" id="edit-location-url" class="swal2-input" value="${escapeHtml(locationUrl)}">
                 </div>
                 <div class="form-group">
                     <label for="edit-plus-url">URL Plus d'info</label>
-                    <input type="url" id="edit-plus-url" class="swal2-input" value="${eventData.moreUrl || ''}">
+                    <input type="url" id="edit-plus-url" class="swal2-input" value="${escapeHtml(eventData.moreUrl || '')}">
                 </div>
             `;
         } else {
             // Pour les événements normaux
-            const startDateInput = timestampToInputDatetime(eventData.startDate);
-            const endDateInput = timestampToInputDatetime(eventData.endDate);
+            const startDateInput = toDatetimeLocalInputValue(eventData.startDate);
+            const endDateInput = toDatetimeLocalInputValue(eventData.endDate);
             
             let partnersValue = '';
             if (eventData.partners && Array.isArray(eventData.partners)) {
@@ -2094,25 +2131,25 @@ async editEvent(eventId, eventData = null) {
             dateSection = `
                 <div class="form-group">
                     <label for="edit-start-date">Date de début</label>
-                    <input type="datetime-local" id="edit-start-date" class="swal2-input" value="${startDateInput}">
+                    <input type="datetime-local" id="edit-start-date" class="swal2-input" value="${escapeHtml(startDateInput)}">
                 </div>
                 <div class="form-group">
                     <label for="edit-end-date">Date de fin</label>
-                    <input type="datetime-local" id="edit-end-date" class="swal2-input" value="${endDateInput}">
+                    <input type="datetime-local" id="edit-end-date" class="swal2-input" value="${escapeHtml(endDateInput)}">
                 </div>
             `;
 
             genreSection = `
                 <div class="form-group">
                     <label for="edit-genre">Genre (séparés par des virgules)</label>
-                    <input type="text" id="edit-genre" class="swal2-input" value="${genreValue}">
+                    <input type="text" id="edit-genre" class="swal2-input" value="${escapeHtml(genreValue)}">
                 </div>
             `;
 
             additionalFields = `
                 <div class="form-group">
                     <label for="edit-plus-url">URL Plus d'info</label>
-                    <input type="url" id="edit-plus-url" class="swal2-input" value="${eventData.plusUrl || ''}">
+                    <input type="url" id="edit-plus-url" class="swal2-input" value="${escapeHtml(eventData.plusUrl || '')}">
                 </div>
             `;
         }
@@ -2122,22 +2159,22 @@ async editEvent(eventId, eventData = null) {
             <form id="edit-event-form" class="swal-event-form">
                 <div class="form-group">
                     <label for="edit-title">Titre*</label>
-                    <input type="text" id="edit-title" class="swal2-input" value="${title}" required>
+                    <input type="text" id="edit-title" class="swal2-input" value="${escapeHtml(title)}" required>
                 </div>
                 <div class="form-group">
                     <label for="edit-subtitle">${isSummerEvent ? 'Style musical' : 'Sous-titre'}</label>
-                    <input type="text" id="edit-subtitle" class="swal2-input" value="${subtitle}">
+                    <input type="text" id="edit-subtitle" class="swal2-input" value="${escapeHtml(subtitle)}">
                 </div>
                 ${dateSection}
                 <div class="form-group">
                     <label for="edit-location">Lieu</label>
-                    <input type="text" id="edit-location" class="swal2-input" value="${location}">
+                    <input type="text" id="edit-location" class="swal2-input" value="${escapeHtml(location)}">
                 </div>
                 ${genreSection}
                 ${additionalFields}
                 <div class="form-group">
                     <label for="edit-description">Description</label>
-                    <textarea id="edit-description" class="swal2-textarea">${description}</textarea>
+                    <textarea id="edit-description" class="swal2-textarea">${escapeHtml(description)}</textarea>
                 </div>
                 <div class="form-group">
                     <label for="edit-image">Image</label>
@@ -2214,11 +2251,11 @@ async editEvent(eventId, eventData = null) {
                         const plusUrlValue = document.getElementById('edit-plus-url')?.value;
                         
                         if (dateValue) {
-                            formData.date = Timestamp.fromDate(new Date(dateValue));
+                            formData.date = localDateInputToTimestamp(dateValue);
                         }
                         
                         if (endDateValue) {
-                            formData.endDate = Timestamp.fromDate(new Date(endDateValue));
+                            formData.endDate = localDateInputToTimestamp(endDateValue);
                         }
                         
                         if (locationUrlValue) {
@@ -2238,11 +2275,11 @@ async editEvent(eventId, eventData = null) {
                         const plusUrlValue = document.getElementById('edit-plus-url')?.value;
                         
                         if (startDateValue) {
-                            formData.startDate = Timestamp.fromDate(new Date(startDateValue));
+                            formData.startDate = localDateTimeInputToTimestamp(startDateValue);
                         }
                         
                         if (endDateValue) {
-                            formData.endDate = Timestamp.fromDate(new Date(endDateValue));
+                            formData.endDate = localDateTimeInputToTimestamp(endDateValue);
                         }
                         
                         if (plusUrlValue) {
@@ -3105,27 +3142,27 @@ async editPartner(partnerId) {
     <form id="edit-partner-form" class="swal-partner-form">
         <div class="form-group">
             <label for="edit-name">Nom*</label>
-            <input type="text" id="edit-name" class="swal2-input" value="${partnerData.name || ''}" required>
+            <input type="text" id="edit-name" class="swal2-input" value="${escapeHtml(partnerData.name || '')}" required>
         </div>
         <div class="form-group">
             <label for="edit-type">Type d'établissement</label>
-            <input type="text" id="edit-type" class="swal2-input" value="${partnerData.type || ''}" placeholder="Restaurant, Bar, Café...">
+            <input type="text" id="edit-type" class="swal2-input" value="${escapeHtml(partnerData.type || '')}" placeholder="Restaurant, Bar, Café...">
         </div>
         <div class="form-group">
             <label for="edit-info">Informations</label>
-            <textarea id="edit-info" class="swal2-textarea">${partnerData.info || ''}</textarea>
+            <textarea id="edit-info" class="swal2-textarea">${escapeHtml(partnerData.info || '')}</textarea>
         </div>
         <div class="form-group">
             <label for="edit-address">Adresse</label>
-            <input type="text" id="edit-address" class="swal2-input" value="${partnerData.address || ''}">
+            <input type="text" id="edit-address" class="swal2-input" value="${escapeHtml(partnerData.address || '')}">
         </div>
         <div class="form-group">
             <label for="edit-phone">Téléphone</label>
-            <input type="tel" id="edit-phone" class="swal2-input" value="${partnerData.phone || ''}">
+            <input type="tel" id="edit-phone" class="swal2-input" value="${escapeHtml(partnerData.phone || '')}">
         </div>
         <div class="form-group">
             <label for="edit-website">Site Web</label>
-            <input type="url" id="edit-website" class="swal2-input" value="${partnerData.website || ''}">
+            <input type="url" id="edit-website" class="swal2-input" value="${escapeHtml(partnerData.website || '')}">
         </div>
         <div class="form-group">
             <label for="edit-image">Image</label>
@@ -4142,6 +4179,34 @@ async function addSoundPoint(soundPoint) {
     }
 }
 
+async function updateSoundPoint(id, soundPoint) {
+    try {
+        if (!id || !soundPoint.name || !soundPoint.gpsCoordinates || !soundPoint.section_toulon) {
+            throw new Error("Données du point de son manquantes");
+        }
+
+        const genresArray = (soundPoint.genres || []).map(extractValued);
+        const partnersArray = (soundPoint.partners || []).map(extractValued);
+
+        await updateDoc(doc(db, "sound_points", id), {
+            name: soundPoint.name,
+            type: soundPoint.type || "autre",
+            genres: genresArray,
+            gpsCoordinates: soundPoint.gpsCoordinates,
+            section_toulon: soundPoint.section_toulon,
+            partners: partnersArray,
+            updatedAt: Timestamp.now()
+        });
+
+        await loadSoundPoints();
+        showToast("Point de son mis à jour avec succès");
+    } catch (error) {
+        console.error("Erreur lors de la modification du point de son:", error);
+        showToast("Erreur lors de la modification du point de son", "error");
+        throw error;
+    }
+}
+
 // Supprimer un point de son de Firestore
 async function deleteSoundPoint(id) {
     try {
@@ -4170,6 +4235,103 @@ function viewSoundPoint(id) {
         ${soundPoint.partners && soundPoint.partners.length > 0 ? 
           `<p><strong>Partenaires:</strong> ${soundPoint.partners.join(', ')}</p>` : ''}
     `);
+}
+
+async function editSoundPoint(id) {
+    const soundPoint = currentSoundPoints.find(point => point.id === id);
+    if (!soundPoint) {
+        showToast("Point de son introuvable", "error");
+        return;
+    }
+
+    const genresValue = Array.isArray(soundPoint.genres) ? soundPoint.genres.join(', ') : '';
+    const partnersValue = Array.isArray(soundPoint.partners) ? soundPoint.partners.join(', ') : '';
+    const sectionValue = soundPoint.section_toulon || '';
+
+    const result = await Swal.fire({
+        title: 'Modifier le point de son',
+        width: '760px',
+        showCancelButton: true,
+        confirmButtonText: 'Enregistrer',
+        cancelButtonText: 'Annuler',
+        confirmButtonColor: '#06409e',
+        html: `
+            <form id="edit-sound-point-form" class="swal-partner-form">
+                <div class="form-group">
+                    <label for="edit-sound-point-name">Nom*</label>
+                    <input type="text" id="edit-sound-point-name" class="swal2-input" value="${escapeHtml(soundPoint.name || '')}" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-sound-point-type">Styles de musiques*</label>
+                    <input type="text" id="edit-sound-point-type" class="swal2-input" value="${escapeHtml(soundPoint.type || '')}" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-sound-point-genres">Genres, séparés par des virgules*</label>
+                    <input type="text" id="edit-sound-point-genres" class="swal2-input" value="${escapeHtml(genresValue)}" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-sound-point-section">Section Toulon*</label>
+                    <select id="edit-sound-point-section" class="swal2-input" required>
+                        <option value="">Sélectionner une section</option>
+                        <option value="centreville" ${sectionValue === 'centreville' ? 'selected' : ''}>Centre ville</option>
+                        <option value="mourillon" ${sectionValue === 'mourillon' ? 'selected' : ''}>Mourillon</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-sound-point-gps">Coordonnées GPS*</label>
+                    <input type="text" id="edit-sound-point-gps" class="swal2-input" value="${escapeHtml(soundPoint.gpsCoordinates || '')}" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-sound-point-partners">Partenaires, séparés par des virgules</label>
+                    <input type="text" id="edit-sound-point-partners" class="swal2-input" value="${escapeHtml(partnersValue)}">
+                </div>
+            </form>
+        `,
+        preConfirm: async () => {
+            const name = document.getElementById('edit-sound-point-name').value.trim();
+            const type = document.getElementById('edit-sound-point-type').value.trim();
+            const genres = document.getElementById('edit-sound-point-genres').value
+                .split(',')
+                .map(value => value.trim())
+                .filter(Boolean);
+            const section_toulon = document.getElementById('edit-sound-point-section').value;
+            const gpsCoordinates = document.getElementById('edit-sound-point-gps').value.trim();
+            const partners = document.getElementById('edit-sound-point-partners').value
+                .split(',')
+                .map(value => value.trim())
+                .filter(Boolean);
+
+            if (!name || !type || genres.length === 0 || !section_toulon || !gpsCoordinates) {
+                Swal.showValidationMessage('Nom, styles, genres, section et coordonnées GPS sont obligatoires');
+                return false;
+            }
+
+            try {
+                Swal.showLoading();
+                await updateSoundPoint(id, {
+                    name,
+                    type,
+                    genres,
+                    section_toulon,
+                    gpsCoordinates,
+                    partners
+                });
+                return true;
+            } catch (error) {
+                Swal.showValidationMessage(`Erreur: ${error.message}`);
+                return false;
+            }
+        }
+    });
+
+    if (result.isConfirmed) {
+        Swal.fire({
+            title: 'Point de son mis à jour',
+            icon: 'success',
+            timer: 1800,
+            showConfirmButton: false
+        });
+    }
 }
 
 // Obtenir le label lisible pour un type de point de son
@@ -4237,7 +4399,9 @@ async function loadSoundPoints() {
                 <td>${data.gpsCoordinates}</td>
                 <td><div class="truncate-text">${partnersStr}</div></td>
                 <td class="table-actions">
-                    
+                    <button class="action-edit edit-sound-point" title="Modifier">
+                        <i class="fas fa-edit"></i>
+                    </button>
                     <button class="action-delete delete-sound-point" title="Supprimer">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -4279,14 +4443,12 @@ function attachActionListeners() {
         });
     });
     
-    // Note: Les boutons d'édition nécessiteraient une fonction d'édition supplémentaire
     const editButtons = document.querySelectorAll('.edit-sound-point');
     editButtons.forEach(button => {
         button.addEventListener('click', function() {
             const row = this.closest('tr');
             const id = row.getAttribute('data-id');
-            alert('Fonctionnalité d\'édition à implémenter');
-            // editSoundPoint(id); // À implémenter
+            editSoundPoint(id);
         });
     });
 }
