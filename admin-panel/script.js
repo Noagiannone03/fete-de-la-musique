@@ -4150,6 +4150,42 @@ function extractValued(obj) {
     return obj.value || obj;
 }
 
+function normalizeSelectedMultiSelectItems(values = [], options = []) {
+    if (!Array.isArray(values)) return [];
+
+    const normalized = [];
+    const seen = new Set();
+
+    values.forEach(item => {
+        const rawValue = item && typeof item === 'object'
+            ? (item.value || item.id || item.name || item.label)
+            : item;
+
+        if (!rawValue) return;
+
+        const rawValueString = String(rawValue);
+        const matchingOption = options.find(option =>
+            String(option.value) === rawValueString ||
+            String(option.label).toLowerCase() === rawValueString.toLowerCase()
+        );
+
+        const selectedItem = matchingOption
+            ? { value: matchingOption.value, label: matchingOption.label }
+            : { value: rawValueString, label: rawValueString };
+
+        if (!seen.has(selectedItem.value)) {
+            normalized.push(selectedItem);
+            seen.add(selectedItem.value);
+        }
+    });
+
+    return normalized;
+}
+
+function getMultiSelectLabels(values = [], options = []) {
+    return normalizeSelectedMultiSelectItems(values, options).map(item => item.label);
+}
+
 // Modification de la fonction addSoundPoint pour inclure section_toulon
 async function addSoundPoint(soundPoint) {
     try {
@@ -4244,8 +4280,9 @@ async function editSoundPoint(id) {
         return;
     }
 
+    const partnerOptions = await getAllPartners();
+    const selectedPartners = normalizeSelectedMultiSelectItems(soundPoint.partners, partnerOptions);
     const genresValue = Array.isArray(soundPoint.genres) ? soundPoint.genres.join(', ') : '';
-    const partnersValue = Array.isArray(soundPoint.partners) ? soundPoint.partners.join(', ') : '';
     const sectionValue = soundPoint.section_toulon || '';
 
     const result = await Swal.fire({
@@ -4282,11 +4319,24 @@ async function editSoundPoint(id) {
                     <input type="text" id="edit-sound-point-gps" class="swal2-input" value="${escapeHtml(soundPoint.gpsCoordinates || '')}" required>
                 </div>
                 <div class="form-group">
-                    <label for="edit-sound-point-partners">Partenaires, séparés par des virgules</label>
-                    <input type="text" id="edit-sound-point-partners" class="swal2-input" value="${escapeHtml(partnersValue)}">
+                    <label for="edit-sound-point-partners">Partenaires rattachés</label>
+                    <div class="multiselect-wrapper">
+                        <div class="multiselect-input-wrapper">
+                            <input type="text" id="edit-sound-point-partners-input" class="multiselect-search" placeholder="Rechercher un partenaire">
+                            <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
+                        </div>
+                        <div class="multiselect-dropdown" id="edit-sound-point-partners-dropdown"></div>
+                        <div class="selected-items" id="edit-sound-point-partners-selected"></div>
+                        <input type="hidden" id="edit-sound-point-partners">
+                    </div>
                 </div>
             </form>
         `,
+        didOpen: () => {
+            initMultiSelect('edit-sound-point-partners', () => partnerOptions, selectedPartners, {
+                allowCustom: false
+            });
+        },
         preConfirm: async () => {
             const name = document.getElementById('edit-sound-point-name').value.trim();
             const type = document.getElementById('edit-sound-point-type').value.trim();
@@ -4296,10 +4346,8 @@ async function editSoundPoint(id) {
                 .filter(Boolean);
             const section_toulon = document.getElementById('edit-sound-point-section').value;
             const gpsCoordinates = document.getElementById('edit-sound-point-gps').value.trim();
-            const partners = document.getElementById('edit-sound-point-partners').value
-                .split(',')
-                .map(value => value.trim())
-                .filter(Boolean);
+            const partnersValue = document.getElementById('edit-sound-point-partners').value;
+            const partners = partnersValue ? JSON.parse(partnersValue) : [];
 
             if (!name || !type || genres.length === 0 || !section_toulon || !gpsCoordinates) {
                 Swal.showValidationMessage('Nom, styles, genres, section et coordonnées GPS sont obligatoires');
@@ -4359,6 +4407,7 @@ async function loadSoundPoints() {
         
         // Obtenir les données de Firestore
         const soundPointsSnapshot = await getDocs(query(collection(db, "sound_points"), orderBy("createdAt", "desc")));
+        const partnerOptions = await getAllPartners();
         
         if (soundPointsSnapshot.empty) {
             soundPointsListElement.innerHTML = '<tr><td colspan="6" class="text-center">Aucun point de son trouvé</td></tr>';
@@ -4383,7 +4432,7 @@ async function loadSoundPoints() {
             
             // Traitement des partenaires
             const partners = data.partners || [];
-            let partnersStr = partners.join(', ');
+            let partnersStr = getMultiSelectLabels(partners, partnerOptions).join(', ');
             if (partnersStr.length > 30) {
                 partnersStr = partnersStr.substring(0, 27) + '...';
             }
@@ -4462,7 +4511,9 @@ function initSoundPointForm() {
     
     // Initialisation des sélecteurs multiples pour les genres et partenaires
     initMultiSelect('sound-point-genres', getAllGenres);
-    initMultiSelect('sound-point-partners', getAllPartners);
+    initMultiSelect('sound-point-partners', getAllPartners, [], {
+        allowCustom: false
+    });
     
     // Gérer la soumission du formulaire
     if (soundPointForm) {
@@ -4576,7 +4627,7 @@ function initSoundPointForm() {
     }
 }
 // Initialiser un sélecteur multiple
-function initMultiSelect(id, getOptionsFunc) {
+function initMultiSelect(id, getOptionsFunc, initialItems = [], config = {}) {
     const input = document.getElementById(`${id}-input`);
     const dropdown = document.getElementById(`${id}-dropdown`);
     const selected = document.getElementById(`${id}-selected`);
@@ -4588,7 +4639,8 @@ function initMultiSelect(id, getOptionsFunc) {
     }
     
     // Initialiser les valeurs sélectionnées
-    let selectedItems = [];
+    let selectedItems = normalizeSelectedMultiSelectItems(initialItems);
+    const allowCustom = config.allowCustom !== false;
     
     // Mettre à jour l'entrée cachée
     function updateHiddenInput() {
@@ -4601,12 +4653,17 @@ function initMultiSelect(id, getOptionsFunc) {
         selectedItems.forEach(item => {
             const itemElement = document.createElement('div');
             itemElement.className = 'selected-item';
-            itemElement.innerHTML = `
-                <span class="selected-item-text">${item.label}</span>
-                <span class="selected-item-remove" data-value="${item.value}">
-                    <i class="fas fa-times"></i>
-                </span>
-            `;
+            const itemText = document.createElement('span');
+            itemText.className = 'selected-item-text';
+            itemText.textContent = item.label;
+
+            const removeButton = document.createElement('span');
+            removeButton.className = 'selected-item-remove';
+            removeButton.setAttribute('data-value', item.value);
+            removeButton.innerHTML = '<i class="fas fa-times"></i>';
+
+            itemElement.appendChild(itemText);
+            itemElement.appendChild(removeButton);
             selected.appendChild(itemElement);
         });
         
@@ -4662,10 +4719,13 @@ function initMultiSelect(id, getOptionsFunc) {
                 });
             } else {
                 // Option pour ajouter un nouvel élément
-                if (query.trim() !== '') {
+                if (allowCustom && query.trim() !== '') {
                     const addOption = document.createElement('div');
                     addOption.className = 'multiselect-option add-option';
-                    addOption.innerHTML = `<i class="fas fa-plus"></i> Ajouter "${query}"`;
+                    const icon = document.createElement('i');
+                    icon.className = 'fas fa-plus';
+                    addOption.appendChild(icon);
+                    addOption.appendChild(document.createTextNode(` Ajouter "${query.trim()}"`));
                     
                     addOption.addEventListener('click', function() {
                         const newValue = query.trim();
