@@ -4170,6 +4170,9 @@ function normalizeSelectedMultiSelectItems(values = [], options = [], config = {
         if (!rawValue) return;
 
         const rawValueString = String(rawValue).trim();
+        const rawLabel = item && typeof item === 'object'
+            ? (item.label || item.name || rawValueString)
+            : rawValueString;
         const matchingOption = options.find(option =>
             String(option.value).trim() === rawValueString ||
             String(option.label).trim().toLowerCase() === rawValueString.toLowerCase()
@@ -4179,9 +4182,9 @@ function normalizeSelectedMultiSelectItems(values = [], options = [], config = {
             ? { value: matchingOption.value, label: matchingOption.label }
             : {
                 value: rawValueString,
-                label: hideUnknownIds && isFirestoreAutoId(rawValueString)
+                label: hideUnknownIds && isFirestoreAutoId(rawValueString) && rawLabel === rawValueString
                     ? unknownIdLabel
-                    : rawValueString
+                    : rawLabel
             };
 
         if (!seen.has(selectedItem.value)) {
