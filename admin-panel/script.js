@@ -4150,11 +4150,17 @@ function extractValued(obj) {
     return obj.value || obj;
 }
 
-function normalizeSelectedMultiSelectItems(values = [], options = []) {
+function isFirestoreAutoId(value) {
+    return /^[A-Za-z0-9]{20}$/.test(String(value || ''));
+}
+
+function normalizeSelectedMultiSelectItems(values = [], options = [], config = {}) {
     if (!Array.isArray(values)) return [];
 
     const normalized = [];
     const seen = new Set();
+    const hideUnknownIds = config.hideUnknownIds === true;
+    const unknownIdLabel = config.unknownIdLabel || 'Partenaire introuvable';
 
     values.forEach(item => {
         const rawValue = item && typeof item === 'object'
@@ -4163,15 +4169,20 @@ function normalizeSelectedMultiSelectItems(values = [], options = []) {
 
         if (!rawValue) return;
 
-        const rawValueString = String(rawValue);
+        const rawValueString = String(rawValue).trim();
         const matchingOption = options.find(option =>
-            String(option.value) === rawValueString ||
-            String(option.label).toLowerCase() === rawValueString.toLowerCase()
+            String(option.value).trim() === rawValueString ||
+            String(option.label).trim().toLowerCase() === rawValueString.toLowerCase()
         );
 
         const selectedItem = matchingOption
             ? { value: matchingOption.value, label: matchingOption.label }
-            : { value: rawValueString, label: rawValueString };
+            : {
+                value: rawValueString,
+                label: hideUnknownIds && isFirestoreAutoId(rawValueString)
+                    ? unknownIdLabel
+                    : rawValueString
+            };
 
         if (!seen.has(selectedItem.value)) {
             normalized.push(selectedItem);
@@ -4182,8 +4193,14 @@ function normalizeSelectedMultiSelectItems(values = [], options = []) {
     return normalized;
 }
 
-function getMultiSelectLabels(values = [], options = []) {
-    return normalizeSelectedMultiSelectItems(values, options).map(item => item.label);
+function getMultiSelectLabels(values = [], options = [], config = {}) {
+    return normalizeSelectedMultiSelectItems(values, options, config).map(item => item.label);
+}
+
+function getPartnerDisplayLabels(values = [], partnerOptions = []) {
+    return getMultiSelectLabels(values, partnerOptions, {
+        hideUnknownIds: true
+    }).filter(label => label !== 'Partenaire introuvable');
 }
 
 // Modification de la fonction addSoundPoint pour inclure section_toulon
@@ -4281,7 +4298,9 @@ async function editSoundPoint(id) {
     }
 
     const partnerOptions = await getAllPartners();
-    const selectedPartners = normalizeSelectedMultiSelectItems(soundPoint.partners, partnerOptions);
+    const selectedPartners = normalizeSelectedMultiSelectItems(soundPoint.partners, partnerOptions, {
+        hideUnknownIds: true
+    });
     const genresValue = Array.isArray(soundPoint.genres) ? soundPoint.genres.join(', ') : '';
     const sectionValue = soundPoint.section_toulon || '';
 
@@ -4432,7 +4451,7 @@ async function loadSoundPoints() {
             
             // Traitement des partenaires
             const partners = data.partners || [];
-            let partnersStr = getMultiSelectLabels(partners, partnerOptions).join(', ');
+            let partnersStr = getPartnerDisplayLabels(partners, partnerOptions).join(', ');
             if (partnersStr.length > 30) {
                 partnersStr = partnersStr.substring(0, 27) + '...';
             }
