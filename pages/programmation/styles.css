@@ -936,15 +936,3 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
-
-.menu-icon {
-    display: none !important;
-    pointer-events: none !important;
-}
-
-.menu-overlay,
-.menu-overlay.active {
-    display: none !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
